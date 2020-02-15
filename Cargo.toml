@@ -1,0 +1,10 @@
+[package]
+name = "ig"
+version = "0.1.0"
+authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+grep = "0.2.4"
+ignore = "0.4.11"
+clap = "2.33.0"

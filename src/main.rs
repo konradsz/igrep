@@ -23,7 +23,7 @@ struct FileMatch {
     matches: Vec<Match>,
 }
 
-fn search_path(pattern: &str, path: &str) -> Result<(), Box<std::error::Error>> {
+fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let (tx, rx) = mpsc::channel();
 
     let matcher = RegexMatcher::new_line_matcher(&pattern)?;
@@ -104,7 +104,7 @@ where
     }
 }
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("ig")
         .about("Interactive Grep")
         .arg(

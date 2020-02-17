@@ -58,9 +58,11 @@ fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Erro
                 &matcher,
                 dir_entry.path(),
                 MatchesSink(|_, sink_match| {
+                    println!("{}", dir_entry.path().to_str().unwrap());
                     let m = Match {
                         line_number: sink_match.line_number().unwrap(),
-                        text: String::from(std::str::from_utf8(sink_match.bytes()).unwrap()),
+                        text: std::str::from_utf8(sink_match.bytes())
+                            .map_or(String::from("Not UTF-8"), |s| String::from(s)),
                     };
                     matches_in_entry.push(m);
                     Ok(true)
@@ -71,7 +73,8 @@ fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Erro
                 tx.send(FileMatch {
                     name: String::from(dir_entry.path().to_str().unwrap()),
                     matches: matches_in_entry,
-                }).unwrap();
+                })
+                .unwrap();
             }
 
             ignore::WalkState::Continue

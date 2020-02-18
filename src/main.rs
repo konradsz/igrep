@@ -1,7 +1,3 @@
-extern crate clap;
-extern crate grep;
-extern crate ignore;
-
 use std::sync::mpsc;
 
 use clap::{App, Arg};

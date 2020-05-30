@@ -3,6 +3,8 @@ use std::sync::mpsc;
 use clap::{App, Arg};
 use ignore::WalkBuilder;
 
+use std::thread;
+
 use grep::matcher::LineTerminator;
 use grep::regex::RegexMatcher;
 use grep::searcher::{Searcher, SearcherBuilder, Sink, SinkMatch};
@@ -19,62 +21,68 @@ struct FileMatch {
     matches: Vec<Match>,
 }
 
+// path: &str -> AsRef<Path>
 fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let (tx, rx) = mpsc::channel();
 
     let matcher = RegexMatcher::new_line_matcher(&pattern)?;
     let builder = WalkBuilder::new(path);
 
-    builder.build_parallel().run(move || {
-        let tx = tx.clone();
-        let matcher = matcher.clone();
-        let mut searcher = SearcherBuilder::new()
-            .line_terminator(LineTerminator::byte(b'\n'))
-            .line_number(true)
-            .multi_line(false)
-            .build();
+    let walk_parallel = builder.build_parallel();
+    let handle = thread::spawn(|| {
+        walk_parallel.run(move || {
+            let tx = tx.clone();
+            let matcher = matcher.clone();
+            let mut searcher = SearcherBuilder::new()
+                //.binary_detection(BinaryDetection::quit(b'\x00')) // from simplegrep - check it
+                .line_terminator(LineTerminator::byte(b'\n'))
+                .line_number(true)
+                .multi_line(false)
+                .build();
 
-        Box::new(move |result| {
-            let dir_entry = match result {
-                Err(err) => {
-                    eprintln!("{}", err);
-                    return ignore::WalkState::Continue;
-                }
-                Ok(entry) => {
-                    if !entry.file_type().map_or(false, |ft| ft.is_file()) {
+            Box::new(move |result| {
+                let dir_entry = match result {
+                    Err(err) => {
+                        eprintln!("{}", err);
                         return ignore::WalkState::Continue;
                     }
-                    entry
+                    Ok(entry) => {
+                        if !entry.file_type().map_or(false, |ft| ft.is_file()) {
+                            return ignore::WalkState::Continue;
+                        }
+                        entry
+                    }
+                };
+
+                let mut matches_in_entry = Vec::new();
+
+                // handle error like in simplegrep
+                let _ = searcher.search_path(
+                    &matcher,
+                    dir_entry.path(),
+                    MatchesSink(|_, sink_match| {
+                        //println!("{}", dir_entry.path().to_str().unwrap());
+                        let m = Match {
+                            line_number: sink_match.line_number().unwrap(),
+                            text: std::str::from_utf8(sink_match.bytes())
+                                .map_or(String::from("Not UTF-8"), |s| String::from(s)),
+                        };
+                        matches_in_entry.push(m);
+                        Ok(true)
+                    }),
+                );
+
+                if !matches_in_entry.is_empty() {
+                    tx.send(FileMatch {
+                        name: String::from(dir_entry.path().to_str().unwrap()),
+                        matches: matches_in_entry,
+                    })
+                    .unwrap();
                 }
-            };
 
-            let mut matches_in_entry = Vec::new();
-
-            let _ = searcher.search_path(
-                &matcher,
-                dir_entry.path(),
-                MatchesSink(|_, sink_match| {
-                    println!("{}", dir_entry.path().to_str().unwrap());
-                    let m = Match {
-                        line_number: sink_match.line_number().unwrap(),
-                        text: std::str::from_utf8(sink_match.bytes())
-                            .map_or(String::from("Not UTF-8"), |s| String::from(s)),
-                    };
-                    matches_in_entry.push(m);
-                    Ok(true)
-                }),
-            );
-
-            if !matches_in_entry.is_empty() {
-                tx.send(FileMatch {
-                    name: String::from(dir_entry.path().to_str().unwrap()),
-                    matches: matches_in_entry,
-                })
-                .unwrap();
-            }
-
-            ignore::WalkState::Continue
-        })
+                ignore::WalkState::Continue
+            })
+        });
     });
 
     for received in rx {
@@ -103,6 +111,36 @@ where
     }
 }
 
+/*use crate::util::{
+    event::{Event, Events},
+    FileEntry, Match, StatefulList,
+};*/
+mod util;
+use std::{error::Error, io};
+use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
+use tui::{
+    backend::TermionBackend,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, List, Text},
+    Terminal,
+};
+
+struct AppList {
+    items: util::StatefulList,
+}
+
+impl AppList {
+    fn new() -> Self {
+        AppList {
+            items: util::StatefulList::new(), /*StatefulList::with_items(vec![
+                                            File::new("File A", vec![Match::new("m1"), Match::new("m2")]),
+                                            File::new("File B", vec![Match::new("m3"), Match::new("m4")]),
+                                        ]),*/
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("ig")
         .about("Interactive Grep")
@@ -123,7 +161,77 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pattern = matches.value_of("PATTERN").unwrap();
     let path = matches.value_of("PATH").unwrap();
 
-    search_path(pattern, path)?;
+    //search_path(pattern, path)?;
+
+    let stdout = io::stdout().into_raw_mode()?;
+    let stdout = MouseTerminal::from(stdout);
+    let stdout = AlternateScreen::from(stdout);
+    let backend = TermionBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.hide_cursor()?;
+
+    let events = util::event::Events::new();
+
+    // App
+    let mut app = AppList::new();
+    app.items.add_entry(util::FileEntry::new(
+        "File A",
+        vec![util::Match::new("m1"), util::Match::new("m2")],
+    ));
+    app.items.add_entry(util::FileEntry::new(
+        "File B",
+        vec![util::Match::new("m3"), util::Match::new("m4")],
+    ));
+
+    loop {
+        terminal.draw(|mut f| {
+            let chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .split(f.size());
+
+            //let style = Style::default().fg(Color::White).bg(Color::Black);
+            let files_list = app
+                .items
+                .entries
+                .iter()
+                .map(|item| item.list())
+                .flatten()
+                .map(|e| Text::raw(e));
+            let list = List::new(files_list)
+                .block(Block::default().title("List").borders(Borders::ALL))
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().modifier(Modifier::ITALIC))
+                .highlight_symbol(">>");
+            /*let items = List::new(items)
+            .block(Block::default().borders(Borders::NONE).title("List"))
+            .style(style)
+            .highlight_style(style.fg(Color::LightGreen).modifier(Modifier::BOLD));*/
+            //.highlight_symbol(">");
+            f.render_stateful_widget(list, chunks[0], &mut app.items.state);
+        })?;
+
+        match events.next()? {
+            util::event::Event::Input(input) => match input {
+                Key::Char('q') => {
+                    break;
+                }
+                Key::Left => {
+                    app.items.unselect();
+                }
+                Key::Down => {
+                    app.items.next();
+                }
+                Key::Up => {
+                    app.items.previous();
+                }
+                _ => {}
+            },
+            util::event::Event::Tick => {
+                //app.advance();
+            }
+        }
+    }
 
     Ok(())
 }

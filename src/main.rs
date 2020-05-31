@@ -45,7 +45,7 @@ fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Erro
     let builder = WalkBuilder::new(path);
 
     let walk_parallel = builder.build_parallel();
-    let handle = thread::spawn(|| {
+    thread::spawn(|| {
         walk_parallel.run(move || {
             let tx = tx.clone();
             let matcher = matcher.clone();
@@ -176,18 +176,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .split(f.size());
 
-            //let style = Style::default().fg(Color::White).bg(Color::Black);
+            let header_style = Style::default().fg(Color::Red);
+
             let files_list = result_list
                 .entries
                 .iter()
                 .map(|item| item.list())
                 .flatten()
-                .map(|e| Text::raw(e));
+                .map(|e| match e {
+                    entries::Type::Header(s) => Text::Styled(s.into(), header_style),
+                    entries::Type::Match(s) => Text::raw(s),
+                });
             let list = List::new(files_list)
                 .block(Block::default().title("List").borders(Borders::ALL))
                 .style(Style::default().fg(Color::White))
                 .highlight_style(Style::default().modifier(Modifier::ITALIC))
                 .highlight_symbol(">>");
+
             /*let items = List::new(items)
             .block(Block::default().borders(Borders::NONE).title("List"))
             .style(style)
@@ -209,9 +214,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 _ => {}
             },
-            Event::Tick => {
-                //app.advance();
-            }
         }
     }
 

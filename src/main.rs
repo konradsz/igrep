@@ -1,13 +1,22 @@
+use std::io;
 use std::sync::mpsc;
+use std::thread;
 
 use clap::{App, Arg};
 use ignore::WalkBuilder;
 
-use std::thread;
-
 use grep::matcher::LineTerminator;
 use grep::regex::RegexMatcher;
 use grep::searcher::{Searcher, SearcherBuilder, Sink, SinkMatch};
+
+use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
+use tui::{
+    backend::TermionBackend,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, List, Text},
+    Terminal,
+};
 
 mod entries;
 mod event;
@@ -117,16 +126,6 @@ where
         (self.0)(searcher, sink_match)
     }
 }
-
-use std::{error::Error, io};
-use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
-use tui::{
-    backend::TermionBackend,
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, Text},
-    Terminal,
-};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("ig")

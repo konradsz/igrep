@@ -1,5 +1,6 @@
-use crate::entries::{FileEntry, Match};
+use crate::entries::FileEntry;
 use tui::widgets::ListState;
+
 pub struct ResultList {
     pub state: ListState,
     pub entries: Vec<FileEntry>,

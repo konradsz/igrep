@@ -9,6 +9,13 @@ use grep::matcher::LineTerminator;
 use grep::regex::RegexMatcher;
 use grep::searcher::{Searcher, SearcherBuilder, Sink, SinkMatch};
 
+mod entries;
+mod event;
+mod result_list;
+
+use event::{Event, Events};
+use result_list::ResultList;
+
 #[derive(Debug)]
 struct Match {
     line_number: u64,
@@ -111,11 +118,6 @@ where
     }
 }
 
-/*use crate::util::{
-    event::{Event, Events},
-    FileEntry, Match, StatefulList,
-};*/
-mod util;
 use std::{error::Error, io};
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
@@ -155,17 +157,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(backend)?;
     terminal.hide_cursor()?;
 
-    let events = util::event::Events::new();
+    let events = Events::new();
 
     // App
-    let mut result_list = util::ResultList::new();
-    result_list.add_entry(util::FileEntry::new(
+    let mut result_list = ResultList::new();
+    result_list.add_entry(entries::FileEntry::new(
         "File A",
-        vec![util::Match::new("m1"), util::Match::new("m2")],
+        vec![entries::Match::new("m1"), entries::Match::new("m2")],
     ));
-    result_list.add_entry(util::FileEntry::new(
+    result_list.add_entry(entries::FileEntry::new(
         "File B",
-        vec![util::Match::new("m3"), util::Match::new("m4")],
+        vec![entries::Match::new("m3"), entries::Match::new("m4")],
     ));
 
     loop {
@@ -196,7 +198,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })?;
 
         match events.next()? {
-            util::event::Event::Input(input) => match input {
+            Event::Input(input) => match input {
                 Key::Char('q') => {
                     break;
                 }
@@ -208,7 +210,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 _ => {}
             },
-            util::event::Event::Tick => {
+            Event::Tick => {
                 //app.advance();
             }
         }

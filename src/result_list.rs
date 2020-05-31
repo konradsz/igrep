@@ -97,14 +97,14 @@ fn test_empty_list() {
 #[test]
 fn test_add_entry() {
     let mut list = ResultList::new();
-    list.add_entry(FileEntry::new("entry1", vec![Match::new("e1m1")]));
+    list.add_entry(FileEntry::new("entry1", vec![Match::new(0, "e1m1")]));
     assert_eq!(list.entries.len(), 1);
     assert_eq!(list.header_indices.len(), 1);
     assert_eq!(list.state.selected(), Some(1));
 
     list.add_entry(FileEntry::new(
         "entry2",
-        vec![Match::new("e1m2"), Match::new("e2m2")],
+        vec![Match::new(0, "e1m2"), Match::new(0, "e2m2")],
     ));
     assert_eq!(list.entries.len(), 2);
     assert_eq!(list.header_indices.len(), 2);

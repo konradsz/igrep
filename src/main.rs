@@ -25,18 +25,6 @@ mod result_list;
 use event::{Event, Events};
 use result_list::ResultList;
 
-#[derive(Debug)]
-struct Match {
-    line_number: u64,
-    text: String,
-}
-
-#[derive(Debug)]
-struct FileMatch {
-    name: String,
-    matches: Vec<Match>,
-}
-
 // path: &str -> AsRef<Path>
 fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let (tx, rx) = mpsc::channel();
@@ -77,19 +65,17 @@ fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Erro
                     &matcher,
                     dir_entry.path(),
                     MatchesSink(|_, sink_match| {
+                        let line_number = sink_match.line_number().unwrap();
+                        let text = std::str::from_utf8(sink_match.bytes()).unwrap_or("Not UTF-8");
                         //println!("{}", dir_entry.path().to_str().unwrap());
-                        let m = Match {
-                            line_number: sink_match.line_number().unwrap(),
-                            text: std::str::from_utf8(sink_match.bytes())
-                                .map_or(String::from("Not UTF-8"), |s| String::from(s)),
-                        };
+                        let m = entries::Match::new(line_number, text);
                         matches_in_entry.push(m);
                         Ok(true)
                     }),
                 );
 
                 if !matches_in_entry.is_empty() {
-                    tx.send(FileMatch {
+                    tx.send(entries::FileEntry {
                         name: String::from(dir_entry.path().to_str().unwrap()),
                         matches: matches_in_entry,
                     })
@@ -162,11 +148,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut result_list = ResultList::new();
     result_list.add_entry(entries::FileEntry::new(
         "File A",
-        vec![entries::Match::new("m1"), entries::Match::new("m2")],
+        vec![entries::Match::new(0, "m1"), entries::Match::new(0, "m2")],
     ));
     result_list.add_entry(entries::FileEntry::new(
         "File B",
-        vec![entries::Match::new("m3"), entries::Match::new("m4")],
+        vec![entries::Match::new(0, "m3"), entries::Match::new(0, "m4")],
     ));
 
     loop {
@@ -184,8 +170,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .map(|item| item.list())
                 .flatten()
                 .map(|e| match e {
-                    entries::Type::Header(s) => Text::Styled(s.into(), header_style),
-                    entries::Type::Match(s) => Text::raw(s),
+                    entries::Type::Header(h) => Text::Styled(h.into(), header_style),
+                    entries::Type::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
                 });
             let list = List::new(files_list)
                 .block(Block::default().title("List").borders(Borders::ALL))

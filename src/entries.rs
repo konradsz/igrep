@@ -1,16 +1,24 @@
-pub struct Match(String);
+#[derive(Debug)]
+pub struct Match {
+    line_number: u64,
+    text: String,
+}
 
 impl Match {
-    pub fn new(text: &str) -> Self {
-        Match(text.into())
+    pub fn new(line_number: u64, text: &str) -> Self {
+        Match {
+            line_number,
+            text: text.into(),
+        }
     }
 }
 
 pub enum Type<'a> {
     Header(&'a str),
-    Match(&'a str),
+    Match(u64, &'a str),
 }
 
+#[derive(Debug)]
 pub struct FileEntry {
     pub name: String,
     pub matches: Vec<Match>,
@@ -26,6 +34,10 @@ impl FileEntry {
 
     pub fn list(&self) -> impl Iterator<Item = Type> {
         let name = std::iter::once(Type::Header(self.name.as_str()));
-        name.chain(self.matches.iter().map(|m| Type::Match(m.0.as_str())))
+        name.chain(
+            self.matches
+                .iter()
+                .map(|m| Type::Match(m.line_number, m.text.as_str())),
+        )
     }
 }

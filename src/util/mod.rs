@@ -29,15 +29,15 @@ impl FileEntry {
     }
 }
 
-pub struct StatefulList {
+pub struct ResultList {
     pub state: ListState,
     pub entries: Vec<FileEntry>,
     headers: Vec<usize>,
 }
 
-impl StatefulList {
-    pub fn new() -> StatefulList {
-        StatefulList {
+impl ResultList {
+    pub fn new() -> ResultList {
+        ResultList {
             state: ListState::default(),
             entries: Vec::new(),
             headers: Vec::new(), // header_indices
@@ -52,12 +52,16 @@ impl StatefulList {
             }
             None => self.headers.push(0),
         }
+
         self.entries.push(entry);
+
+        if self.entries.len() == 1 {
+            self.state.select(Some(1));
+        }
     }
 
     pub fn next(&mut self) {
         if self.entries.is_empty() {
-            self.state.select(None);
             return;
         }
 
@@ -85,28 +89,34 @@ impl StatefulList {
     }
 
     pub fn previous(&mut self) {
-        let i = match self.state.selected() {
+        if self.entries.is_empty() {
+            return;
+        }
+
+        let index = match self.state.selected() {
             Some(i) => {
-                if i == 0 {
-                    self.entries.len() - 1
+                if i == 1 {
+                    1
                 } else {
-                    i - 1
+                    if self.headers.contains(&(i - 1)) {
+                        i - 2
+                    } else {
+                        i - 1
+                    }
                 }
             }
-            None => 0,
+            None => 1,
         };
-        self.state.select(Some(i));
-    }
-
-    pub fn unselect(&mut self) {
-        self.state.select(None);
+        self.state.select(Some(index));
     }
 }
 
 #[test]
 fn test_empty_list() {
-    let mut list = StatefulList::new();
+    let mut list = ResultList::new();
     assert_eq!(list.state.selected(), None);
     list.next();
+    assert_eq!(list.state.selected(), None);
+    list.previous();
     assert_eq!(list.state.selected(), None);
 }

@@ -126,21 +126,6 @@ use tui::{
     Terminal,
 };
 
-struct AppList {
-    items: util::StatefulList,
-}
-
-impl AppList {
-    fn new() -> Self {
-        AppList {
-            items: util::StatefulList::new(), /*StatefulList::with_items(vec![
-                                            File::new("File A", vec![Match::new("m1"), Match::new("m2")]),
-                                            File::new("File B", vec![Match::new("m3"), Match::new("m4")]),
-                                        ]),*/
-        }
-    }
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("ig")
         .about("Interactive Grep")
@@ -173,12 +158,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let events = util::event::Events::new();
 
     // App
-    let mut app = AppList::new();
-    app.items.add_entry(util::FileEntry::new(
+    let mut result_list = util::ResultList::new();
+    result_list.add_entry(util::FileEntry::new(
         "File A",
         vec![util::Match::new("m1"), util::Match::new("m2")],
     ));
-    app.items.add_entry(util::FileEntry::new(
+    result_list.add_entry(util::FileEntry::new(
         "File B",
         vec![util::Match::new("m3"), util::Match::new("m4")],
     ));
@@ -191,8 +176,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .split(f.size());
 
             //let style = Style::default().fg(Color::White).bg(Color::Black);
-            let files_list = app
-                .items
+            let files_list = result_list
                 .entries
                 .iter()
                 .map(|item| item.list())
@@ -208,7 +192,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .style(style)
             .highlight_style(style.fg(Color::LightGreen).modifier(Modifier::BOLD));*/
             //.highlight_symbol(">");
-            f.render_stateful_widget(list, chunks[0], &mut app.items.state);
+            f.render_stateful_widget(list, chunks[0], &mut result_list.state);
         })?;
 
         match events.next()? {
@@ -216,14 +200,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Key::Char('q') => {
                     break;
                 }
-                Key::Left => {
-                    app.items.unselect();
-                }
                 Key::Down => {
-                    app.items.next();
+                    result_list.next();
                 }
                 Key::Up => {
-                    app.items.previous();
+                    result_list.previous();
                 }
                 _ => {}
             },

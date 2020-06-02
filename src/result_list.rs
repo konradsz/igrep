@@ -1,8 +1,7 @@
-use crate::entries::FileEntry;
-use tui::widgets::ListState;
+use crate::entries::{FileEntry, Match};
 
 pub struct ResultList {
-    pub state: ListState,
+    pub state: tui::widgets::ListState,
     pub entries: Vec<FileEntry>,
     header_indices: Vec<usize>,
 }
@@ -10,7 +9,7 @@ pub struct ResultList {
 impl ResultList {
     pub fn new() -> ResultList {
         ResultList {
-            state: ListState::default(),
+            state: tui::widgets::ListState::default(),
             entries: Vec::new(),
             header_indices: Vec::new(),
         }

@@ -1,13 +1,6 @@
 use std::io;
-use std::sync::mpsc;
-use std::thread;
 
 use clap::{App, Arg};
-use ignore::WalkBuilder;
-
-use grep::matcher::LineTerminator;
-use grep::regex::RegexMatcher;
-use grep::searcher::{Searcher, SearcherBuilder, Sink, SinkMatch};
 
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
@@ -24,94 +17,6 @@ mod result_list;
 
 use event::{Event, Events};
 use result_list::ResultList;
-
-// path: &str -> AsRef<Path>
-fn search_path(pattern: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let (tx, rx) = mpsc::channel();
-
-    let matcher = RegexMatcher::new_line_matcher(&pattern)?;
-    let builder = WalkBuilder::new(path);
-
-    let walk_parallel = builder.build_parallel();
-    thread::spawn(|| {
-        walk_parallel.run(move || {
-            let tx = tx.clone();
-            let matcher = matcher.clone();
-            let mut searcher = SearcherBuilder::new()
-                //.binary_detection(BinaryDetection::quit(b'\x00')) // from simplegrep - check it
-                .line_terminator(LineTerminator::byte(b'\n'))
-                .line_number(true)
-                .multi_line(false)
-                .build();
-
-            Box::new(move |result| {
-                let dir_entry = match result {
-                    Err(err) => {
-                        eprintln!("{}", err);
-                        return ignore::WalkState::Continue;
-                    }
-                    Ok(entry) => {
-                        if !entry.file_type().map_or(false, |ft| ft.is_file()) {
-                            return ignore::WalkState::Continue;
-                        }
-                        entry
-                    }
-                };
-
-                let mut matches_in_entry = Vec::new();
-
-                // handle error like in simplegrep
-                let _ = searcher.search_path(
-                    &matcher,
-                    dir_entry.path(),
-                    MatchesSink(|_, sink_match| {
-                        let line_number = sink_match.line_number().unwrap();
-                        let text = std::str::from_utf8(sink_match.bytes()).unwrap_or("Not UTF-8");
-                        //println!("{}", dir_entry.path().to_str().unwrap());
-                        let m = entries::Match::new(line_number, text);
-                        matches_in_entry.push(m);
-                        Ok(true)
-                    }),
-                );
-
-                if !matches_in_entry.is_empty() {
-                    tx.send(entries::FileEntry {
-                        name: String::from(dir_entry.path().to_str().unwrap()),
-                        matches: matches_in_entry,
-                    })
-                    .unwrap();
-                }
-
-                ignore::WalkState::Continue
-            })
-        });
-    });
-
-    for received in rx {
-        println!("{:?}", received);
-    }
-
-    Ok(())
-}
-
-pub struct MatchesSink<F>(pub F)
-where
-    F: FnMut(&Searcher, &SinkMatch) -> Result<bool, std::io::Error>;
-
-impl<F> Sink for MatchesSink<F>
-where
-    F: FnMut(&Searcher, &SinkMatch) -> Result<bool, std::io::Error>,
-{
-    type Error = std::io::Error;
-
-    fn matched(
-        &mut self,
-        searcher: &Searcher,
-        sink_match: &SinkMatch,
-    ) -> Result<bool, std::io::Error> {
-        (self.0)(searcher, sink_match)
-    }
-}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("ig")
@@ -173,18 +78,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     entries::Type::Header(h) => Text::Styled(h.into(), header_style),
                     entries::Type::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
                 });
-            let list = List::new(files_list)
+            let list_widget = List::new(files_list)
                 .block(Block::default().title("List").borders(Borders::ALL))
                 .style(Style::default().fg(Color::White))
                 .highlight_style(Style::default().modifier(Modifier::ITALIC))
                 .highlight_symbol(">>");
 
-            /*let items = List::new(items)
-            .block(Block::default().borders(Borders::NONE).title("List"))
-            .style(style)
-            .highlight_style(style.fg(Color::LightGreen).modifier(Modifier::BOLD));*/
-            //.highlight_symbol(">");
-            f.render_stateful_widget(list, chunks[0], &mut result_list.state);
+            f.render_stateful_widget(list_widget, chunks[0], &mut result_list.state);
         })?;
 
         match events.next()? {
@@ -200,6 +100,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 _ => {}
             },
+            Event::NewEntry => {
+                result_list.add_entry(entries::FileEntry::new(
+                    "New entry",
+                    vec![entries::Match::new(0, "m1")],
+                ));
+            }
+            Event::SearcherFinished => {
+                result_list.add_entry(entries::FileEntry::new(
+                    "FINISH",
+                    vec![entries::Match::new(0, "finished")],
+                ));
+            }
         }
     }
 

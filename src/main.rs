@@ -51,20 +51,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // App
     let mut result_list = ResultList::new();
-    result_list.add_entry(entries::FileEntry::new(
-        "File A",
-        vec![entries::Match::new(0, "m1"), entries::Match::new(0, "m2")],
-    ));
-    result_list.add_entry(entries::FileEntry::new(
-        "File B",
-        vec![entries::Match::new(0, "m3"), entries::Match::new(0, "m4")],
-    ));
 
     loop {
         terminal.draw(|mut f| {
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .constraints([Constraint::Percentage(100)].as_ref())
                 .split(f.size());
 
             let header_style = Style::default().fg(Color::Red);
@@ -100,11 +92,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 _ => {}
             },
-            Event::NewEntry => {
-                result_list.add_entry(entries::FileEntry::new(
-                    "New entry",
-                    vec![entries::Match::new(0, "m1")],
-                ));
+            Event::NewEntry(entry) => {
+                result_list.add_entry(entry);
             }
             Event::SearcherFinished => {
                 result_list.add_entry(entries::FileEntry::new(

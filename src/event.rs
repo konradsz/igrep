@@ -57,7 +57,6 @@ fn search_path(
                 MatchesSink(|_, sink_match| {
                     let line_number = sink_match.line_number().unwrap();
                     let text = std::str::from_utf8(sink_match.bytes()).unwrap_or("Not UTF-8");
-                    //println!("{}", dir_entry.path().to_str().unwrap());
                     let m = Match::new(line_number, text);
                     matches_in_entry.push(m);
                     Ok(true)
@@ -65,14 +64,11 @@ fn search_path(
             );
 
             if !matches_in_entry.is_empty() {
-                /*tx.send(FileEntry {
+                tx.send(Event::NewEntry(FileEntry {
                     name: String::from(dir_entry.path().to_str().unwrap()),
                     matches: matches_in_entry,
-                })
-                .unwrap();*/
-                if !matches_in_entry.is_empty() {
-                    tx.send(Event::NewEntry).unwrap();
-                }
+                }))
+                .unwrap();
             }
 
             ignore::WalkState::Continue
@@ -84,7 +80,7 @@ fn search_path(
 
 pub enum Event {
     Input(Key),
-    NewEntry,
+    NewEntry(FileEntry),
     SearcherFinished,
 }
 
@@ -130,13 +126,9 @@ impl Events {
         };
 
         let _ = {
-            let tx2 = tx.clone();
             thread::spawn(move || {
-                let searcher_handle = thread::spawn(move || {
-                    search_path("kernel", "/home/konrad/", tx.clone());
-                });
-                searcher_handle.join();
-                tx2.send(Event::SearcherFinished)
+                search_path("kernel", "/home/konrad/", tx.clone());
+                tx.send(Event::SearcherFinished)
             })
         };
 

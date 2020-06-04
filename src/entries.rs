@@ -13,7 +13,7 @@ impl Match {
     }
 }
 
-pub enum Type<'a> {
+pub enum EntryType<'a> {
     Header(&'a str),
     Match(u64, &'a str),
 }
@@ -32,12 +32,12 @@ impl FileEntry {
         }
     }
 
-    pub fn list(&self) -> impl Iterator<Item = Type> {
-        let name = std::iter::once(Type::Header(self.name.as_str()));
+    pub fn list(&self) -> impl Iterator<Item = EntryType> {
+        let name = std::iter::once(EntryType::Header(self.name.as_str()));
         name.chain(
             self.matches
                 .iter()
-                .map(|m| Type::Match(m.line_number, m.text.as_str())),
+                .map(|m| EntryType::Match(m.line_number, m.text.as_str())),
         )
     }
 }

@@ -1,4 +1,4 @@
-use crate::entries::{FileEntry, Match};
+use crate::entries::FileEntry;
 
 pub struct ResultList {
     pub state: tui::widgets::ListState,
@@ -83,29 +83,34 @@ impl ResultList {
     }
 }
 
-#[test]
-fn test_empty_list() {
-    let mut list = ResultList::new();
-    assert_eq!(list.state.selected(), None);
-    list.next();
-    assert_eq!(list.state.selected(), None);
-    list.previous();
-    assert_eq!(list.state.selected(), None);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::entries::Match;
+    #[test]
+    fn test_empty_list() {
+        let mut list = ResultList::new();
+        assert_eq!(list.state.selected(), None);
+        list.next();
+        assert_eq!(list.state.selected(), None);
+        list.previous();
+        assert_eq!(list.state.selected(), None);
+    }
 
-#[test]
-fn test_add_entry() {
-    let mut list = ResultList::new();
-    list.add_entry(FileEntry::new("entry1", vec![Match::new(0, "e1m1")]));
-    assert_eq!(list.entries.len(), 1);
-    assert_eq!(list.header_indices.len(), 1);
-    assert_eq!(list.state.selected(), Some(1));
+    #[test]
+    fn test_add_entry() {
+        let mut list = ResultList::new();
+        list.add_entry(FileEntry::new("entry1", vec![Match::new(0, "e1m1")]));
+        assert_eq!(list.entries.len(), 1);
+        assert_eq!(list.header_indices.len(), 1);
+        assert_eq!(list.state.selected(), Some(1));
 
-    list.add_entry(FileEntry::new(
-        "entry2",
-        vec![Match::new(0, "e1m2"), Match::new(0, "e2m2")],
-    ));
-    assert_eq!(list.entries.len(), 2);
-    assert_eq!(list.header_indices.len(), 2);
-    assert_eq!(list.state.selected(), Some(1));
+        list.add_entry(FileEntry::new(
+            "entry2",
+            vec![Match::new(0, "e1m2"), Match::new(0, "e2m2")],
+        ));
+        assert_eq!(list.entries.len(), 2);
+        assert_eq!(list.header_indices.len(), 2);
+        assert_eq!(list.state.selected(), Some(1));
+    }
 }

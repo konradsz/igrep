@@ -1,10 +1,9 @@
-use clap::{App, Arg};
-
 mod entries;
 mod ig;
 mod result_list;
 mod searcher;
 
+use clap::{App, Arg};
 use ig::Ig;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

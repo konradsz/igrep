@@ -1,3 +1,4 @@
+use std::process::Command;
 use std::sync::mpsc;
 use std::thread;
 
@@ -109,6 +110,21 @@ impl Ig {
                     Key::Up => {
                         result_list.previous();
                     }
+                    Key::Char('\n') => {
+                        let mut child_process = Command::new("/usr/bin/sh")
+                            .arg("-c")
+                            .arg("nvim")
+                            .spawn()
+                            .expect("Error: Failed to run editor");
+                        let stdin = std::io::stdin();
+                        let _lock_handle = stdin.lock();
+                        child_process.wait()?;
+
+                        // workaround: force redraw of the terminal
+                        let size = terminal.size().unwrap();
+                        terminal.resize(size)?;
+                        terminal.hide_cursor()?;
+                    }
                     _ => {}
                 },
                 Event::NewEntry(entry) => {
@@ -120,7 +136,6 @@ impl Ig {
                 }
             }
         }
-
         Ok(())
     }
 

@@ -7,26 +7,21 @@ use grep::{
 };
 use ignore::WalkBuilder;
 
-use crate::entries::{FileEntry, Match};
-use crate::ig::Event;
+//use crate::entries::{FileEntry, Match};
+//use crate::ig::Event;
 
-pub struct SearchConfig {
-    pub pattern: String,
-    pub path: String, // // path: &str -> AsRef<Path>
-}
 pub struct Searcher {
-    config: SearchConfig,
-    tx: mpsc::Sender<Event>,
+    tx: mpsc::Sender<String>,
 }
 
 impl Searcher {
-    pub fn new(tx: mpsc::Sender<Event>, config: SearchConfig) -> Self {
-        Self { config, tx }
+    pub fn new(tx: mpsc::Sender<String>) -> Self {
+        Self { tx }
     }
 
-    pub fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let matcher = RegexMatcher::new_line_matcher(&self.config.pattern)?;
-        let builder = WalkBuilder::new(&self.config.path);
+    pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let matcher = RegexMatcher::new_line_matcher("kernel")?; // handle this unwrap with if let here
+        let builder = WalkBuilder::new("/");
 
         let walk_parallel = builder.build_parallel();
         walk_parallel.run(move || {
@@ -42,7 +37,7 @@ impl Searcher {
             Box::new(move |result| {
                 let dir_entry = match result {
                     Err(err) => {
-                        eprintln!("{}", err);
+                        //eprintln!("{}", err);
                         return ignore::WalkState::Continue;
                     }
                     Ok(entry) => {
@@ -62,18 +57,20 @@ impl Searcher {
                     MatchesSink(|_, sink_match| {
                         let line_number = sink_match.line_number().unwrap();
                         let text = std::str::from_utf8(sink_match.bytes()).unwrap_or("Not UTF-8");
-                        let m = Match::new(line_number, text);
-                        matches_in_entry.push(m);
+                        //let m = Match::new(line_number, text);
+                        //matches_in_entry.push(m);
+                        matches_in_entry.push(String::from("asd"));
                         Ok(true)
                     }),
                 );
 
                 if !matches_in_entry.is_empty() {
-                    tx.send(Event::NewEntry(FileEntry {
+                    /*tx.send(Event::NewEntry(FileEntry {
                         name: String::from(dir_entry.path().to_str().unwrap()),
                         matches: matches_in_entry,
                     }))
-                    .unwrap();
+                    .unwrap();*/
+                    tx.send(String::from("asd")).unwrap();
                 }
 
                 ignore::WalkState::Continue

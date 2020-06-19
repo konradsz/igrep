@@ -8,5 +8,5 @@ edition = "2018"
 grep = "0.2.4"
 ignore = "0.4.11"
 clap = "2.33.0"
-tui = "0.9.5"
-termion = "1.5"
+crossterm = "0.17.5"
+tui = { version = "0.9", default-features = false, features = ['crossterm'] }

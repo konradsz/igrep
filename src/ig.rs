@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{poll, read, DisableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -23,7 +23,7 @@ use tui::{
 
 use crate::entries::{EntryType, FileEntry};
 use crate::result_list::ResultList;
-use crate::searcher::Searcher;
+use crate::searcher::{SearchConfig, Searcher};
 
 pub struct Ig {
     rx: mpsc::Receiver<FileEntry>,
@@ -31,10 +31,16 @@ pub struct Ig {
 }
 
 impl Ig {
-    pub fn new() -> Self {
+    pub fn new(pattern: &str, path: &str) -> Self {
         let (tx, rx) = mpsc::channel();
 
-        let mut s = Searcher::new(tx);
+        let mut s = Searcher::new(
+            SearchConfig {
+                pattern: pattern.into(),
+                path: path.into(),
+            },
+            tx,
+        );
         let _ = {
             thread::spawn(move || {
                 s.run(); // handle error?
@@ -92,11 +98,7 @@ impl Ig {
             }
         }
 
-        execute!(
-            terminal.backend_mut(),
-            LeaveAlternateScreen,
-            EnableMouseCapture
-        )?;
+        execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
         disable_raw_mode()?;
 
         Ok(None)

@@ -26,8 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pattern = matches.value_of("PATTERN").unwrap();
     let path = matches.value_of("PATH").unwrap();
 
-    //let mut ig = Ig::new(pattern, path);
-    let mut ig = Ig::new();
+    let mut ig = Ig::new(pattern, path);
     ig.run()?;
 
     Ok(())

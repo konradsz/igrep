@@ -8,20 +8,25 @@ use grep::{
 use ignore::WalkBuilder;
 
 use crate::entries::{FileEntry, Match};
-//use crate::ig::Event;
+
+pub struct SearchConfig {
+    pub pattern: String,
+    pub path: String, // path: &str -> AsRef<Path>
+}
 
 pub struct Searcher {
+    config: SearchConfig,
     tx: mpsc::Sender<FileEntry>,
 }
 
 impl Searcher {
-    pub fn new(tx: mpsc::Sender<FileEntry>) -> Self {
-        Self { tx }
+    pub fn new(config: SearchConfig, tx: mpsc::Sender<FileEntry>) -> Self {
+        Self { config, tx }
     }
 
     pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let matcher = RegexMatcher::new_line_matcher("kernel")?; // handle this unwrap with if let here
-        let builder = WalkBuilder::new("/");
+        let matcher = RegexMatcher::new_line_matcher(&self.config.pattern)?;
+        let builder = WalkBuilder::new(&self.config.path);
 
         let walk_parallel = builder.build_parallel();
         walk_parallel.run(move || {
@@ -64,10 +69,10 @@ impl Searcher {
                 );
 
                 if !matches_in_entry.is_empty() {
-                    tx.send(FileEntry {
-                        name: String::from(dir_entry.path().to_str().unwrap()),
-                        matches: matches_in_entry,
-                    })
+                    tx.send(FileEntry::new(
+                        dir_entry.path().to_str().unwrap(),
+                        matches_in_entry,
+                    ))
                     .unwrap();
                 }
 

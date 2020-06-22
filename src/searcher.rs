@@ -7,15 +7,15 @@ use grep::{
 };
 use ignore::WalkBuilder;
 
-//use crate::entries::{FileEntry, Match};
+use crate::entries::{FileEntry, Match};
 //use crate::ig::Event;
 
 pub struct Searcher {
-    tx: mpsc::Sender<String>,
+    tx: mpsc::Sender<FileEntry>,
 }
 
 impl Searcher {
-    pub fn new(tx: mpsc::Sender<String>) -> Self {
+    pub fn new(tx: mpsc::Sender<FileEntry>) -> Self {
         Self { tx }
     }
 
@@ -36,7 +36,7 @@ impl Searcher {
 
             Box::new(move |result| {
                 let dir_entry = match result {
-                    Err(err) => {
+                    Err(_err) => {
                         //eprintln!("{}", err);
                         return ignore::WalkState::Continue;
                     }
@@ -57,20 +57,18 @@ impl Searcher {
                     MatchesSink(|_, sink_match| {
                         let line_number = sink_match.line_number().unwrap();
                         let text = std::str::from_utf8(sink_match.bytes()).unwrap_or("Not UTF-8");
-                        //let m = Match::new(line_number, text);
-                        //matches_in_entry.push(m);
-                        matches_in_entry.push(String::from("asd"));
+                        let m = Match::new(line_number, text);
+                        matches_in_entry.push(m);
                         Ok(true)
                     }),
                 );
 
                 if !matches_in_entry.is_empty() {
-                    /*tx.send(Event::NewEntry(FileEntry {
+                    tx.send(FileEntry {
                         name: String::from(dir_entry.path().to_str().unwrap()),
                         matches: matches_in_entry,
-                    }))
-                    .unwrap();*/
-                    tx.send(String::from("asd")).unwrap();
+                    })
+                    .unwrap();
                 }
 
                 ignore::WalkState::Continue

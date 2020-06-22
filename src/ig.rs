@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{self, poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -10,7 +10,7 @@ use std::{
     io::{stdout, Write},
     sync::mpsc,
     thread,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use tui::{
@@ -21,11 +21,13 @@ use tui::{
     Terminal,
 };
 
+use crate::entries::{EntryType, FileEntry};
+use crate::result_list::ResultList;
 use crate::searcher::Searcher;
 
 pub struct Ig {
-    rx: mpsc::Receiver<String>,
-    result_list: Vec<String>,
+    rx: mpsc::Receiver<FileEntry>,
+    result_list: ResultList,
 }
 
 impl Ig {
@@ -41,7 +43,7 @@ impl Ig {
 
         Self {
             rx,
-            result_list: Vec::default(),
+            result_list: ResultList::new(),
         }
     }
 
@@ -67,15 +69,16 @@ impl Ig {
         terminal.hide_cursor()?;
 
         enable_raw_mode()?;
-        execute!(terminal.backend_mut(), EnterAlternateScreen)?;
-
-        //let mut result_list = Vec::new();
+        execute!(
+            terminal.backend_mut(),
+            EnterAlternateScreen,
+            DisableMouseCapture
+        )?;
 
         loop {
             self.draw_list(&mut terminal)?;
-            match self.rx.recv() {
-                // try_recv?
-                Ok(s) => self.result_list.push(s),
+            match self.rx.try_recv() {
+                Ok(s) => self.result_list.add_entry(s),
                 Err(e) => (),
             };
             if poll(Duration::from_millis(0))? {
@@ -89,7 +92,13 @@ impl Ig {
             }
         }
 
-        execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+        execute!(
+            terminal.backend_mut(),
+            LeaveAlternateScreen,
+            EnableMouseCapture
+        )?;
+        disable_raw_mode()?;
+
         Ok(None)
     }
 
@@ -103,13 +112,20 @@ impl Ig {
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .split(f.size());
 
-            //let header_style = Style::default().fg(Color::Red);
+            let header_style = Style::default().fg(Color::Red);
 
-            //let files = vec![Text::raw("item1"), Text::raw("item2")];
-            let files = self.result_list.iter().map(|s| Text::raw(s));
-            //let files_list = files.into_iter();
+            let files_list = self
+                .result_list
+                .entries
+                .iter()
+                .map(|item| item.list())
+                .flatten()
+                .map(|e| match e {
+                    EntryType::Header(h) => Text::Styled(h.into(), header_style),
+                    EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
+                });
 
-            let list_widget = List::new(files)
+            let list_widget = List::new(files_list)
                 .block(Block::default().title("List").borders(Borders::ALL))
                 .style(Style::default().fg(Color::White))
                 .highlight_style(Style::default().modifier(Modifier::ITALIC))

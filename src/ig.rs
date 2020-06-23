@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers},
+    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -49,8 +49,10 @@ impl Ig {
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
         loop {
             match self.draw_and_handle_events()? {
-                Some(_file_name) => {
+                Some((file_name, line_number)) => {
                     let mut child_process = Command::new("nvim")
+                        .arg(file_name)
+                        .arg(format!("+{}", line_number))
                         .spawn()
                         .expect("Error: Failed to run editor");
                     child_process.wait()?;
@@ -62,7 +64,7 @@ impl Ig {
         Ok(())
     }
 
-    fn draw_and_handle_events(&mut self) -> Result<Option<String>, Box<dyn Error>> {
+    fn draw_and_handle_events(&mut self) -> Result<Option<(String, u64)>, Box<dyn Error>> {
         let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
@@ -94,7 +96,13 @@ impl Ig {
                     Event::Key(KeyEvent {
                         code: KeyCode::Enter,
                         ..
-                    }) => return Ok(Some(String::from("file_name"))),
+                    }) => {
+                        if self.result_list.is_empty() {
+                            continue;
+                        } else {
+                            return Ok(self.result_list.get_selected_entry());
+                        }
+                    }
                     Event::Key(KeyEvent {
                         code: KeyCode::Char('q'),
                         ..

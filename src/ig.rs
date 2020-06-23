@@ -1,23 +1,16 @@
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, Event, KeyCode},
+    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::process::Command;
-use std::{
-    error::Error,
-    io::{stdout, Write},
-    sync::mpsc,
-    thread,
-    time::Duration,
-};
+use std::{error::Error, io::Write, process::Command, sync::mpsc, thread, time::Duration};
 
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListState, Text},
+    widgets::{Block, Borders, List, Text},
     Terminal,
 };
 
@@ -70,7 +63,7 @@ impl Ig {
     }
 
     fn draw_and_handle_events(&mut self) -> Result<Option<String>, Box<dyn Error>> {
-        let backend = CrosstermBackend::new(stdout());
+        let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
@@ -83,17 +76,30 @@ impl Ig {
 
         loop {
             self.draw_list(&mut terminal)?;
+
             match self.rx.try_recv() {
                 Ok(s) => self.result_list.add_entry(s),
-                Err(e) => (),
+                Err(_e) => (),
             };
+
             if poll(Duration::from_millis(0))? {
-                // change timeout after finding everything
-                let event = read()?;
-                if event == Event::Key(KeyCode::Char('e').into()) {
-                    return Ok(Some(String::from("file_name")));
-                } else if event == Event::Key(KeyCode::Char('q').into()) {
-                    break;
+                match read()? {
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Down,
+                        ..
+                    }) => self.result_list.next(),
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Up, ..
+                    }) => self.result_list.previous(),
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Enter,
+                        ..
+                    }) => return Ok(Some(String::from("file_name"))),
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Char('q'),
+                        ..
+                    }) => break,
+                    _ => (),
                 }
             }
         }
@@ -105,7 +111,7 @@ impl Ig {
     }
 
     fn draw_list(
-        &self,
+        &mut self,
         terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
     ) -> Result<(), Box<dyn Error>> {
         terminal.draw(|mut f| {
@@ -133,7 +139,7 @@ impl Ig {
                 .highlight_style(Style::default().modifier(Modifier::ITALIC))
                 .highlight_symbol(">>");
 
-            f.render_stateful_widget(list_widget, chunks[0], &mut ListState::default());
+            f.render_stateful_widget(list_widget, chunks[0], &mut self.result_list.state);
         })?;
 
         Ok(())

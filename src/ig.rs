@@ -6,15 +6,9 @@ use crossterm::{
 
 use std::{error::Error, io::Write, process::Command, sync::mpsc, thread, time::Duration};
 
-use tui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, Text},
-    Terminal,
-};
+use tui::{backend::CrosstermBackend, Terminal};
 
-use crate::entries::{EntryType, FileEntry};
+use crate::entries::FileEntry;
 use crate::result_list::ResultList;
 use crate::searcher::{SearchConfig, Searcher};
 
@@ -42,7 +36,7 @@ impl Ig {
 
         Self {
             rx,
-            result_list: ResultList::new(),
+            result_list: ResultList::default(),
         }
     }
 
@@ -77,10 +71,10 @@ impl Ig {
         )?;
 
         loop {
-            self.draw_list(&mut terminal)?;
+            self.result_list.render(&mut terminal)?;
 
             match self.rx.try_recv() {
-                Ok(s) => self.result_list.add_entry(s),
+                Ok(entry) => self.result_list.add_entry(entry),
                 Err(_e) => (),
             };
 
@@ -116,40 +110,5 @@ impl Ig {
         disable_raw_mode()?;
 
         Ok(None)
-    }
-
-    fn draw_list(
-        &mut self,
-        terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
-    ) -> Result<(), Box<dyn Error>> {
-        terminal.draw(|mut f| {
-            let chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(100)].as_ref())
-                .split(f.size());
-
-            let header_style = Style::default().fg(Color::Red);
-
-            let files_list = self
-                .result_list
-                .entries
-                .iter()
-                .map(|item| item.list())
-                .flatten()
-                .map(|e| match e {
-                    EntryType::Header(h) => Text::Styled(h.into(), header_style),
-                    EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
-                });
-
-            let list_widget = List::new(files_list)
-                .block(Block::default().title("List").borders(Borders::ALL))
-                .style(Style::default().fg(Color::White))
-                .highlight_style(Style::default().modifier(Modifier::ITALIC))
-                .highlight_symbol(">>");
-
-            f.render_stateful_widget(list_widget, chunks[0], &mut self.result_list.state);
-        })?;
-
-        Ok(())
     }
 }

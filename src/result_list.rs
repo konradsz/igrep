@@ -1,20 +1,23 @@
+use std::error::Error;
+
+use tui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, List, Text},
+    Terminal,
+};
+
 use crate::entries::{EntryType, FileEntry};
 
+#[derive(Default)]
 pub struct ResultList {
-    pub state: tui::widgets::ListState,
-    pub entries: Vec<FileEntry>,
+    entries: Vec<FileEntry>,
     file_names_indices: Vec<usize>,
+    state: tui::widgets::ListState,
 }
 
 impl ResultList {
-    pub fn new() -> ResultList {
-        ResultList {
-            state: tui::widgets::ListState::default(),
-            entries: Vec::new(),
-            file_names_indices: Vec::new(),
-        }
-    }
-
     pub fn add_entry(&mut self, entry: FileEntry) {
         match self.entries.last() {
             Some(e) => {
@@ -30,6 +33,40 @@ impl ResultList {
         if self.entries.len() == 1 {
             self.state.select(Some(1));
         }
+    }
+
+    pub fn render(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+    ) -> Result<(), Box<dyn Error>> {
+        terminal.draw(|mut f| {
+            let chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .split(f.size());
+
+            let header_style = Style::default().fg(Color::Red);
+
+            let files_list =
+                self.entries
+                    .iter()
+                    .map(|item| item.list())
+                    .flatten()
+                    .map(|e| match e {
+                        EntryType::Header(h) => Text::Styled(h.into(), header_style),
+                        EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
+                    });
+
+            let list_widget = List::new(files_list)
+                .block(Block::default().title("List").borders(Borders::ALL))
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().modifier(Modifier::ITALIC))
+                .highlight_symbol(">>");
+
+            f.render_stateful_widget(list_widget, chunks[0], &mut self.state);
+        })?;
+
+        Ok(())
     }
 
     pub fn next(&mut self) {
@@ -113,7 +150,7 @@ mod tests {
     use crate::entries::Match;
     #[test]
     fn test_empty_list() {
-        let mut list = ResultList::new();
+        let mut list = ResultList::default();
         assert_eq!(list.state.selected(), None);
         list.next();
         assert_eq!(list.state.selected(), None);
@@ -123,7 +160,7 @@ mod tests {
 
     #[test]
     fn test_add_entry() {
-        let mut list = ResultList::new();
+        let mut list = ResultList::default();
         list.add_entry(FileEntry::new("entry1", vec![Match::new(0, "e1m1")]));
         assert_eq!(list.entries.len(), 1);
         assert_eq!(list.file_names_indices.len(), 1);

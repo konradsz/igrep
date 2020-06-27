@@ -21,7 +21,7 @@ impl ResultList {
         self.entries.append(&mut entry.0);
 
         if self.state.selected().is_none() {
-            self.next();
+            self.next_match();
         }
     }
 
@@ -54,8 +54,8 @@ impl ResultList {
         Ok(())
     }
 
-    pub fn next(&mut self) {
-        if self.entries.is_empty() {
+    pub fn next_match(&mut self) {
+        if self.is_empty() {
             return;
         }
 
@@ -76,8 +76,8 @@ impl ResultList {
         self.state.select(Some(index));
     }
 
-    pub fn previous(&mut self) {
-        if self.entries.is_empty() {
+    pub fn previous_match(&mut self) {
+        if self.is_empty() {
             return;
         }
 
@@ -91,6 +91,73 @@ impl ResultList {
                         EntryType::Match(_, _) => i - 1,
                     }
                 }
+            }
+            None => 1,
+        };
+
+        self.state.select(Some(index));
+    }
+
+    pub fn next_file(&mut self) {
+        if self.is_empty() {
+            return;
+        }
+
+        let index = match self.state.selected() {
+            Some(i) => {
+                let mut next_index = i;
+                loop {
+                    if next_index == self.entries.len() - 1 {
+                        next_index = i;
+                        break;
+                    }
+
+                    next_index += 1;
+                    match self.entries[next_index] {
+                        EntryType::Header(_) => {
+                            next_index += 1;
+                            break;
+                        }
+                        EntryType::Match(_, _) => continue,
+                    }
+                }
+                next_index
+            }
+            None => 1,
+        };
+
+        self.state.select(Some(index));
+    }
+
+    pub fn previous_file(&mut self) {
+        if self.is_empty() {
+            return;
+        }
+
+        let index = match self.state.selected() {
+            Some(i) => {
+                let mut next_index = i;
+                let mut first_header_visited = false;
+                loop {
+                    if next_index == 1 {
+                        break;
+                    }
+
+                    next_index -= 1;
+                    match self.entries[next_index] {
+                        EntryType::Header(_) => {
+                            if !first_header_visited {
+                                first_header_visited = true;
+                                next_index -= 1;
+                            } else {
+                                next_index += 1;
+                                break;
+                            }
+                        }
+                        EntryType::Match(_, _) => continue,
+                    }
+                }
+                next_index
             }
             None => 1,
         };

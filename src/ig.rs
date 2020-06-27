@@ -12,8 +12,13 @@ use crate::entries::FileEntry;
 use crate::result_list::ResultList;
 use crate::searcher::{SearchConfig, Searcher};
 
+pub enum MyEvent {
+    NewEntry(FileEntry),
+    SearchingFinished,
+}
+
 pub struct Ig {
-    rx: mpsc::Receiver<FileEntry>,
+    rx: mpsc::Receiver<MyEvent>,
     result_list: ResultList,
 }
 
@@ -26,7 +31,7 @@ impl Ig {
                 pattern: pattern.into(),
                 path: path.into(),
             },
-            tx,
+            tx.clone(),
         );
         let _ = {
             thread::spawn(move || {
@@ -35,6 +40,7 @@ impl Ig {
                     Ok(_) => (),
                     Err(_) => (),
                 }
+                tx.send(MyEvent::SearchingFinished);
             })
         };
 
@@ -78,7 +84,10 @@ impl Ig {
             self.result_list.render(&mut terminal)?;
 
             match self.rx.try_recv() {
-                Ok(entry) => self.result_list.add_entry(entry),
+                Ok(event) => match event {
+                    MyEvent::NewEntry(e) => self.result_list.add_entry(e),
+                    MyEvent::SearchingFinished => (),
+                },
                 Err(_) => (),
             };
 
@@ -91,14 +100,30 @@ impl Ig {
                     | Event::Key(KeyEvent {
                         code: KeyCode::Char('j'),
                         ..
-                    }) => self.result_list.next(),
+                    }) => self.result_list.next_match(),
                     Event::Key(KeyEvent {
                         code: KeyCode::Up, ..
                     })
                     | Event::Key(KeyEvent {
                         code: KeyCode::Char('k'),
                         ..
-                    }) => self.result_list.previous(),
+                    }) => self.result_list.previous_match(),
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Right,
+                        ..
+                    })
+                    | Event::Key(KeyEvent {
+                        code: KeyCode::Char('l'),
+                        ..
+                    }) => self.result_list.next_file(),
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Left,
+                        ..
+                    })
+                    | Event::Key(KeyEvent {
+                        code: KeyCode::Char('h'),
+                        ..
+                    }) => self.result_list.previous_file(),
                     Event::Key(KeyEvent {
                         code: KeyCode::Enter,
                         ..

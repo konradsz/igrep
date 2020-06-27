@@ -30,7 +30,11 @@ impl Ig {
         );
         let _ = {
             thread::spawn(move || {
-                s.run(); // handle error?
+                // handle error?
+                match s.run() {
+                    Ok(_) => (),
+                    Err(_) => (),
+                }
             })
         };
 
@@ -58,7 +62,7 @@ impl Ig {
         Ok(())
     }
 
-    fn draw_and_handle_events(&mut self) -> Result<Option<(String, u64)>, Box<dyn Error>> {
+    fn draw_and_handle_events(&mut self) -> Result<Option<(&str, u64)>, Box<dyn Error>> {
         let backend = CrosstermBackend::new(std::io::stdout());
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;

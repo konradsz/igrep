@@ -79,7 +79,7 @@ impl Ig {
 
             match self.rx.try_recv() {
                 Ok(entry) => self.result_list.add_entry(entry),
-                Err(_e) => (),
+                Err(_) => (),
             };
 
             if poll(Duration::from_millis(0))? {
@@ -87,9 +87,17 @@ impl Ig {
                     Event::Key(KeyEvent {
                         code: KeyCode::Down,
                         ..
+                    })
+                    | Event::Key(KeyEvent {
+                        code: KeyCode::Char('j'),
+                        ..
                     }) => self.result_list.next(),
                     Event::Key(KeyEvent {
                         code: KeyCode::Up, ..
+                    })
+                    | Event::Key(KeyEvent {
+                        code: KeyCode::Char('k'),
+                        ..
                     }) => self.result_list.previous(),
                     Event::Key(KeyEvent {
                         code: KeyCode::Enter,
@@ -102,6 +110,9 @@ impl Ig {
                         }
                     }
                     Event::Key(KeyEvent {
+                        code: KeyCode::Esc, ..
+                    })
+                    | Event::Key(KeyEvent {
                         code: KeyCode::Char('q'),
                         ..
                     }) => break,

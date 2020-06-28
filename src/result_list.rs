@@ -1,19 +1,9 @@
-use std::error::Error;
-
-use tui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, Text},
-    Terminal,
-};
-
 use crate::entries::{EntryType, FileEntry};
 
 #[derive(Default)]
 pub struct ResultList {
-    entries: Vec<EntryType>,
-    state: tui::widgets::ListState,
+    pub entries: Vec<EntryType>,
+    pub state: tui::widgets::ListState,
 }
 
 impl ResultList {
@@ -25,33 +15,8 @@ impl ResultList {
         }
     }
 
-    pub fn render(
-        &mut self,
-        terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
-    ) -> Result<(), Box<dyn Error>> {
-        terminal.draw(|mut f| {
-            let chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(100)].as_ref())
-                .split(f.size());
-
-            let header_style = Style::default().fg(Color::Red);
-
-            let files_list = self.entries.iter().map(|e| match e {
-                EntryType::Header(h) => Text::Styled(h.into(), header_style),
-                EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
-            });
-
-            let list_widget = List::new(files_list)
-                .block(Block::default().title("List").borders(Borders::ALL))
-                .style(Style::default().fg(Color::White))
-                .highlight_style(Style::default().modifier(Modifier::ITALIC))
-                .highlight_symbol(">>");
-
-            f.render_stateful_widget(list_widget, chunks[0], &mut self.state);
-        })?;
-
-        Ok(())
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
     }
 
     pub fn next_match(&mut self) {
@@ -165,10 +130,6 @@ impl ResultList {
         self.state.select(Some(index));
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.entries.is_empty()
-    }
-
     pub fn get_selected_entry(&self) -> Option<(&str, u64)> {
         match self.state.selected() {
             Some(i) => {
@@ -200,9 +161,9 @@ mod tests {
     fn test_empty_list() {
         let mut list = ResultList::default();
         assert_eq!(list.state.selected(), None);
-        list.next();
+        list.next_match();
         assert_eq!(list.state.selected(), None);
-        list.previous();
+        list.previous_match();
         assert_eq!(list.state.selected(), None);
     }
 

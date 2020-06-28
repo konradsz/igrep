@@ -6,19 +6,25 @@ use crossterm::{
 
 use std::{error::Error, io::Write, process::Command, sync::mpsc, thread, time::Duration};
 
-use tui::{backend::CrosstermBackend, Terminal};
+use tui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, List, Paragraph, Text},
+    Frame, Terminal,
+};
 
-use crate::entries::FileEntry;
+use crate::entries::{EntryType, FileEntry};
 use crate::result_list::ResultList;
 use crate::searcher::{SearchConfig, Searcher};
 
-pub enum MyEvent {
+pub enum IgEvent {
     NewEntry(FileEntry),
     SearchingFinished,
 }
 
 pub struct Ig {
-    rx: mpsc::Receiver<MyEvent>,
+    rx: mpsc::Receiver<IgEvent>,
     result_list: ResultList,
 }
 
@@ -40,7 +46,7 @@ impl Ig {
                     Ok(_) => (),
                     Err(_) => (),
                 }
-                tx.send(MyEvent::SearchingFinished);
+                tx.send(IgEvent::SearchingFinished);
             })
         };
 
@@ -81,12 +87,12 @@ impl Ig {
         )?;
 
         loop {
-            self.result_list.render(&mut terminal)?;
+            terminal.draw(|mut f| self.draw(&mut f))?;
 
             match self.rx.try_recv() {
                 Ok(event) => match event {
-                    MyEvent::NewEntry(e) => self.result_list.add_entry(e),
-                    MyEvent::SearchingFinished => (),
+                    IgEvent::NewEntry(e) => self.result_list.add_entry(e),
+                    IgEvent::SearchingFinished => (),
                 },
                 Err(_) => (),
             };
@@ -128,9 +134,7 @@ impl Ig {
                         code: KeyCode::Enter,
                         ..
                     }) => {
-                        if self.result_list.is_empty() {
-                            continue;
-                        } else {
+                        if !self.result_list.is_empty() {
                             return Ok(self.result_list.get_selected_entry());
                         }
                     }
@@ -150,5 +154,43 @@ impl Ig {
         disable_raw_mode()?;
 
         Ok(None)
+    }
+
+    fn draw(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
+            .split(f.size());
+
+        self.draw_list(f, chunks[0]);
+        self.draw_footer(f, chunks[1]);
+    }
+
+    fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+        let header_style = Style::default().fg(Color::Red);
+
+        let files_list = self.result_list.entries.iter().map(|e| match e {
+            EntryType::Header(h) => Text::Styled(h.into(), header_style),
+            EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
+        });
+
+        let list_widget = List::new(files_list)
+            .block(Block::default().title("List").borders(Borders::NONE))
+            .style(Style::default().fg(Color::White))
+            .highlight_style(Style::default().modifier(Modifier::ITALIC))
+            .highlight_symbol(">>");
+
+        f.render_stateful_widget(list_widget, area, &mut self.result_list.state);
+    }
+
+    fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+        let text_items = vec![Text::styled(
+            "Footer",
+            Style::default().bg(Color::DarkGray).fg(Color::White),
+        )];
+        f.render_widget(
+            Paragraph::new(text_items.iter()).style(Style::default().bg(Color::DarkGray)),
+            area,
+        );
     }
 }

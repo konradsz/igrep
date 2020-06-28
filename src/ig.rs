@@ -58,7 +58,18 @@ impl Ig {
 
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
         loop {
-            match self.draw_and_handle_events()? {
+            let backend = CrosstermBackend::new(std::io::stdout());
+            let mut terminal = Terminal::new(backend)?;
+            terminal.hide_cursor()?;
+
+            enable_raw_mode()?;
+            execute!(
+                terminal.backend_mut(),
+                EnterAlternateScreen,
+                DisableMouseCapture
+            )?;
+
+            match self.draw_and_handle_events(&mut terminal)? {
                 Some((file_name, line_number)) => {
                     let mut child_process = Command::new("nvim")
                         .arg(file_name)
@@ -67,25 +78,21 @@ impl Ig {
                         .expect("Error: Failed to run editor");
                     child_process.wait()?;
                 }
-                None => break,
+                None => {
+                    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+                    disable_raw_mode()?;
+                    break;
+                }
             }
         }
 
         Ok(())
     }
 
-    fn draw_and_handle_events(&mut self) -> Result<Option<(&str, u64)>, Box<dyn Error>> {
-        let backend = CrosstermBackend::new(std::io::stdout());
-        let mut terminal = Terminal::new(backend)?;
-        terminal.hide_cursor()?;
-
-        enable_raw_mode()?;
-        execute!(
-            terminal.backend_mut(),
-            EnterAlternateScreen,
-            DisableMouseCapture
-        )?;
-
+    fn draw_and_handle_events(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+    ) -> Result<Option<(&str, u64)>, Box<dyn Error>> {
         loop {
             terminal.draw(|mut f| self.draw(&mut f))?;
 
@@ -149,9 +156,6 @@ impl Ig {
                 }
             }
         }
-
-        execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-        disable_raw_mode()?;
 
         Ok(None)
     }

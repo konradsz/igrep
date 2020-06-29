@@ -123,55 +123,7 @@ impl Ig {
                 Err(_) => (),
             };
 
-            if poll(Duration::from_millis(0))? {
-                match read()? {
-                    Event::Key(KeyEvent {
-                        code: KeyCode::Down,
-                        ..
-                    })
-                    | Event::Key(KeyEvent {
-                        code: KeyCode::Char('j'),
-                        ..
-                    }) => self.result_list.next_match(),
-                    Event::Key(KeyEvent {
-                        code: KeyCode::Up, ..
-                    })
-                    | Event::Key(KeyEvent {
-                        code: KeyCode::Char('k'),
-                        ..
-                    }) => self.result_list.previous_match(),
-                    Event::Key(KeyEvent {
-                        code: KeyCode::Right,
-                        ..
-                    })
-                    | Event::Key(KeyEvent {
-                        code: KeyCode::Char('l'),
-                        ..
-                    }) => self.result_list.next_file(),
-                    Event::Key(KeyEvent {
-                        code: KeyCode::Left,
-                        ..
-                    })
-                    | Event::Key(KeyEvent {
-                        code: KeyCode::Char('h'),
-                        ..
-                    }) => self.result_list.previous_file(),
-                    Event::Key(KeyEvent {
-                        code: KeyCode::Enter,
-                        ..
-                    }) => {
-                        self.state = AppState::OpenFile(self.state == AppState::Idle);
-                    }
-                    Event::Key(KeyEvent {
-                        code: KeyCode::Esc, ..
-                    })
-                    | Event::Key(KeyEvent {
-                        code: KeyCode::Char('q'),
-                        ..
-                    }) => self.state = AppState::Exit,
-                    _ => (),
-                }
-            }
+            self.handle_input()?;
 
             match self.state {
                 AppState::Searching | AppState::Idle => continue,
@@ -226,5 +178,59 @@ impl Ig {
             Paragraph::new(text_items.iter()).style(Style::default().bg(Color::DarkGray)),
             area,
         );
+    }
+
+    fn handle_input(&mut self) -> Result<(), Box<dyn Error>> {
+        if poll(Duration::from_millis(0))? {
+            match read()? {
+                Event::Key(KeyEvent {
+                    code: KeyCode::Down,
+                    ..
+                })
+                | Event::Key(KeyEvent {
+                    code: KeyCode::Char('j'),
+                    ..
+                }) => self.result_list.next_match(),
+                Event::Key(KeyEvent {
+                    code: KeyCode::Up, ..
+                })
+                | Event::Key(KeyEvent {
+                    code: KeyCode::Char('k'),
+                    ..
+                }) => self.result_list.previous_match(),
+                Event::Key(KeyEvent {
+                    code: KeyCode::Right,
+                    ..
+                })
+                | Event::Key(KeyEvent {
+                    code: KeyCode::Char('l'),
+                    ..
+                }) => self.result_list.next_file(),
+                Event::Key(KeyEvent {
+                    code: KeyCode::Left,
+                    ..
+                })
+                | Event::Key(KeyEvent {
+                    code: KeyCode::Char('h'),
+                    ..
+                }) => self.result_list.previous_file(),
+                Event::Key(KeyEvent {
+                    code: KeyCode::Enter,
+                    ..
+                }) => {
+                    self.state = AppState::OpenFile(self.state == AppState::Idle);
+                }
+                Event::Key(KeyEvent {
+                    code: KeyCode::Esc, ..
+                })
+                | Event::Key(KeyEvent {
+                    code: KeyCode::Char('q'),
+                    ..
+                }) => self.state = AppState::Exit,
+                _ => (),
+            }
+        }
+
+        Ok(())
     }
 }

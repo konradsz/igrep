@@ -18,6 +18,14 @@ use crate::entries::{EntryType, FileEntry};
 use crate::result_list::ResultList;
 use crate::searcher::{SearchConfig, Searcher};
 
+#[derive(PartialEq)]
+enum AppState {
+    Searching,
+    Idle,
+    OpenFile(bool),
+    Exit,
+}
+
 pub enum IgEvent {
     NewEntry(FileEntry),
     SearchingFinished,
@@ -26,6 +34,7 @@ pub enum IgEvent {
 pub struct Ig {
     rx: mpsc::Receiver<IgEvent>,
     result_list: ResultList,
+    state: AppState,
 }
 
 impl Ig {
@@ -53,6 +62,7 @@ impl Ig {
         Self {
             rx,
             result_list: ResultList::default(),
+            state: AppState::Searching,
         }
     }
 
@@ -69,16 +79,25 @@ impl Ig {
                 DisableMouseCapture
             )?;
 
-            match self.draw_and_handle_events(&mut terminal)? {
-                Some((file_name, line_number)) => {
-                    let mut child_process = Command::new("nvim")
-                        .arg(file_name)
-                        .arg(format!("+{}", line_number))
-                        .spawn()
-                        .expect("Error: Failed to run editor");
-                    child_process.wait()?;
+            self.draw_and_handle_events(&mut terminal)?;
+            match self.state {
+                AppState::Searching | AppState::Idle => continue,
+                AppState::OpenFile(idle) => {
+                    if let Some((file_name, line_number)) = self.result_list.get_selected_entry() {
+                        let mut child_process = Command::new("nvim")
+                            .arg(file_name)
+                            .arg(format!("+{}", line_number))
+                            .spawn()
+                            .expect("Error: Failed to run editor");
+                        child_process.wait()?;
+                        self.state = if idle {
+                            AppState::Idle
+                        } else {
+                            AppState::Searching
+                        };
+                    }
                 }
-                None => {
+                AppState::Exit => {
                     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
                     disable_raw_mode()?;
                     break;
@@ -92,14 +111,14 @@ impl Ig {
     fn draw_and_handle_events(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
-    ) -> Result<Option<(&str, u64)>, Box<dyn Error>> {
+    ) -> Result<(), Box<dyn Error>> {
         loop {
             terminal.draw(|mut f| self.draw(&mut f))?;
 
             match self.rx.try_recv() {
                 Ok(event) => match event {
                     IgEvent::NewEntry(e) => self.result_list.add_entry(e),
-                    IgEvent::SearchingFinished => (),
+                    IgEvent::SearchingFinished => self.state = AppState::Idle,
                 },
                 Err(_) => (),
             };
@@ -141,9 +160,7 @@ impl Ig {
                         code: KeyCode::Enter,
                         ..
                     }) => {
-                        if !self.result_list.is_empty() {
-                            return Ok(self.result_list.get_selected_entry());
-                        }
+                        self.state = AppState::OpenFile(self.state == AppState::Idle);
                     }
                     Event::Key(KeyEvent {
                         code: KeyCode::Esc, ..
@@ -151,13 +168,18 @@ impl Ig {
                     | Event::Key(KeyEvent {
                         code: KeyCode::Char('q'),
                         ..
-                    }) => break,
+                    }) => self.state = AppState::Exit,
                     _ => (),
                 }
             }
+
+            match self.state {
+                AppState::Searching | AppState::Idle => continue,
+                AppState::OpenFile(_) | AppState::Exit => break,
+            }
         }
 
-        Ok(None)
+        Ok(())
     }
 
     fn draw(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
@@ -190,10 +212,16 @@ impl Ig {
     }
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
-        let text_items = vec![Text::styled(
-            "Footer",
-            Style::default().bg(Color::DarkGray).fg(Color::White),
-        )];
+        let text_items = match self.state {
+            AppState::Searching => vec![Text::styled(
+                "Searching",
+                Style::default().bg(Color::DarkGray).fg(Color::White),
+            )],
+            _ => vec![Text::styled(
+                "Finished",
+                Style::default().bg(Color::DarkGray).fg(Color::White),
+            )],
+        };
         f.render_widget(
             Paragraph::new(text_items.iter()).style(Style::default().bg(Color::DarkGray)),
             area,

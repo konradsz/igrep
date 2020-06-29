@@ -1,9 +1,22 @@
 use crate::entries::{EntryType, FileEntry};
 
+#[derive(Copy, Clone, Default)]
+pub struct ListState(Option<usize>);
+
+impl ListState {
+    pub fn select(&mut self, index: Option<usize>) {
+        self.0 = index;
+    }
+
+    pub fn selected(&self) -> Option<usize> {
+        self.0
+    }
+}
+
 #[derive(Default)]
 pub struct ResultList {
-    pub entries: Vec<EntryType>,
-    pub state: tui::widgets::ListState,
+    entries: Vec<EntryType>,
+    state: ListState,
 }
 
 impl ResultList {
@@ -13,6 +26,10 @@ impl ResultList {
         if self.state.selected().is_none() {
             self.next_match();
         }
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<EntryType> {
+        self.entries.iter()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -150,6 +167,10 @@ impl ResultList {
             }
             None => None,
         }
+    }
+
+    pub fn get_state(&self) -> ListState {
+        self.state
     }
 }
 

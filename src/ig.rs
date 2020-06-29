@@ -173,7 +173,7 @@ impl Ig {
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         let header_style = Style::default().fg(Color::Red);
 
-        let files_list = self.result_list.entries.iter().map(|e| match e {
+        let files_list = self.result_list.iter().map(|e| match e {
             EntryType::Header(h) => Text::Styled(h.into(), header_style),
             EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
         });
@@ -184,7 +184,9 @@ impl Ig {
             .highlight_style(Style::default().modifier(Modifier::ITALIC))
             .highlight_symbol(">>");
 
-        f.render_stateful_widget(list_widget, area, &mut self.result_list.state);
+        let mut widget_state = tui::widgets::ListState::default();
+        widget_state.select(self.result_list.get_state().selected());
+        f.render_stateful_widget(list_widget, area, &mut widget_state);
     }
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {

@@ -26,13 +26,13 @@ enum AppState {
     Exit,
 }
 
-pub enum IgEvent {
+pub enum AppEvent {
     NewEntry(FileEntry),
     SearchingFinished,
 }
 
 pub struct Ig {
-    rx: mpsc::Receiver<IgEvent>,
+    rx: mpsc::Receiver<AppEvent>,
     result_list: ResultList,
     state: AppState,
 }
@@ -55,7 +55,7 @@ impl Ig {
                     Ok(_) => (),
                     Err(_) => (),
                 }
-                tx.send(IgEvent::SearchingFinished);
+                tx.send(AppEvent::SearchingFinished);
             })
         };
 
@@ -112,23 +112,11 @@ impl Ig {
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
     ) -> Result<(), Box<dyn Error>> {
-        loop {
+        while self.state == AppState::Searching || self.state == AppState::Idle {
             terminal.draw(|mut f| self.draw(&mut f))?;
 
-            match self.rx.try_recv() {
-                Ok(event) => match event {
-                    IgEvent::NewEntry(e) => self.result_list.add_entry(e),
-                    IgEvent::SearchingFinished => self.state = AppState::Idle,
-                },
-                Err(_) => (),
-            };
-
+            self.handle_app_event(); // this function could handle error event
             self.handle_input()?;
-
-            match self.state {
-                AppState::Searching | AppState::Idle => continue,
-                AppState::OpenFile(_) | AppState::Exit => break,
-            }
         }
 
         Ok(())
@@ -178,6 +166,15 @@ impl Ig {
             Paragraph::new(text_items.iter()).style(Style::default().bg(Color::DarkGray)),
             area,
         );
+    }
+
+    fn handle_app_event(&mut self) {
+        if let Ok(event) = self.rx.try_recv() {
+            match event {
+                AppEvent::NewEntry(e) => self.result_list.add_entry(e),
+                AppEvent::SearchingFinished => self.state = AppState::Idle,
+            }
+        }
     }
 
     fn handle_input(&mut self) -> Result<(), Box<dyn Error>> {

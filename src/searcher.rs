@@ -8,7 +8,7 @@ use grep::{
 use ignore::WalkBuilder;
 
 use crate::entries::{FileEntry, Match};
-use crate::ig::IgEvent;
+use crate::ig::AppEvent;
 
 pub struct SearchConfig {
     pub pattern: String,
@@ -17,11 +17,11 @@ pub struct SearchConfig {
 
 pub struct Searcher {
     config: SearchConfig,
-    tx: mpsc::Sender<IgEvent>,
+    tx: mpsc::Sender<AppEvent>,
 }
 
 impl Searcher {
-    pub fn new(config: SearchConfig, tx: mpsc::Sender<IgEvent>) -> Self {
+    pub fn new(config: SearchConfig, tx: mpsc::Sender<AppEvent>) -> Self {
         Self { config, tx }
     }
 
@@ -70,7 +70,7 @@ impl Searcher {
                 );
 
                 if !matches_in_entry.is_empty() {
-                    tx.send(IgEvent::NewEntry(FileEntry::new(
+                    tx.send(AppEvent::NewEntry(FileEntry::new(
                         dir_entry.path().to_str().unwrap(),
                         matches_in_entry,
                     )))

@@ -35,6 +35,7 @@ pub struct Ig {
     rx: mpsc::Receiver<AppEvent>,
     result_list: ResultList,
     state: AppState,
+    poll_timeout: u64,
 }
 
 impl Ig {
@@ -63,6 +64,7 @@ impl Ig {
             rx,
             result_list: ResultList::default(),
             state: AppState::Searching,
+            poll_timeout: 0,
         }
     }
 
@@ -141,7 +143,12 @@ impl Ig {
         });
 
         let list_widget = List::new(files_list)
-            .block(Block::default().title("List").borders(Borders::NONE))
+            .block(
+                Block::default()
+                    .title("List")
+                    .borders(Borders::ALL)
+                    .border_type(tui::widgets::BorderType::Rounded),
+            )
             .style(Style::default().fg(Color::White))
             .highlight_style(Style::default().modifier(Modifier::ITALIC))
             .highlight_symbol(">>");
@@ -195,13 +202,16 @@ impl Ig {
         if let Ok(event) = self.rx.try_recv() {
             match event {
                 AppEvent::NewEntry(e) => self.result_list.add_entry(e),
-                AppEvent::SearchingFinished => self.state = AppState::Idle,
+                AppEvent::SearchingFinished => {
+                    self.state = AppState::Idle;
+                    self.poll_timeout = 1000;
+                }
             }
         }
     }
 
     fn handle_input(&mut self) -> Result<(), Box<dyn Error>> {
-        if poll(Duration::from_millis(0))? {
+        if poll(Duration::from_millis(self.poll_timeout))? {
             match read()? {
                 Event::Key(KeyEvent {
                     code: KeyCode::Down,

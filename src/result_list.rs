@@ -172,6 +172,26 @@ impl ResultList {
     pub fn get_state(&self) -> ListState {
         self.state
     }
+
+    pub fn get_number_of_matches(&self) -> usize {
+        self.entries
+            .iter()
+            .filter(|&e| match e {
+                EntryType::Match(_, _) => true,
+                _ => false,
+            })
+            .count()
+    }
+
+    pub fn get_number_of_file_entries(&self) -> usize {
+        self.entries
+            .iter()
+            .filter(|&e| match e {
+                EntryType::Header(_) => true,
+                _ => false,
+            })
+            .count()
+    }
 }
 
 #[cfg(test)]

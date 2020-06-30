@@ -154,14 +154,37 @@ impl Ig {
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         let text_items = match self.state {
             AppState::Searching => vec![Text::styled(
-                "Searching",
+                "Searching...",
                 Style::default().bg(Color::DarkGray).fg(Color::White),
             )],
-            _ => vec![Text::styled(
-                "Finished",
-                Style::default().bg(Color::DarkGray).fg(Color::White),
-            )],
+            _ => {
+                let no_of_matches = self.result_list.get_number_of_matches();
+
+                let message = if no_of_matches == 0 {
+                    " No matches found.".into()
+                } else {
+                    let no_of_files = self.result_list.get_number_of_file_entries();
+
+                    let matches_str = if no_of_matches == 1 {
+                        "match"
+                    } else {
+                        "matches"
+                    };
+                    let files_str = if no_of_files == 1 { "file" } else { "files" };
+
+                    format!(
+                        " Found {} {} in {} {}.",
+                        no_of_matches, matches_str, no_of_files, files_str
+                    )
+                };
+
+                vec![Text::styled(
+                    message,
+                    Style::default().bg(Color::DarkGray).fg(Color::White),
+                )]
+            }
         };
+
         f.render_widget(
             Paragraph::new(text_items.iter()).style(Style::default().bg(Color::DarkGray)),
             area,

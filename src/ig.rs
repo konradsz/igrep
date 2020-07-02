@@ -10,7 +10,7 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, Paragraph, Text},
+    widgets::{Block, Borders, List, ListState, Paragraph, Text},
     Frame, Terminal,
 };
 
@@ -34,6 +34,7 @@ pub enum AppEvent {
 pub struct Ig {
     rx: mpsc::Receiver<AppEvent>,
     result_list: ResultList,
+    result_list_state: ListState,
     state: AppState,
     poll_timeout: u64,
 }
@@ -63,6 +64,7 @@ impl Ig {
         Self {
             rx,
             result_list: ResultList::default(),
+            result_list_state: ListState::default(),
             state: AppState::Searching,
             poll_timeout: 0,
         }
@@ -153,9 +155,9 @@ impl Ig {
             .highlight_style(Style::default().modifier(Modifier::ITALIC))
             .highlight_symbol(">>");
 
-        let mut widget_state = tui::widgets::ListState::default();
-        widget_state.select(self.result_list.get_state().selected());
-        f.render_stateful_widget(list_widget, area, &mut widget_state);
+        self.result_list_state
+            .select(self.result_list.get_state().selected());
+        f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
     }
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {

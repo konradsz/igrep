@@ -10,12 +10,15 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListState, Paragraph, Text},
+    widgets::{Block, Borders, Paragraph, Text},
     Frame, Terminal,
 };
 
 use crate::entries::{EntryType, FileEntry};
 use crate::result_list::ResultList;
+use crate::scroll_offset_list::{
+    List as ScrollOffsetList, ListState as ScrollOffsetListState, ScrollOffset,
+};
 use crate::searcher::{SearchConfig, Searcher};
 
 #[derive(PartialEq)]
@@ -34,7 +37,7 @@ pub enum AppEvent {
 pub struct Ig {
     rx: mpsc::Receiver<AppEvent>,
     result_list: ResultList,
-    result_list_state: ListState,
+    result_list_state: ScrollOffsetListState,
     state: AppState,
     poll_timeout: u64,
 }
@@ -64,7 +67,7 @@ impl Ig {
         Self {
             rx,
             result_list: ResultList::default(),
-            result_list_state: ListState::default(),
+            result_list_state: ScrollOffsetListState::default(),
             state: AppState::Searching,
             poll_timeout: 0,
         }
@@ -144,7 +147,7 @@ impl Ig {
             EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
         });
 
-        let list_widget = List::new(files_list)
+        let list_widget = ScrollOffsetList::new(files_list)
             .block(
                 Block::default()
                     .title("List")
@@ -153,7 +156,8 @@ impl Ig {
             )
             .style(Style::default().fg(Color::White))
             .highlight_style(Style::default().modifier(Modifier::ITALIC))
-            .highlight_symbol(">>");
+            .highlight_symbol(">>")
+            .scroll_offset(ScrollOffset { top: 1, bottom: 0 });
 
         self.result_list_state
             .select(self.result_list.get_state().selected());

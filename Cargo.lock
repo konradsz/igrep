@@ -320,7 +320,9 @@ dependencies = [
  "crossterm",
  "grep",
  "ignore",
+ "itertools",
  "tui",
+ "unicode-width",
 ]
 
 [[package]]

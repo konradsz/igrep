@@ -1,6 +1,7 @@
 mod entries;
 mod ig;
 mod result_list;
+mod scroll_offset_list;
 mod searcher;
 
 use clap::{App, Arg};

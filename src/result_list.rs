@@ -173,6 +173,18 @@ impl ResultList {
         self.state
     }
 
+    pub fn get_current_match_index(&self) -> usize {
+        self.entries
+            .iter()
+            .take(self.state.selected().unwrap_or(0))
+            .filter(|&e| match e {
+                EntryType::Match(_, _) => true,
+                _ => false,
+            })
+            .count()
+            + 1
+    }
+
     pub fn get_number_of_matches(&self) -> usize {
         self.entries
             .iter()

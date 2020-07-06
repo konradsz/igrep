@@ -8,7 +8,7 @@ use std::{error::Error, io::Write, process::Command, sync::mpsc, time::Duration}
 
 use tui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Paragraph, Text},
     Frame, Terminal,
@@ -163,14 +163,15 @@ impl Ig {
     }
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+        let current_match_index = self.result_list.get_current_match_index();
+        let no_of_matches = self.result_list.get_number_of_matches();
+
         let text_items = match self.state {
             AppState::Searching => vec![Text::styled(
                 "Searching...",
                 Style::default().bg(Color::DarkGray).fg(Color::White),
             )],
             _ => {
-                let no_of_matches = self.result_list.get_number_of_matches();
-
                 let message = if no_of_matches == 0 {
                     " No matches found.".into()
                 } else {
@@ -196,9 +197,37 @@ impl Ig {
             }
         };
 
+        let selected_info = format!("{}/{} ", current_match_index, no_of_matches);
+        let selected_info_length = selected_info.len();
+
+        let selected_info_items = vec![Text::styled(
+            selected_info,
+            Style::default().bg(Color::DarkGray).fg(Color::White),
+        )];
+
+        let hsplit = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Min(1),
+                    Constraint::Length(selected_info_length as u16),
+                ]
+                .as_ref(),
+            )
+            .split(area);
+
         f.render_widget(
-            Paragraph::new(text_items.iter()).style(Style::default().bg(Color::DarkGray)),
-            area,
+            Paragraph::new(text_items.iter())
+                .style(Style::default().bg(Color::DarkGray))
+                .alignment(Alignment::Left),
+            hsplit[0],
+        );
+
+        f.render_widget(
+            Paragraph::new(selected_info_items.iter())
+                .style(Style::default().bg(Color::DarkGray))
+                .alignment(Alignment::Right),
+            hsplit[1],
         );
     }
 

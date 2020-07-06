@@ -138,11 +138,16 @@ impl Ig {
     }
 
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+        let width = f.size().width as usize;
         let header_style = Style::default().fg(Color::Red);
 
         let files_list = self.result_list.iter().map(|e| match e {
             EntryType::Header(h) => Text::Styled(h.into(), header_style),
-            EntryType::Match(n, t) => Text::raw(format!("{}: {}", n, t)),
+            EntryType::Match(n, t) => {
+                let text = format!(" {}: {}", n, t);
+                let text = format!("{: <1$}", text, width);
+                Text::raw(text)
+            }
         });
 
         let list_widget = ScrollOffsetList::new(files_list)
@@ -153,8 +158,7 @@ impl Ig {
                     .border_type(tui::widgets::BorderType::Rounded),
             )
             .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().modifier(Modifier::ITALIC))
-            .highlight_symbol(">>")
+            .highlight_style(Style::default().bg(Color::DarkGray))
             .scroll_offset(ScrollOffset { top: 1, bottom: 0 });
 
         self.result_list_state
@@ -166,11 +170,23 @@ impl Ig {
         let current_match_index = self.result_list.get_current_match_index();
         let no_of_matches = self.result_list.get_number_of_matches();
 
-        let text_items = match self.state {
-            AppState::Searching => vec![Text::styled(
-                "Searching...",
-                Style::default().bg(Color::DarkGray).fg(Color::White),
-            )],
+        let app_status_color = match self.state {
+            AppState::Searching => Color::LightRed,
+            _ => Color::Green,
+        };
+        let app_status = vec![Text::styled(
+            match self.state {
+                AppState::Searching => "SEARCHING",
+                _ => "FINISHED",
+            },
+            Style::default()
+                .modifier(Modifier::BOLD)
+                .bg(app_status_color)
+                .fg(Color::Black),
+        )];
+
+        let search_result = match self.state {
+            AppState::Searching => vec![],
             _ => {
                 let message = if no_of_matches == 0 {
                     " No matches found.".into()
@@ -192,23 +208,24 @@ impl Ig {
 
                 vec![Text::styled(
                     message,
-                    Style::default().bg(Color::DarkGray).fg(Color::White),
+                    Style::default().bg(Color::DarkGray).fg(Color::Black),
                 )]
             }
         };
 
-        let selected_info = format!("{}/{} ", current_match_index, no_of_matches);
-        let selected_info_length = selected_info.len();
+        let selected_info_text = format!("{}/{} ", current_match_index, no_of_matches);
+        let selected_info_length = selected_info_text.len();
 
-        let selected_info_items = vec![Text::styled(
-            selected_info,
-            Style::default().bg(Color::DarkGray).fg(Color::White),
+        let selected_info = vec![Text::styled(
+            selected_info_text,
+            Style::default().bg(Color::DarkGray).fg(Color::Black),
         )];
 
         let hsplit = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(
                 [
+                    Constraint::Length(12),
                     Constraint::Min(1),
                     Constraint::Length(selected_info_length as u16),
                 ]
@@ -217,17 +234,24 @@ impl Ig {
             .split(area);
 
         f.render_widget(
-            Paragraph::new(text_items.iter())
-                .style(Style::default().bg(Color::DarkGray))
-                .alignment(Alignment::Left),
+            Paragraph::new(app_status.iter())
+                .style(Style::default().bg(app_status_color))
+                .alignment(Alignment::Center),
             hsplit[0],
         );
 
         f.render_widget(
-            Paragraph::new(selected_info_items.iter())
+            Paragraph::new(search_result.iter())
+                .style(Style::default().bg(Color::DarkGray))
+                .alignment(Alignment::Left),
+            hsplit[1],
+        );
+
+        f.render_widget(
+            Paragraph::new(selected_info.iter())
                 .style(Style::default().bg(Color::DarkGray))
                 .alignment(Alignment::Right),
-            hsplit[1],
+            hsplit[2],
         );
     }
 

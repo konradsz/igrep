@@ -90,12 +90,13 @@ impl Ig {
                             .spawn()
                             .expect("Error: Failed to run editor");
                         child_process.wait()?;
-                        self.state = if idle {
-                            AppState::Idle
-                        } else {
-                            AppState::Searching
-                        };
                     }
+
+                    self.state = if idle {
+                        AppState::Idle
+                    } else {
+                        AppState::Searching
+                    };
                 }
                 AppState::Exit => {
                     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;

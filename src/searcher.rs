@@ -1,4 +1,4 @@
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 
 use grep::{
     matcher::LineTerminator,
@@ -16,22 +16,48 @@ pub struct SearchConfig {
 }
 
 pub struct Searcher {
-    config: SearchConfig,
+    inner: Arc<SearcherImpl>,
     tx: mpsc::Sender<AppEvent>,
 }
 
 impl Searcher {
     pub fn new(config: SearchConfig, tx: mpsc::Sender<AppEvent>) -> Self {
-        Self { config, tx }
+        Self {
+            inner: Arc::new(SearcherImpl::new(config)),
+            tx,
+        }
     }
 
-    pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn search(&self) {
+        let local_self = self.inner.clone();
+        let tx_local = self.tx.clone();
+        let _ = std::thread::spawn(move || {
+            // handle error?
+            match local_self.run(tx_local.clone()) {
+                Ok(_) => (),
+                Err(_) => (),
+            }
+            tx_local.send(AppEvent::SearchingFinished);
+        });
+    }
+}
+
+struct SearcherImpl {
+    config: SearchConfig,
+}
+
+impl SearcherImpl {
+    pub fn new(config: SearchConfig) -> Self {
+        Self { config }
+    }
+
+    pub fn run(&self, tx2: mpsc::Sender<AppEvent>) -> Result<(), Box<dyn std::error::Error>> {
         let matcher = RegexMatcher::new_line_matcher(&self.config.pattern)?;
         let builder = WalkBuilder::new(&self.config.path);
 
         let walk_parallel = builder.build_parallel();
         walk_parallel.run(move || {
-            let tx = self.tx.clone();
+            let tx = tx2.clone();
             let matcher = matcher.clone();
             let mut grep_searcher = GrepSearcherBuilder::new()
                 //.binary_detection(BinaryDetection::quit(b'\x00')) // from simplegrep - check it

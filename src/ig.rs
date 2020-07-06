@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::{error::Error, io::Write, process::Command, sync::mpsc, thread, time::Duration};
+use std::{error::Error, io::Write, process::Command, sync::mpsc, time::Duration};
 
 use tui::{
     backend::CrosstermBackend,
@@ -23,8 +23,8 @@ use crate::searcher::{SearchConfig, Searcher};
 
 #[derive(PartialEq)]
 enum AppState {
-    Searching,
     Idle,
+    Searching,
     OpenFile(bool),
     Exit,
 }
@@ -36,6 +36,7 @@ pub enum AppEvent {
 
 pub struct Ig {
     rx: mpsc::Receiver<AppEvent>,
+    searcher: Searcher,
     result_list: ResultList,
     result_list_state: ScrollOffsetListState,
     state: AppState,
@@ -46,34 +47,26 @@ impl Ig {
     pub fn new(pattern: &str, path: &str) -> Self {
         let (tx, rx) = mpsc::channel();
 
-        let mut s = Searcher::new(
+        let s = Searcher::new(
             SearchConfig {
                 pattern: pattern.into(),
                 path: path.into(),
             },
             tx.clone(),
         );
-        let _ = {
-            thread::spawn(move || {
-                // handle error?
-                match s.run() {
-                    Ok(_) => (),
-                    Err(_) => (),
-                }
-                tx.send(AppEvent::SearchingFinished);
-            })
-        };
 
         Self {
             rx,
+            searcher: s,
             result_list: ResultList::default(),
             result_list_state: ScrollOffsetListState::default(),
-            state: AppState::Searching,
+            state: AppState::Idle,
             poll_timeout: 0,
         }
     }
 
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
+        self.search();
         loop {
             let backend = CrosstermBackend::new(std::io::stdout());
             let mut terminal = Terminal::new(backend)?;
@@ -88,7 +81,7 @@ impl Ig {
 
             self.draw_and_handle_events(&mut terminal)?;
             match self.state {
-                AppState::Searching | AppState::Idle => continue,
+                AppState::Idle | AppState::Searching => continue,
                 AppState::OpenFile(idle) => {
                     if let Some((file_name, line_number)) = self.result_list.get_selected_entry() {
                         let mut child_process = Command::new("nvim")
@@ -115,11 +108,16 @@ impl Ig {
         Ok(())
     }
 
+    fn search(&mut self) {
+        self.state = AppState::Searching;
+        self.searcher.search();
+    }
+
     fn draw_and_handle_events(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
     ) -> Result<(), Box<dyn Error>> {
-        while self.state == AppState::Searching || self.state == AppState::Idle {
+        while self.state == AppState::Idle || self.state == AppState::Searching {
             terminal.draw(|mut f| self.draw(&mut f))?;
 
             self.handle_app_event(); // this function could handle error event

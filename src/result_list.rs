@@ -147,6 +147,22 @@ impl ResultList {
         self.state.select(Some(index));
     }
 
+    pub fn top(&mut self) {
+        if self.is_empty() {
+            return;
+        }
+
+        self.state.select(Some(1));
+    }
+
+    pub fn bottom(&mut self) {
+        if self.is_empty() {
+            return;
+        }
+
+        self.state.select(Some(self.entries.len() - 1));
+    }
+
     pub fn get_selected_entry(&self) -> Option<(&str, u64)> {
         match self.state.selected() {
             Some(i) => {

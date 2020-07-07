@@ -41,6 +41,7 @@ pub struct Ig {
     result_list_state: ScrollOffsetListState,
     state: AppState,
     poll_timeout: u64,
+    previous_key: Option<KeyEvent>,
 }
 
 impl Ig {
@@ -62,6 +63,7 @@ impl Ig {
             result_list_state: ScrollOffsetListState::default(),
             state: AppState::Idle,
             poll_timeout: 0,
+            previous_key: None,
         }
     }
 
@@ -270,55 +272,83 @@ impl Ig {
 
     fn handle_input(&mut self) -> Result<(), Box<dyn Error>> {
         if poll(Duration::from_millis(self.poll_timeout))? {
-            match read()? {
-                Event::Key(KeyEvent {
-                    code: KeyCode::Down,
-                    ..
-                })
-                | Event::Key(KeyEvent {
-                    code: KeyCode::Char('j'),
-                    ..
-                }) => self.result_list.next_match(),
-                Event::Key(KeyEvent {
-                    code: KeyCode::Up, ..
-                })
-                | Event::Key(KeyEvent {
-                    code: KeyCode::Char('k'),
-                    ..
-                }) => self.result_list.previous_match(),
-                Event::Key(KeyEvent {
-                    code: KeyCode::Right,
-                    ..
-                })
-                | Event::Key(KeyEvent {
-                    code: KeyCode::Char('l'),
-                    ..
-                }) => self.result_list.next_file(),
-                Event::Key(KeyEvent {
-                    code: KeyCode::Left,
-                    ..
-                })
-                | Event::Key(KeyEvent {
-                    code: KeyCode::Char('h'),
-                    ..
-                }) => self.result_list.previous_file(),
-                Event::Key(KeyEvent {
-                    code: KeyCode::Enter,
-                    ..
-                }) => {
-                    self.state = AppState::OpenFile(self.state == AppState::Idle);
-                }
-                Event::Key(KeyEvent {
-                    code: KeyCode::Esc, ..
-                })
-                | Event::Key(KeyEvent {
-                    code: KeyCode::Char('q'),
-                    ..
-                }) => self.state = AppState::Exit,
-                _ => (),
+            let read_event = read()?;
+            if let Event::Key(key_event) = read_event {
+                self.consume_key(key_event);
+                self.previous_key = Some(key_event);
             }
         }
 
         Ok(())
+    }
+
+    fn consume_key(&mut self, key_event: KeyEvent) {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Down,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('j'),
+                ..
+            } => self.result_list.next_match(),
+            KeyEvent {
+                code: KeyCode::Up, ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('k'),
+                ..
+            } => self.result_list.previous_match(),
+            KeyEvent {
+                code: KeyCode::Right,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('l'),
+                ..
+            } => self.result_list.next_file(),
+            KeyEvent {
+                code: KeyCode::Left,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('h'),
+                ..
+            } => self.result_list.previous_file(),
+            KeyEvent {
+                code: KeyCode::Char('g'),
+                ..
+            } => {
+                if matches!(
+                    self.previous_key,
+                    Some(KeyEvent {
+                        code: KeyCode::Char('g'),
+                        ..
+                    })
+                ) {
+                    self.result_list.top();
+                }
+            }
+            KeyEvent {
+                code: KeyCode::Char('G'),
+                ..
+            } => {
+                self.result_list.bottom();
+            }
+            KeyEvent {
+                code: KeyCode::Enter,
+                ..
+            } => {
+                self.state = AppState::OpenFile(self.state == AppState::Idle);
+            }
+            KeyEvent {
+                code: KeyCode::Esc, ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('q'),
+                ..
+            } => self.state = AppState::Exit,
+            _ => (),
+        }
     }
 }

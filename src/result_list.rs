@@ -179,10 +179,7 @@ impl ResultList {
                 self.entries
                     .iter()
                     .take(selected)
-                    .filter(|&e| match e {
-                        EntryType::Match(_, _) => true,
-                        _ => false,
-                    })
+                    .filter(|&e| matches!(e, EntryType::Match(_, _)))
                     .count()
                     + 1
             }
@@ -193,20 +190,14 @@ impl ResultList {
     pub fn get_number_of_matches(&self) -> usize {
         self.entries
             .iter()
-            .filter(|&e| match e {
-                EntryType::Match(_, _) => true,
-                _ => false,
-            })
+            .filter(|&e| matches!(e, EntryType::Match(_, _)))
             .count()
     }
 
     pub fn get_number_of_file_entries(&self) -> usize {
         self.entries
             .iter()
-            .filter(|&e| match e {
-                EntryType::Header(_) => true,
-                _ => false,
-            })
+            .filter(|&e| matches!(e, EntryType::Header(_)))
             .count()
     }
 }

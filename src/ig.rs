@@ -14,12 +14,12 @@ use tui::{
     Frame, Terminal,
 };
 
-use crate::entries::{EntryType, FileEntry};
+use crate::entries::EntryType;
 use crate::result_list::ResultList;
 use crate::scroll_offset_list::{
     List as ScrollOffsetList, ListState as ScrollOffsetListState, ScrollOffset,
 };
-use crate::searcher::{SearchConfig, Searcher};
+use crate::searcher::{Event, SearchConfig, Searcher};
 
 use crate::input_handler::InputHandler;
 
@@ -31,13 +31,8 @@ enum AppState {
     Exit,
 }
 
-pub enum AppEvent {
-    NewEntry(FileEntry),
-    SearchingFinished,
-}
-
 pub struct Ig {
-    rx: mpsc::Receiver<AppEvent>,
+    rx: mpsc::Receiver<Event>,
     state: AppState,
     searcher: Searcher,
     pub result_list: ResultList,
@@ -60,8 +55,8 @@ impl Ig {
     pub fn handle_searcher_event(&mut self) {
         if let Ok(event) = self.rx.try_recv() {
             match event {
-                AppEvent::NewEntry(e) => self.result_list.add_entry(e),
-                AppEvent::SearchingFinished => self.state = AppState::Idle,
+                Event::NewEntry(e) => self.result_list.add_entry(e),
+                Event::SearchingFinished => self.state = AppState::Idle,
             }
         }
     }

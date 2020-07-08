@@ -8,7 +8,11 @@ use grep::{
 use ignore::WalkBuilder;
 
 use crate::entries::{FileEntry, Match};
-use crate::ig::AppEvent;
+
+pub enum Event {
+    NewEntry(FileEntry),
+    SearchingFinished,
+}
 
 pub struct SearchConfig {
     pub pattern: String,
@@ -17,11 +21,11 @@ pub struct SearchConfig {
 
 pub struct Searcher {
     inner: Arc<SearcherImpl>,
-    tx: mpsc::Sender<AppEvent>,
+    tx: mpsc::Sender<Event>,
 }
 
 impl Searcher {
-    pub fn new(config: SearchConfig, tx: mpsc::Sender<AppEvent>) -> Self {
+    pub fn new(config: SearchConfig, tx: mpsc::Sender<Event>) -> Self {
         Self {
             inner: Arc::new(SearcherImpl::new(config)),
             tx,
@@ -37,7 +41,7 @@ impl Searcher {
                 Ok(_) => (),
                 Err(_) => (),
             }
-            tx_local.send(AppEvent::SearchingFinished);
+            tx_local.send(Event::SearchingFinished);
         });
     }
 }
@@ -51,7 +55,7 @@ impl SearcherImpl {
         Self { config }
     }
 
-    pub fn run(&self, tx2: mpsc::Sender<AppEvent>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run(&self, tx2: mpsc::Sender<Event>) -> Result<(), Box<dyn std::error::Error>> {
         let matcher = RegexMatcher::new_line_matcher(&self.config.pattern)?;
         let builder = WalkBuilder::new(&self.config.path);
 
@@ -97,7 +101,7 @@ impl SearcherImpl {
 
                 if !matches_in_entry.is_empty() {
                     // this can fail if app exits right when event is send
-                    tx.send(AppEvent::NewEntry(FileEntry::new(
+                    tx.send(Event::NewEntry(FileEntry::new(
                         dir_entry.path().to_str().unwrap(),
                         matches_in_entry,
                     )))

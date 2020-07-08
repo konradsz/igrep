@@ -1,10 +1,10 @@
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent},
+    event::DisableMouseCapture,
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::{error::Error, io::Write, process::Command, sync::mpsc, time::Duration};
+use std::{error::Error, io::Write, process::Command, sync::mpsc};
 
 use tui::{
     backend::CrosstermBackend,
@@ -21,6 +21,8 @@ use crate::scroll_offset_list::{
 };
 use crate::searcher::{SearchConfig, Searcher};
 
+use crate::input_handler::InputHandler;
+
 #[derive(PartialEq)]
 enum AppState {
     Idle,
@@ -36,39 +38,70 @@ pub enum AppEvent {
 
 pub struct Ig {
     rx: mpsc::Receiver<AppEvent>,
-    searcher: Searcher,
-    result_list: ResultList,
-    result_list_state: ScrollOffsetListState,
     state: AppState,
-    poll_timeout: u64,
-    previous_key: Option<KeyEvent>,
+    searcher: Searcher,
+    pub result_list: ResultList,
+    result_list_state: ScrollOffsetListState,
 }
 
 impl Ig {
-    pub fn new(pattern: &str, path: &str) -> Self {
+    fn new(config: SearchConfig) -> Self {
         let (tx, rx) = mpsc::channel();
-
-        let s = Searcher::new(
-            SearchConfig {
-                pattern: pattern.into(),
-                path: path.into(),
-            },
-            tx.clone(),
-        );
 
         Self {
             rx,
-            searcher: s,
+            state: AppState::Idle,
+            searcher: Searcher::new(config, tx),
             result_list: ResultList::default(),
             result_list_state: ScrollOffsetListState::default(),
-            state: AppState::Idle,
-            poll_timeout: 0,
-            previous_key: None,
+        }
+    }
+
+    pub fn handle_searcher_event(&mut self) {
+        if let Ok(event) = self.rx.try_recv() {
+            match event {
+                AppEvent::NewEntry(e) => self.result_list.add_entry(e),
+                AppEvent::SearchingFinished => self.state = AppState::Idle,
+            }
+        }
+    }
+
+    pub fn search(&mut self) {
+        self.state = AppState::Searching;
+        self.searcher.search();
+    }
+
+    pub fn open_file(&mut self) {
+        self.state = AppState::OpenFile(self.state == AppState::Idle);
+    }
+
+    pub fn exit(&mut self) {
+        self.state = AppState::Exit;
+    }
+
+    pub fn is_idle(&self) -> bool {
+        self.state == AppState::Idle
+    }
+}
+
+pub struct App {
+    ig: Ig,
+    input_handler: InputHandler,
+}
+
+impl App {
+    pub fn new(pattern: &str, path: &str) -> Self {
+        Self {
+            ig: Ig::new(SearchConfig {
+                pattern: pattern.into(),
+                path: path.into(),
+            }),
+            input_handler: InputHandler::new(),
         }
     }
 
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
-        self.search();
+        self.ig.search();
         loop {
             let backend = CrosstermBackend::new(std::io::stdout());
             let mut terminal = Terminal::new(backend)?;
@@ -82,10 +115,11 @@ impl Ig {
             )?;
 
             self.draw_and_handle_events(&mut terminal)?;
-            match self.state {
+            match self.ig.state {
                 AppState::Idle | AppState::Searching => continue,
                 AppState::OpenFile(idle) => {
-                    if let Some((file_name, line_number)) = self.result_list.get_selected_entry() {
+                    if let Some((file_name, line_number)) = self.ig.result_list.get_selected_entry()
+                    {
                         let mut child_process = Command::new("nvim")
                             .arg(file_name)
                             .arg(format!("+{}", line_number))
@@ -94,7 +128,7 @@ impl Ig {
                         child_process.wait()?;
                     }
 
-                    self.state = if idle {
+                    self.ig.state = if idle {
                         AppState::Idle
                     } else {
                         AppState::Searching
@@ -111,20 +145,15 @@ impl Ig {
         Ok(())
     }
 
-    fn search(&mut self) {
-        self.state = AppState::Searching;
-        self.searcher.search();
-    }
-
     fn draw_and_handle_events(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
     ) -> Result<(), Box<dyn Error>> {
-        while self.state == AppState::Idle || self.state == AppState::Searching {
+        while self.ig.state == AppState::Idle || self.ig.state == AppState::Searching {
             terminal.draw(|mut f| self.draw(&mut f))?;
 
-            self.handle_app_event(); // this function could handle error event
-            self.handle_input()?;
+            self.ig.handle_searcher_event(); // this function could handle error event
+            self.input_handler.handle_input(&mut self.ig)?;
         }
 
         Ok(())
@@ -144,7 +173,7 @@ impl Ig {
         let width = f.size().width as usize;
         let header_style = Style::default().fg(Color::Red);
 
-        let files_list = self.result_list.iter().map(|e| match e {
+        let files_list = self.ig.result_list.iter().map(|e| match e {
             EntryType::Header(h) => Text::Styled(h.into(), header_style),
             EntryType::Match(n, t) => {
                 let text = format!(" {}: {}", n, t);
@@ -164,21 +193,22 @@ impl Ig {
             .highlight_style(Style::default().bg(Color::DarkGray))
             .scroll_offset(ScrollOffset { top: 1, bottom: 0 });
 
-        self.result_list_state
-            .select(self.result_list.get_state().selected());
-        f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
+        self.ig
+            .result_list_state
+            .select(self.ig.result_list.get_state().selected());
+        f.render_stateful_widget(list_widget, area, &mut self.ig.result_list_state);
     }
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
-        let current_match_index = self.result_list.get_current_match_index();
-        let no_of_matches = self.result_list.get_number_of_matches();
+        let current_match_index = self.ig.result_list.get_current_match_index();
+        let no_of_matches = self.ig.result_list.get_number_of_matches();
 
-        let app_status_color = match self.state {
+        let app_status_color = match self.ig.state {
             AppState::Searching => Color::LightRed,
             _ => Color::Green,
         };
         let app_status = vec![Text::styled(
-            match self.state {
+            match self.ig.state {
                 AppState::Searching => "SEARCHING",
                 _ => "FINISHED",
             },
@@ -188,13 +218,13 @@ impl Ig {
                 .fg(Color::Black),
         )];
 
-        let search_result = match self.state {
+        let search_result = match self.ig.state {
             AppState::Searching => vec![],
             _ => {
                 let message = if no_of_matches == 0 {
                     " No matches found.".into()
                 } else {
-                    let no_of_files = self.result_list.get_number_of_file_entries();
+                    let no_of_files = self.ig.result_list.get_number_of_file_entries();
 
                     let matches_str = if no_of_matches == 1 {
                         "match"
@@ -256,99 +286,5 @@ impl Ig {
                 .alignment(Alignment::Right),
             hsplit[2],
         );
-    }
-
-    fn handle_app_event(&mut self) {
-        if let Ok(event) = self.rx.try_recv() {
-            match event {
-                AppEvent::NewEntry(e) => self.result_list.add_entry(e),
-                AppEvent::SearchingFinished => {
-                    self.state = AppState::Idle;
-                    self.poll_timeout = 1000;
-                }
-            }
-        }
-    }
-
-    fn handle_input(&mut self) -> Result<(), Box<dyn Error>> {
-        if poll(Duration::from_millis(self.poll_timeout))? {
-            let read_event = read()?;
-            if let Event::Key(key_event) = read_event {
-                self.consume_key(key_event);
-                self.previous_key = Some(key_event);
-            }
-        }
-
-        Ok(())
-    }
-
-    fn consume_key(&mut self, key_event: KeyEvent) {
-        match key_event {
-            KeyEvent {
-                code: KeyCode::Down,
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('j'),
-                ..
-            } => self.result_list.next_match(),
-            KeyEvent {
-                code: KeyCode::Up, ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('k'),
-                ..
-            } => self.result_list.previous_match(),
-            KeyEvent {
-                code: KeyCode::Right,
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('l'),
-                ..
-            } => self.result_list.next_file(),
-            KeyEvent {
-                code: KeyCode::Left,
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('h'),
-                ..
-            } => self.result_list.previous_file(),
-            KeyEvent {
-                code: KeyCode::Char('g'),
-                ..
-            } => {
-                if matches!(
-                    self.previous_key,
-                    Some(KeyEvent {
-                        code: KeyCode::Char('g'),
-                        ..
-                    })
-                ) {
-                    self.result_list.top();
-                }
-            }
-            KeyEvent {
-                code: KeyCode::Char('G'),
-                ..
-            } => {
-                self.result_list.bottom();
-            }
-            KeyEvent {
-                code: KeyCode::Enter,
-                ..
-            } => {
-                self.state = AppState::OpenFile(self.state == AppState::Idle);
-            }
-            KeyEvent {
-                code: KeyCode::Esc, ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('q'),
-                ..
-            } => self.state = AppState::Exit,
-            _ => (),
-        }
     }
 }

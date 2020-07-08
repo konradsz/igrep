@@ -1,11 +1,12 @@
 mod entries;
 mod ig;
+mod input_handler;
 mod result_list;
 mod scroll_offset_list;
 mod searcher;
 
 use clap::{App, Arg};
-use ig::Ig;
+use ig::App as IgApp;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("ig")
@@ -27,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pattern = matches.value_of("PATTERN").unwrap();
     let path = matches.value_of("PATH").unwrap();
 
-    let mut ig = Ig::new(pattern, path);
+    let mut ig = IgApp::new(pattern, path);
     ig.run()?;
 
     Ok(())

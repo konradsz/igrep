@@ -96,6 +96,7 @@ impl SearcherImpl {
                 );
 
                 if !matches_in_entry.is_empty() {
+                    // this can fail if app exits right when event is send
                     tx.send(AppEvent::NewEntry(FileEntry::new(
                         dir_entry.path().to_str().unwrap(),
                         matches_in_entry,

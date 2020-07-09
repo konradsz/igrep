@@ -91,7 +91,7 @@ impl App {
                 pattern: pattern.into(),
                 path: path.into(),
             }),
-            input_handler: InputHandler::new(),
+            input_handler: InputHandler::default(),
         }
     }
 

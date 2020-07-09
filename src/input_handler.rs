@@ -70,8 +70,10 @@ impl InputHandler {
         match key_code {
             KeyCode::Down => ig.result_list.next_match(),
             KeyCode::Up => ig.result_list.previous_match(),
-            KeyCode::Right => ig.result_list.next_file(),
-            KeyCode::Left => ig.result_list.previous_file(),
+            KeyCode::Right | KeyCode::PageDown => ig.result_list.next_file(),
+            KeyCode::Left | KeyCode::PageUp => ig.result_list.previous_file(),
+            KeyCode::Home => ig.result_list.top(),
+            KeyCode::End => ig.result_list.bottom(),
             KeyCode::Enter => ig.open_file(),
             KeyCode::Esc => ig.exit(),
             _ => (),

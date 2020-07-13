@@ -1,8 +1,15 @@
+mod entries;
+mod result_list;
+mod searcher;
+
+pub use entries::EntryType;
+pub use searcher::SearchConfig;
+
 use std::{process::Command, sync::mpsc};
 
-use crate::result_list::ResultList;
-use crate::scroll_offset_list::ListState;
-use crate::searcher::{Event, SearchConfig, Searcher};
+use super::ui::ListState;
+use result_list::ResultList;
+use searcher::{Event, Searcher};
 
 #[derive(PartialEq)]
 pub enum State {

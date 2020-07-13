@@ -14,11 +14,12 @@ use tui::{
     Frame, Terminal,
 };
 
-use crate::entries::EntryType;
+use super::input_handler::InputHandler;
+use super::scroll_offset_list::{List, ScrollOffset};
+
+use crate::ig::EntryType;
 use crate::ig::Ig;
-use crate::input_handler::InputHandler;
-use crate::scroll_offset_list::{List, ScrollOffset};
-use crate::searcher::SearchConfig;
+use crate::ig::SearchConfig;
 
 pub struct App {
     ig: Ig,

@@ -1,4 +1,4 @@
-use crate::entries::{EntryType, FileEntry};
+use super::entries::{EntryType, FileEntry};
 
 #[derive(Copy, Clone, Default)]
 pub struct ListState(Option<usize>);
@@ -221,7 +221,8 @@ impl ResultList {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::entries::Match;
+    use crate::ig::entries::Match;
+
     #[test]
     fn test_empty_list() {
         let mut list = ResultList::default();

@@ -7,7 +7,7 @@ use grep::{
 };
 use ignore::WalkBuilder;
 
-use crate::entries::{FileEntry, Match};
+use super::entries::{FileEntry, Match};
 
 pub enum Event {
     NewEntry(FileEntry),

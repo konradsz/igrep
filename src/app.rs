@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::{error::Error, io::Write, process::Command};
+use std::{error::Error, io::Write};
 
 use tui::{
     backend::CrosstermBackend,
@@ -15,18 +15,10 @@ use tui::{
 };
 
 use crate::entries::EntryType;
-use crate::ig::Ig;
+use crate::ig::{Ig, State};
 use crate::input_handler::InputHandler;
 use crate::scroll_offset_list::{List, ScrollOffset};
 use crate::searcher::SearchConfig;
-
-#[derive(PartialEq)]
-pub enum AppState {
-    Idle,
-    Searching,
-    OpenFile(bool),
-    Exit,
-}
 
 pub struct App {
     ig: Ig,
@@ -46,6 +38,7 @@ impl App {
 
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
         self.ig.search();
+
         loop {
             let backend = CrosstermBackend::new(std::io::stdout());
             let mut terminal = Terminal::new(backend)?;
@@ -58,46 +51,20 @@ impl App {
                 DisableMouseCapture
             )?;
 
-            self.draw_and_handle_events(&mut terminal)?;
-            match self.ig.state {
-                AppState::Idle | AppState::Searching => continue,
-                AppState::OpenFile(idle) => {
-                    if let Some((file_name, line_number)) = self.ig.result_list.get_selected_entry()
-                    {
-                        let mut child_process = Command::new("nvim")
-                            .arg(file_name)
-                            .arg(format!("+{}", line_number))
-                            .spawn()
-                            .expect("Error: Failed to run editor");
-                        child_process.wait()?;
-                    }
+            while self.ig.is_idle() || self.ig.is_searching() {
+                terminal.draw(|mut f| self.draw(&mut f))?;
 
-                    self.ig.state = if idle {
-                        AppState::Idle
-                    } else {
-                        AppState::Searching
-                    };
-                }
-                AppState::Exit => {
-                    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-                    disable_raw_mode()?;
-                    break;
-                }
+                self.ig.handle_searcher_event(); // this function could handle error event
+                self.input_handler.handle_input(&mut self.ig)?;
             }
-        }
 
-        Ok(())
-    }
+            self.ig.open_file_if_requested();
 
-    fn draw_and_handle_events(
-        &mut self,
-        terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
-    ) -> Result<(), Box<dyn Error>> {
-        while self.ig.state == AppState::Idle || self.ig.state == AppState::Searching {
-            terminal.draw(|mut f| self.draw(&mut f))?;
-
-            self.ig.handle_searcher_event(); // this function could handle error event
-            self.input_handler.handle_input(&mut self.ig)?;
+            if self.ig.exit_requested() {
+                execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+                disable_raw_mode()?;
+                break;
+            }
         }
 
         Ok(())
@@ -148,12 +115,12 @@ impl App {
         let no_of_matches = self.ig.result_list.get_number_of_matches();
 
         let app_status_color = match self.ig.state {
-            AppState::Searching => Color::LightRed,
+            State::Searching => Color::LightRed,
             _ => Color::Green,
         };
         let app_status = vec![Text::styled(
             match self.ig.state {
-                AppState::Searching => "SEARCHING",
+                State::Searching => "SEARCHING",
                 _ => "FINISHED",
             },
             Style::default()
@@ -163,7 +130,7 @@ impl App {
         )];
 
         let search_result = match self.ig.state {
-            AppState::Searching => vec![],
+            State::Searching => vec![],
             _ => {
                 let message = if no_of_matches == 0 {
                     " No matches found.".into()

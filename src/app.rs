@@ -15,7 +15,7 @@ use tui::{
 };
 
 use crate::entries::EntryType;
-use crate::ig::{Ig, State};
+use crate::ig::Ig;
 use crate::input_handler::InputHandler;
 use crate::scroll_offset_list::{List, ScrollOffset};
 use crate::searcher::SearchConfig;
@@ -114,14 +114,16 @@ impl App {
         let current_match_index = self.ig.result_list.get_current_match_index();
         let no_of_matches = self.ig.result_list.get_number_of_matches();
 
-        let app_status_color = match self.ig.state {
-            State::Searching => Color::LightRed,
-            _ => Color::Green,
+        let app_status_color = if self.ig.is_searching() {
+            Color::LightRed
+        } else {
+            Color::Green
         };
         let app_status = vec![Text::styled(
-            match self.ig.state {
-                State::Searching => "SEARCHING",
-                _ => "FINISHED",
+            if self.ig.is_searching() {
+                "SEARCHING"
+            } else {
+                "FINISHED"
             },
             Style::default()
                 .modifier(Modifier::BOLD)
@@ -129,32 +131,31 @@ impl App {
                 .fg(Color::Black),
         )];
 
-        let search_result = match self.ig.state {
-            State::Searching => vec![],
-            _ => {
-                let message = if no_of_matches == 0 {
-                    " No matches found.".into()
+        let search_result = if self.ig.is_searching() {
+            Vec::default()
+        } else {
+            let message = if no_of_matches == 0 {
+                " No matches found.".into()
+            } else {
+                let no_of_files = self.ig.result_list.get_number_of_file_entries();
+
+                let matches_str = if no_of_matches == 1 {
+                    "match"
                 } else {
-                    let no_of_files = self.ig.result_list.get_number_of_file_entries();
-
-                    let matches_str = if no_of_matches == 1 {
-                        "match"
-                    } else {
-                        "matches"
-                    };
-                    let files_str = if no_of_files == 1 { "file" } else { "files" };
-
-                    format!(
-                        " Found {} {} in {} {}.",
-                        no_of_matches, matches_str, no_of_files, files_str
-                    )
+                    "matches"
                 };
+                let files_str = if no_of_files == 1 { "file" } else { "files" };
 
-                vec![Text::styled(
-                    message,
-                    Style::default().bg(Color::DarkGray).fg(Color::Black),
-                )]
-            }
+                format!(
+                    " Found {} {} in {} {}.",
+                    no_of_matches, matches_str, no_of_files, files_str
+                )
+            };
+
+            vec![Text::styled(
+                message,
+                Style::default().bg(Color::DarkGray).fg(Color::Black),
+            )]
         };
 
         let selected_info_text = format!("{}/{} ", current_match_index, no_of_matches);

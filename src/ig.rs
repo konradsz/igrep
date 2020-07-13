@@ -14,7 +14,7 @@ pub enum State {
 
 pub struct Ig {
     rx: mpsc::Receiver<Event>,
-    pub state: State,
+    state: State,
     searcher: Searcher,
     pub result_list: ResultList,
     pub result_list_state: ListState,

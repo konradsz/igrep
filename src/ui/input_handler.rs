@@ -58,8 +58,14 @@ impl InputHandler {
             "G" => {
                 consume_buffer_and_execute(&mut self.input_buffer, &mut || ig.result_list.bottom())
             }
+            "dd" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                ig.result_list.remove_current_entry()
+            }),
+            "dw" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                ig.result_list.remove_current_file()
+            }),
             "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || ig.exit()),
-            "g" => (),
+            "g" | "d" => (),
             _ => self.input_buffer.clear(),
         }
     }
@@ -74,6 +80,7 @@ impl InputHandler {
             KeyCode::Left | KeyCode::PageUp => ig.result_list.previous_file(),
             KeyCode::Home => ig.result_list.top(),
             KeyCode::End => ig.result_list.bottom(),
+            KeyCode::Delete => ig.result_list.remove_current_entry(),
             KeyCode::Enter => ig.open_file(),
             KeyCode::F(5) => ig.search(),
             KeyCode::Esc => ig.exit(),

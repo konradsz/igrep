@@ -75,6 +75,7 @@ impl InputHandler {
             KeyCode::Home => ig.result_list.top(),
             KeyCode::End => ig.result_list.bottom(),
             KeyCode::Enter => ig.open_file(),
+            KeyCode::F(5) => ig.search(),
             KeyCode::Esc => ig.exit(),
             _ => (),
         }

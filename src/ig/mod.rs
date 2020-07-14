@@ -65,6 +65,7 @@ impl Ig {
     }
 
     pub fn search(&mut self) {
+        self.result_list.clear();
         self.state = State::Searching;
         self.searcher.search();
     }

@@ -114,7 +114,6 @@ impl App {
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         let current_match_index = self.ig.result_list.get_current_match_index();
-        let no_of_matches = self.ig.result_list.get_number_of_matches();
 
         let app_status_color = if self.ig.is_searching() {
             Color::LightRed
@@ -136,21 +135,29 @@ impl App {
         let search_result = if self.ig.is_searching() {
             Vec::default()
         } else {
-            let message = if no_of_matches == 0 {
+            let total_no_of_matches = self.ig.result_list.get_total_number_of_matches();
+            let message = if total_no_of_matches == 0 {
                 " No matches found.".into()
             } else {
-                let no_of_files = self.ig.result_list.get_number_of_file_entries();
+                let no_of_files = self.ig.result_list.get_total_number_of_file_entries();
 
-                let matches_str = if no_of_matches == 1 {
+                let matches_str = if total_no_of_matches == 1 {
                     "match"
                 } else {
                     "matches"
                 };
                 let files_str = if no_of_files == 1 { "file" } else { "files" };
 
+                let filtered_count = self.ig.result_list.get_filtered_matches_count();
+                let filtered_str = if filtered_count != 0 {
+                    format!(" ({} filtered)", filtered_count)
+                } else {
+                    String::default()
+                };
+
                 format!(
-                    " Found {} {} in {} {}.",
-                    no_of_matches, matches_str, no_of_files, files_str
+                    " Found {} {} in {} {}{}.",
+                    total_no_of_matches, matches_str, no_of_files, files_str, filtered_str
                 )
             };
 
@@ -160,7 +167,8 @@ impl App {
             )]
         };
 
-        let selected_info_text = format!("{}/{} ", current_match_index, no_of_matches);
+        let current_no_of_matches = self.ig.result_list.get_current_number_of_matches();
+        let selected_info_text = format!("{}/{} ", current_match_index, current_no_of_matches);
         let selected_info_length = selected_info_text.len();
 
         let selected_info = vec![Text::styled(

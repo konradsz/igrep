@@ -18,10 +18,20 @@ impl ListState {
 pub struct ResultList {
     entries: Vec<EntryType>,
     state: ListState,
+    file_entries_count: usize,
+    matches_count: usize,
+    filtered_matches_count: usize,
 }
 
 impl ResultList {
     pub fn add_entry(&mut self, mut entry: FileEntry) {
+        self.file_entries_count += 1;
+        self.matches_count += entry
+            .0
+            .iter()
+            .filter(|&e| matches!(e, EntryType::Match(_, _)))
+            .count();
+
         self.entries.append(&mut entry.0);
 
         if self.state.selected().is_none() {
@@ -35,6 +45,9 @@ impl ResultList {
 
     pub fn clear(&mut self) {
         self.entries.clear();
+        self.file_entries_count = 0;
+        self.matches_count = 0;
+        self.filtered_matches_count = 0;
         self.state.select(None);
     }
 
@@ -209,6 +222,8 @@ impl ResultList {
             self.entries.remove(current_file_header_index);
         }
 
+        self.filtered_matches_count += span - 1;
+
         if self.entries.is_empty() {
             self.state.select(None);
         } else {
@@ -241,6 +256,8 @@ impl ResultList {
     fn remove_current_entry_and_select_previous(&mut self) {
         let selected_index = self.state.selected().unwrap();
         self.entries.remove(selected_index);
+        self.filtered_matches_count += 1;
+
         if selected_index >= self.entries.len() || self.is_header(selected_index) {
             self.state.select(Some(selected_index - 1));
         }
@@ -286,18 +303,23 @@ impl ResultList {
         }
     }
 
-    pub fn get_number_of_matches(&self) -> usize {
+    pub fn get_current_number_of_matches(&self) -> usize {
         self.entries
             .iter()
             .filter(|&e| matches!(e, EntryType::Match(_, _)))
             .count()
     }
 
-    pub fn get_number_of_file_entries(&self) -> usize {
-        self.entries
-            .iter()
-            .filter(|&e| matches!(e, EntryType::Header(_)))
-            .count()
+    pub fn get_total_number_of_matches(&self) -> usize {
+        self.matches_count
+    }
+
+    pub fn get_total_number_of_file_entries(&self) -> usize {
+        self.file_entries_count
+    }
+
+    pub fn get_filtered_matches_count(&self) -> usize {
+        self.filtered_matches_count
     }
 }
 

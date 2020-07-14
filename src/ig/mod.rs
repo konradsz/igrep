@@ -7,7 +7,6 @@ pub use searcher::SearchConfig;
 
 use std::{process::Command, sync::mpsc};
 
-use super::ui::ListState;
 use result_list::ResultList;
 use searcher::{Event, Searcher};
 
@@ -24,7 +23,6 @@ pub struct Ig {
     state: State,
     searcher: Searcher,
     pub result_list: ResultList,
-    pub result_list_state: ListState,
 }
 
 impl Ig {
@@ -36,7 +34,6 @@ impl Ig {
             state: State::Idle,
             searcher: Searcher::new(config, tx),
             result_list: ResultList::default(),
-            result_list_state: ListState::default(),
         }
     }
 

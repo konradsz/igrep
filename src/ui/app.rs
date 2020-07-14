@@ -15,7 +15,7 @@ use tui::{
 };
 
 use super::input_handler::InputHandler;
-use super::scroll_offset_list::{List, ScrollOffset};
+use super::scroll_offset_list::{List, ListState, ScrollOffset};
 
 use crate::ig::EntryType;
 use crate::ig::Ig;
@@ -24,6 +24,7 @@ use crate::ig::SearchConfig;
 pub struct App {
     ig: Ig,
     input_handler: InputHandler,
+    result_list_state: ListState,
 }
 
 impl App {
@@ -34,6 +35,7 @@ impl App {
                 path: path.into(),
             }),
             input_handler: InputHandler::default(),
+            result_list_state: ListState::default(),
         }
     }
 
@@ -105,10 +107,9 @@ impl App {
             .highlight_style(Style::default().bg(Color::DarkGray))
             .scroll_offset(ScrollOffset { top: 1, bottom: 0 });
 
-        self.ig
-            .result_list_state
+        self.result_list_state
             .select(self.ig.result_list.get_state().selected());
-        f.render_stateful_widget(list_widget, area, &mut self.ig.result_list_state);
+        f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
     }
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {

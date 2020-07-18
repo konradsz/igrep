@@ -24,10 +24,6 @@ impl Default for ListState {
 }
 
 impl ListState {
-    pub fn selected(&self) -> Option<usize> {
-        self.selected
-    }
-
     pub fn select(&mut self, index: Option<usize>) {
         self.selected = index;
         if index.is_none() {
@@ -111,31 +107,13 @@ where
         self
     }
 
-    pub fn items<I>(mut self, items: I) -> List<'b, L>
-    where
-        I: IntoIterator<Item = Text<'b>, IntoIter = L>,
-    {
-        self.items = items.into_iter();
-        self
-    }
-
     pub fn style(mut self, style: Style) -> List<'b, L> {
         self.style = style;
         self
     }
 
-    pub fn highlight_symbol(mut self, highlight_symbol: &'b str) -> List<'b, L> {
-        self.highlight_symbol = Some(highlight_symbol);
-        self
-    }
-
     pub fn highlight_style(mut self, highlight_style: Style) -> List<'b, L> {
         self.highlight_style = highlight_style;
-        self
-    }
-
-    pub fn start_corner(mut self, corner: Corner) -> List<'b, L> {
-        self.start_corner = corner;
         self
     }
 

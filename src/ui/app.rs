@@ -54,7 +54,7 @@ impl App {
                 DisableMouseCapture
             )?;
 
-            while self.ig.is_idle() || self.ig.is_searching() {
+            while self.ig.is_searching() || self.ig.is_idle() {
                 terminal.draw(|mut f| self.draw(&mut f))?;
 
                 self.ig.handle_searcher_event(); // this function could handle error event
@@ -150,7 +150,7 @@ impl App {
 
                 let filtered_count = self.ig.result_list.get_filtered_matches_count();
                 let filtered_str = if filtered_count != 0 {
-                    format!(" ({} filtered)", filtered_count)
+                    format!(" ({} filtered out)", filtered_count)
                 } else {
                     String::default()
                 };

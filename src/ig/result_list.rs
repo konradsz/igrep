@@ -226,13 +226,11 @@ impl ResultList {
 
         if self.entries.is_empty() {
             self.state.select(None);
-        } else {
-            if selected_index != 1 {
-                self.state.select(Some(cmp::max(
-                    current_file_header_index.saturating_sub(1),
-                    1,
-                )));
-            }
+        } else if selected_index != 1 {
+            self.state.select(Some(cmp::max(
+                current_file_header_index.saturating_sub(1),
+                1,
+            )));
         }
     }
 
@@ -242,15 +240,9 @@ impl ResultList {
 
     fn is_last_match_in_file(&self) -> bool {
         let current_index = self.state.selected().unwrap();
-        if self.is_header(current_index - 1) {
-            if current_index == self.entries.len() - 1 || self.is_header(current_index + 1) {
-                true
-            } else {
-                false
-            }
-        } else {
-            false
-        }
+
+        self.is_header(current_index - 1)
+            && (current_index == self.entries.len() - 1 || self.is_header(current_index + 1))
     }
 
     fn remove_current_entry_and_select_previous(&mut self) {

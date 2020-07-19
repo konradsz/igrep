@@ -122,7 +122,7 @@ impl App {
             )
             .style(Style::default().fg(Color::White))
             .highlight_style(Style::default().bg(Color::Rgb(58, 58, 58)))
-            .scroll_offset(ScrollOffset { top: 1, bottom: 0 });
+            .scroll_offset(ScrollOffset::default().top(1).bottom(0));
 
         self.result_list_state
             .select(self.ig.result_list.get_state().selected());

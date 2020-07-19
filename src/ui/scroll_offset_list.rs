@@ -56,8 +56,20 @@ impl<'a> ListItem<'a> {
 
 #[derive(Default, Debug, Clone)]
 pub struct ScrollOffset {
-    pub top: usize,
-    pub bottom: usize,
+    top: usize,
+    bottom: usize,
+}
+
+impl ScrollOffset {
+    pub fn top(mut self, offset: usize) -> Self {
+        self.top = offset;
+        self
+    }
+
+    pub fn bottom(mut self, offset: usize) -> Self {
+        self.bottom = offset;
+        self
+    }
 }
 
 /// A widget to display several items among which one can be selected (optional)

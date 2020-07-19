@@ -11,7 +11,7 @@ pub struct InputHandler {
 
 impl InputHandler {
     pub fn handle_input(&mut self, ig: &mut Ig) -> Result<(), Box<dyn Error>> {
-        let poll_timeout = Duration::from_millis(if ig.is_idle() { 1_000 } else { 0 });
+        let poll_timeout = Duration::from_millis(1);
         if poll(poll_timeout)? {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {

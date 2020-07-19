@@ -121,7 +121,7 @@ impl App {
                     .border_type(tui::widgets::BorderType::Rounded),
             )
             .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().bg(Color::DarkGray))
+            .highlight_style(Style::default().bg(Color::Rgb(58, 58, 58)))
             .scroll_offset(ScrollOffset { top: 1, bottom: 0 });
 
         self.result_list_state
@@ -180,7 +180,9 @@ impl App {
 
             Span::styled(
                 message,
-                Style::default().bg(Color::DarkGray).fg(Color::Black),
+                Style::default()
+                    .bg(Color::Rgb(58, 58, 58))
+                    .fg(Color::Rgb(147, 147, 147)),
             )
         };
 
@@ -190,7 +192,9 @@ impl App {
 
         let selected_info = Span::styled(
             selected_info_text,
-            Style::default().bg(Color::DarkGray).fg(Color::Black),
+            Style::default()
+                .bg(Color::Rgb(58, 58, 58))
+                .fg(Color::Rgb(147, 147, 147)),
         );
 
         let hsplit = Layout::default()
@@ -214,14 +218,14 @@ impl App {
 
         f.render_widget(
             Paragraph::new(search_result)
-                .style(Style::default().bg(Color::DarkGray))
+                .style(Style::default().bg(Color::Rgb(58, 58, 58)))
                 .alignment(Alignment::Left),
             hsplit[1],
         );
 
         f.render_widget(
             Paragraph::new(selected_info)
-                .style(Style::default().bg(Color::DarkGray))
+                .style(Style::default().bg(Color::Rgb(58, 58, 58)))
                 .alignment(Alignment::Right),
             hsplit[2],
         );

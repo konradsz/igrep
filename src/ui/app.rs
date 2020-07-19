@@ -10,12 +10,13 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Paragraph, Text},
+    text::Span,
+    widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
 };
 
 use super::input_handler::InputHandler;
-use super::scroll_offset_list::{List, ListState, ScrollOffset};
+use super::scroll_offset_list::{List, ListItem, ListState, ScrollOffset};
 
 use crate::ig::EntryType;
 use crate::ig::Ig;
@@ -87,14 +88,19 @@ impl App {
         let width = f.size().width as usize;
         let header_style = Style::default().fg(Color::Red);
 
-        let files_list = self.ig.result_list.iter().map(|e| match e {
-            EntryType::Header(h) => Text::Styled(h.into(), header_style),
-            EntryType::Match(n, t) => {
-                let text = format!(" {}: {}", n, t);
-                let text = format!("{: <1$}", text, width);
-                Text::raw(text)
-            }
-        });
+        let files_list: Vec<ListItem> = self
+            .ig
+            .result_list
+            .iter()
+            .map(|e| match e {
+                EntryType::Header(h) => ListItem::new(Span::styled(h, header_style)),
+                EntryType::Match(n, t) => {
+                    let text = format!(" {}: {}", n, t);
+                    let text = format!("{: <1$}", text, width);
+                    ListItem::new(Span::raw(text))
+                }
+            })
+            .collect();
 
         let list_widget = List::new(files_list)
             .block(
@@ -120,20 +126,20 @@ impl App {
         } else {
             Color::Green
         };
-        let app_status = vec![Text::styled(
+        let app_status = Span::styled(
             if self.ig.is_searching() {
                 "SEARCHING"
             } else {
                 "FINISHED"
             },
             Style::default()
-                .modifier(Modifier::BOLD)
+                .add_modifier(Modifier::BOLD)
                 .bg(app_status_color)
                 .fg(Color::Black),
-        )];
+        );
 
         let search_result = if self.ig.is_searching() {
-            Vec::default()
+            Span::raw("")
         } else {
             let total_no_of_matches = self.ig.result_list.get_total_number_of_matches();
             let message = if total_no_of_matches == 0 {
@@ -161,20 +167,20 @@ impl App {
                 )
             };
 
-            vec![Text::styled(
+            Span::styled(
                 message,
                 Style::default().bg(Color::DarkGray).fg(Color::Black),
-            )]
+            )
         };
 
         let current_no_of_matches = self.ig.result_list.get_current_number_of_matches();
         let selected_info_text = format!("{}/{} ", current_match_index, current_no_of_matches);
         let selected_info_length = selected_info_text.len();
 
-        let selected_info = vec![Text::styled(
+        let selected_info = Span::styled(
             selected_info_text,
             Style::default().bg(Color::DarkGray).fg(Color::Black),
-        )];
+        );
 
         let hsplit = Layout::default()
             .direction(Direction::Horizontal)
@@ -189,21 +195,21 @@ impl App {
             .split(area);
 
         f.render_widget(
-            Paragraph::new(app_status.iter())
+            Paragraph::new(app_status)
                 .style(Style::default().bg(app_status_color))
                 .alignment(Alignment::Center),
             hsplit[0],
         );
 
         f.render_widget(
-            Paragraph::new(search_result.iter())
+            Paragraph::new(search_result)
                 .style(Style::default().bg(Color::DarkGray))
                 .alignment(Alignment::Left),
             hsplit[1],
         );
 
         f.render_widget(
-            Paragraph::new(selected_info.iter())
+            Paragraph::new(selected_info)
                 .style(Style::default().bg(Color::DarkGray))
                 .alignment(Alignment::Right),
             hsplit[2],

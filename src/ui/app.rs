@@ -10,7 +10,7 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    text::Span,
+    text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
 };
@@ -86,18 +86,30 @@ impl App {
 
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         let width = f.size().width as usize;
-        let header_style = Style::default().fg(Color::Red);
 
         let files_list: Vec<ListItem> = self
             .ig
             .result_list
             .iter()
             .map(|e| match e {
-                EntryType::Header(h) => ListItem::new(Span::styled(h, header_style)),
-                EntryType::Match(n, t) => {
-                    let text = format!(" {}: {}", n, t);
-                    let text = format!("{: <1$}", text, width);
-                    ListItem::new(Span::raw(text))
+                EntryType::Header(h) => {
+                    ListItem::new(Span::styled(h, Style::default().fg(Color::LightMagenta)))
+                }
+                EntryType::Match(n, t, offset) => {
+                    let line_number =
+                        Span::styled(format!(" {}: ", n), Style::default().fg(Color::Green));
+                    let spans = if let Some(span) = offset {
+                        let pre = Span::raw(&t[0..span.0]);
+                        let actual =
+                            Span::styled(&t[span.0..span.1], Style::default().fg(Color::Red));
+                        let post = Span::raw(format!("{: <1$}", &t[span.1..], width));
+                        Spans::from(vec![line_number, pre, actual, post])
+                    } else {
+                        let result = format!("{: <1$}", t, width);
+                        Spans::from(vec![line_number, Span::raw(result)])
+                    };
+
+                    ListItem::new(spans)
                 }
             })
             .collect();
@@ -105,7 +117,6 @@ impl App {
         let list_widget = List::new(files_list)
             .block(
                 Block::default()
-                    .title("List")
                     .borders(Borders::ALL)
                     .border_type(tui::widgets::BorderType::Rounded),
             )

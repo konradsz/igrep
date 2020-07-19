@@ -61,6 +61,7 @@ impl SearcherImpl {
 
         let walk_parallel = builder.build_parallel();
         walk_parallel.run(move || {
+            let pattern = self.config.pattern.clone(); // this is _very_ lame
             let tx = tx2.clone();
             let matcher = matcher.clone();
             let mut grep_searcher = GrepSearcherBuilder::new()
@@ -92,9 +93,16 @@ impl SearcherImpl {
                     dir_entry.path(),
                     MatchesSink(|_, sink_match| {
                         let line_number = sink_match.line_number().unwrap();
-                        let text = std::str::from_utf8(sink_match.bytes()).unwrap_or("Not UTF-8");
-                        let m = Match::new(line_number, text);
-                        matches_in_entry.push(m);
+                        let text = std::str::from_utf8(sink_match.bytes());
+                        if let Ok(t) = text {
+                            let span = if let Some(byte_offset) = t.find(&pattern) {
+                                Some((byte_offset, byte_offset + pattern.len()))
+                            } else {
+                                None
+                            };
+                            let m = Match::new(line_number, t, span);
+                            matches_in_entry.push(m);
+                        }
                         Ok(true)
                     }),
                 );

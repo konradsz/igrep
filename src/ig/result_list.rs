@@ -29,7 +29,7 @@ impl ResultList {
         self.matches_count += entry
             .0
             .iter()
-            .filter(|&e| matches!(e, EntryType::Match(_, _)))
+            .filter(|&e| matches!(e, EntryType::Match(_, _, _)))
             .count();
 
         self.entries.append(&mut entry.0);
@@ -67,7 +67,7 @@ impl ResultList {
                 } else {
                     match self.entries[i + 1] {
                         EntryType::Header(_) => i + 2,
-                        EntryType::Match(_, _) => i + 1,
+                        EntryType::Match(_, _, _) => i + 1,
                     }
                 }
             }
@@ -89,7 +89,7 @@ impl ResultList {
                 } else {
                     match self.entries[i - 1] {
                         EntryType::Header(_) => i - 2,
-                        EntryType::Match(_, _) => i - 1,
+                        EntryType::Match(_, _, _) => i - 1,
                     }
                 }
             }
@@ -119,7 +119,7 @@ impl ResultList {
                             next_index += 1;
                             break;
                         }
-                        EntryType::Match(_, _) => continue,
+                        EntryType::Match(_, _, _) => continue,
                     }
                 }
                 next_index
@@ -155,7 +155,7 @@ impl ResultList {
                                 break;
                             }
                         }
-                        EntryType::Match(_, _) => continue,
+                        EntryType::Match(_, _, _) => continue,
                     }
                 }
                 next_index
@@ -264,7 +264,7 @@ impl ResultList {
                         EntryType::Header(name) => {
                             return Some((name.as_str(), line_number.unwrap()));
                         }
-                        EntryType::Match(number, _) => {
+                        EntryType::Match(number, _, _) => {
                             if line_number.is_none() {
                                 line_number = Some(*number);
                             }
@@ -287,7 +287,7 @@ impl ResultList {
                 self.entries
                     .iter()
                     .take(selected)
-                    .filter(|&e| matches!(e, EntryType::Match(_, _)))
+                    .filter(|&e| matches!(e, EntryType::Match(_, _, _)))
                     .count()
                     + 1
             }
@@ -298,7 +298,7 @@ impl ResultList {
     pub fn get_current_number_of_matches(&self) -> usize {
         self.entries
             .iter()
-            .filter(|&e| matches!(e, EntryType::Match(_, _)))
+            .filter(|&e| matches!(e, EntryType::Match(_, _, _)))
             .count()
     }
 
@@ -333,13 +333,13 @@ mod tests {
     #[test]
     fn test_add_entry() {
         let mut list = ResultList::default();
-        list.add_entry(FileEntry::new("entry1", vec![Match::new(0, "e1m1")]));
+        list.add_entry(FileEntry::new("entry1", vec![Match::new(0, "e1m1", None)]));
         assert_eq!(list.entries.len(), 2);
         assert_eq!(list.state.selected(), Some(1));
 
         list.add_entry(FileEntry::new(
             "entry2",
-            vec![Match::new(0, "e1m2"), Match::new(0, "e2m2")],
+            vec![Match::new(0, "e1m2", None), Match::new(0, "e2m2", None)],
         ));
         assert_eq!(list.entries.len(), 5);
         assert_eq!(list.state.selected(), Some(1));

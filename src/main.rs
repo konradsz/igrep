@@ -4,6 +4,7 @@ mod ui;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = clap::App::new("ig")
         .about("Interactive Grep")
+        .author("Konrad Szymoniak <szymoniak.konrad@gmail.com>")
         .arg(
             clap::Arg::with_name("PATTERN")
                 .help("Pattern to search")
@@ -16,6 +17,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .required(false)
                 .index(2),
         )
+        .arg(
+            clap::Arg::with_name("ignore-case")
+                .short("i")
+                .help("Perform case insensitive search"),
+        )
         .get_matches();
 
     let pattern = matches.value_of("PATTERN").unwrap();
@@ -25,7 +31,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "./"
     };
 
-    let mut app = ui::app::App::new(pattern, path);
+    let search_config =
+        ig::SearchConfig::from(pattern, path).case_insensitive(matches.is_present("ignore-case"));
+
+    let mut app = ui::app::App::new(search_config);
     app.run()?;
 
     Ok(())

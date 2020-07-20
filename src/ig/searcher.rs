@@ -1,11 +1,8 @@
-use std::{
-    path::PathBuf,
-    sync::{mpsc, Arc},
-};
+use std::sync::{mpsc, Arc};
 
 use grep::{
     matcher::LineTerminator,
-    regex::RegexMatcher,
+    regex::RegexMatcherBuilder,
     searcher::{
         BinaryDetection, Searcher as GrepSearcher, SearcherBuilder as GrepSearcherBuilder, Sink,
         SinkMatch,
@@ -14,15 +11,11 @@ use grep::{
 use ignore::WalkBuilder;
 
 use super::entries::{FileEntry, Match};
+use super::SearchConfig;
 
 pub enum Event {
     NewEntry(FileEntry),
     SearchingFinished,
-}
-
-pub struct SearchConfig {
-    pub pattern: String,
-    pub path: PathBuf,
 }
 
 pub struct Searcher {
@@ -62,7 +55,10 @@ impl SearcherImpl {
     }
 
     pub fn run(&self, tx2: mpsc::Sender<Event>) -> Result<(), Box<dyn std::error::Error>> {
-        let matcher = RegexMatcher::new_line_matcher(&self.config.pattern)?;
+        let matcher = RegexMatcherBuilder::new()
+            .line_terminator(Some(b'\n'))
+            .case_insensitive(self.config.case_insensitive)
+            .build(&self.config.pattern)?;
         let builder = WalkBuilder::new(&self.config.path);
 
         let walk_parallel = builder.build_parallel();
@@ -79,16 +75,13 @@ impl SearcherImpl {
 
             Box::new(move |result| {
                 let dir_entry = match result {
-                    Err(_err) => {
-                        //eprintln!("{}", err);
-                        return ignore::WalkState::Continue;
-                    }
                     Ok(entry) => {
                         if !entry.file_type().map_or(false, |ft| ft.is_file()) {
                             return ignore::WalkState::Continue;
                         }
                         entry
                     }
+                    Err(_) => return ignore::WalkState::Continue,
                 };
 
                 let mut matches_in_entry = Vec::new();

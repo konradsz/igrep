@@ -1,9 +1,10 @@
 mod entries;
 mod result_list;
+mod search_config;
 mod searcher;
 
 pub use entries::EntryType;
-pub use searcher::SearchConfig;
+pub use search_config::SearchConfig;
 
 use std::{process::Command, sync::mpsc};
 

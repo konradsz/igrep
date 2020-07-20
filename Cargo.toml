@@ -7,8 +7,7 @@ edition = "2018"
 [dependencies]
 grep = "0.2.4"
 ignore = "0.4.11"
-clap = "2.33.0"
+clap = "2.33.1"
 crossterm = "0.17.5"
 tui = { version = "0.10", default-features = false, features = ['crossterm'] }
 unicode-width = "0.1"
-itertools = "0.9"

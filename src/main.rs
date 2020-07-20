@@ -19,6 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .arg(
             clap::Arg::with_name("ignore-case")
+                .long("ignore-case")
                 .short("i")
                 .help("Perform case insensitive search"),
         )

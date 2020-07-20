@@ -1,4 +1,7 @@
-use std::sync::{mpsc, Arc};
+use std::{
+    path::PathBuf,
+    sync::{mpsc, Arc},
+};
 
 use grep::{
     matcher::LineTerminator,
@@ -19,7 +22,7 @@ pub enum Event {
 
 pub struct SearchConfig {
     pub pattern: String,
-    pub path: String, // path: &str -> AsRef<Path>
+    pub path: PathBuf,
 }
 
 pub struct Searcher {

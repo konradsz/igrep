@@ -13,13 +13,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg(
             clap::Arg::with_name("PATH")
                 .help("Path to search")
-                .required(true)
+                .required(false)
                 .index(2),
         )
         .get_matches();
 
     let pattern = matches.value_of("PATTERN").unwrap();
-    let path = matches.value_of("PATH").unwrap();
+    let path = if let Some(p) = matches.value_of("PATH") {
+        p
+    } else {
+        "./"
+    };
 
     let mut app = ui::app::App::new(pattern, path);
     app.run()?;

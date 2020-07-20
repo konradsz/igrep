@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::{error::Error, io::Write};
+use std::{error::Error, io::Write, path::PathBuf};
 
 use tui::{
     backend::CrosstermBackend,
@@ -33,7 +33,7 @@ impl App {
         Self {
             ig: Ig::new(SearchConfig {
                 pattern: pattern.into(),
-                path: path.into(),
+                path: PathBuf::from(path),
             }),
             input_handler: InputHandler::default(),
             result_list_state: ListState::default(),

@@ -3,7 +3,10 @@ use std::sync::{mpsc, Arc};
 use grep::{
     matcher::LineTerminator,
     regex::RegexMatcher,
-    searcher::{Searcher as GrepSearcher, SearcherBuilder as GrepSearcherBuilder, Sink, SinkMatch},
+    searcher::{
+        BinaryDetection, Searcher as GrepSearcher, SearcherBuilder as GrepSearcherBuilder, Sink,
+        SinkMatch,
+    },
 };
 use ignore::WalkBuilder;
 
@@ -65,7 +68,7 @@ impl SearcherImpl {
             let tx = tx2.clone();
             let matcher = matcher.clone();
             let mut grep_searcher = GrepSearcherBuilder::new()
-                //.binary_detection(BinaryDetection::quit(b'\x00')) // from simplegrep - check it
+                .binary_detection(BinaryDetection::quit(b'\x00'))
                 .line_terminator(LineTerminator::byte(b'\n'))
                 .line_number(true)
                 .multi_line(false)

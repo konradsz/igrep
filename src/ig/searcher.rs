@@ -16,6 +16,7 @@ use super::SearchConfig;
 pub enum Event {
     NewEntry(FileEntry),
     SearchingFinished,
+    Error,
 }
 
 pub struct Searcher {
@@ -35,12 +36,11 @@ impl Searcher {
         let local_self = self.inner.clone();
         let tx_local = self.tx.clone();
         let _ = std::thread::spawn(move || {
-            // handle error?
-            match local_self.run(tx_local.clone()) {
-                Ok(_) => (),
-                Err(_) => (),
+            if local_self.run(tx_local.clone()).is_err() {
+                let _ = tx_local.send(Event::Error);
             }
-            tx_local.send(Event::SearchingFinished);
+
+            let _ = tx_local.send(Event::SearchingFinished);
         });
     }
 }
@@ -86,7 +86,6 @@ impl SearcherImpl {
 
                 let mut matches_in_entry = Vec::new();
 
-                // handle error like in simplegrep
                 let _ = grep_searcher.search_path(
                     &matcher,
                     dir_entry.path(),
@@ -107,12 +106,10 @@ impl SearcherImpl {
                 );
 
                 if !matches_in_entry.is_empty() {
-                    // this can fail if app exits right when event is send
-                    tx.send(Event::NewEntry(FileEntry::new(
+                    let _ = tx.send(Event::NewEntry(FileEntry::new(
                         dir_entry.path().to_str().unwrap(),
                         matches_in_entry,
-                    )))
-                    .unwrap();
+                    )));
                 }
 
                 ignore::WalkState::Continue

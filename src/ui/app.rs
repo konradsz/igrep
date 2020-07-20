@@ -55,7 +55,7 @@ impl App {
             while self.ig.is_searching() || self.ig.is_idle() {
                 terminal.draw(|mut f| self.draw(&mut f))?;
 
-                self.ig.handle_searcher_event(); // this function could handle error event
+                self.ig.handle_searcher_event();
                 self.input_handler.handle_input(&mut self.ig)?;
             }
 

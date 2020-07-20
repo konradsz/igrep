@@ -58,6 +58,7 @@ impl Ig {
             match event {
                 Event::NewEntry(e) => self.result_list.add_entry(e),
                 Event::SearchingFinished => self.state = State::Idle,
+                Event::Error => self.state = State::Exit,
             }
         }
     }

@@ -21,7 +21,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             clap::Arg::with_name("ignore-case")
                 .long("ignore-case")
                 .short("i")
-                .help("Perform case insensitive search"),
+                .help("Searches case insensitively."),
+        )
+        .arg(
+            clap::Arg::with_name("smart-case")
+                .long("smart-case")
+                .short("S")
+                .help("Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise."),
         )
         .get_matches();
 
@@ -32,8 +38,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "./"
     };
 
-    let search_config =
-        ig::SearchConfig::from(pattern, path).case_insensitive(matches.is_present("ignore-case"));
+    let search_config = ig::SearchConfig::from(pattern, path)
+        .case_insensitive(matches.is_present("ignore-case"))
+        .case_smart(matches.is_present("smart-case"));
 
     let mut app = ui::app::App::new(search_config);
     app.run()?;

@@ -58,6 +58,7 @@ impl SearcherImpl {
         let matcher = RegexMatcherBuilder::new()
             .line_terminator(Some(b'\n'))
             .case_insensitive(self.config.case_insensitive)
+            .case_smart(self.config.case_smart)
             .build(&self.config.pattern)?;
         let builder = WalkBuilder::new(&self.config.path);
 

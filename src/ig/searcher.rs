@@ -2,6 +2,7 @@ use std::sync::{mpsc, Arc};
 
 use grep::{
     matcher::LineTerminator,
+    matcher::Matcher,
     regex::RegexMatcherBuilder,
     searcher::{
         BinaryDetection, Searcher as GrepSearcher, SearcherBuilder as GrepSearcherBuilder, Sink,
@@ -105,6 +106,8 @@ impl SearcherImpl {
                         Ok(true)
                     }),
                 );
+                //let sr = SinkRecorder::new(matcher.clone());
+                //let _ = grep_searcher.search_path(&matcher, dir_entry.path(), ms);
 
                 if !matches_in_entry.is_empty() {
                     let _ = tx.send(Event::NewEntry(FileEntry::new(
@@ -118,6 +121,49 @@ impl SearcherImpl {
         });
 
         Ok(())
+    }
+}
+
+struct SinkRecorder<M>
+where
+    M: Matcher,
+{
+    pub matcher: M,
+    pub matches: Vec<Match>,
+}
+
+impl<M> SinkRecorder<M>
+where
+    M: Matcher,
+{
+    fn new(matcher: M) -> Self {
+        Self {
+            matcher,
+            matches: Vec::new(),
+        }
+    }
+}
+
+impl<M> Sink for SinkRecorder<M>
+where
+    M: Matcher,
+{
+    type Error = std::io::Error;
+
+    fn matched(
+        &mut self,
+        searcher: &GrepSearcher,
+        sink_match: &SinkMatch,
+    ) -> Result<bool, std::io::Error> {
+        //(self.0)(searcher, sink_match)
+        //self.matcher.find_iter(sink_match.bytes(), )
+        let line_number = sink_match.line_number().unwrap();
+        let text = std::str::from_utf8(sink_match.bytes());
+        if let Ok(t) = text {
+            self.matches.push(Match::new(line_number, t, None));
+        };
+
+        Ok(true)
     }
 }
 

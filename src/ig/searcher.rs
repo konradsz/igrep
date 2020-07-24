@@ -38,10 +38,10 @@ impl Searcher {
         let tx_local = self.tx.clone();
         let _ = std::thread::spawn(move || {
             if local_self.run(tx_local.clone()).is_err() {
-                let _ = tx_local.send(Event::Error);
+                tx_local.send(Event::Error).ok();
             }
 
-            let _ = tx_local.send(Event::SearchingFinished);
+            tx_local.send(Event::SearchingFinished).ok();
         });
     }
 }
@@ -65,7 +65,6 @@ impl SearcherImpl {
 
         let walk_parallel = builder.build_parallel();
         walk_parallel.run(move || {
-            let pattern = self.config.pattern.clone(); // this is _very_ lame
             let tx = tx2.clone();
             let matcher = matcher.clone();
             let mut grep_searcher = GrepSearcherBuilder::new()
@@ -85,35 +84,18 @@ impl SearcherImpl {
                     }
                     Err(_) => return ignore::WalkState::Continue,
                 };
-
                 let mut matches_in_entry = Vec::new();
-
-                let _ = grep_searcher.search_path(
-                    &matcher,
-                    dir_entry.path(),
-                    MatchesSink(|_, sink_match| {
-                        let line_number = sink_match.line_number().unwrap();
-                        let text = std::str::from_utf8(sink_match.bytes());
-                        if let Ok(t) = text {
-                            let span = if let Some(byte_offset) = t.find(&pattern) {
-                                Some((byte_offset, byte_offset + pattern.len()))
-                            } else {
-                                None
-                            };
-                            let m = Match::new(line_number, t, span);
-                            matches_in_entry.push(m);
-                        }
-                        Ok(true)
-                    }),
-                );
-                //let sr = SinkRecorder::new(matcher.clone());
-                //let _ = grep_searcher.search_path(&matcher, dir_entry.path(), ms);
+                let sr = SinkRecorder::new(&matcher, &mut matches_in_entry);
+                grep_searcher
+                    .search_path(&matcher, dir_entry.path(), sr)
+                    .ok();
 
                 if !matches_in_entry.is_empty() {
-                    let _ = tx.send(Event::NewEntry(FileEntry::new(
+                    tx.send(Event::NewEntry(FileEntry::new(
                         dir_entry.path().to_str().unwrap(),
                         matches_in_entry,
-                    )));
+                    )))
+                    .ok();
                 }
 
                 ignore::WalkState::Continue
@@ -124,27 +106,27 @@ impl SearcherImpl {
     }
 }
 
-struct SinkRecorder<M>
+struct SinkRecorder<'a, M>
 where
     M: Matcher,
 {
-    pub matcher: M,
-    pub matches: Vec<Match>,
+    matcher: M,
+    matches_in_entry: &'a mut Vec<Match>,
 }
 
-impl<M> SinkRecorder<M>
+impl<'a, M> SinkRecorder<'a, M>
 where
     M: Matcher,
 {
-    fn new(matcher: M) -> Self {
+    fn new(matcher: M, matches_in_entry: &'a mut Vec<Match>) -> Self {
         Self {
             matcher,
-            matches: Vec::new(),
+            matches_in_entry,
         }
     }
 }
 
-impl<M> Sink for SinkRecorder<M>
+impl<'a, M> Sink for SinkRecorder<'a, M>
 where
     M: Matcher,
 {
@@ -152,36 +134,25 @@ where
 
     fn matched(
         &mut self,
-        searcher: &GrepSearcher,
+        _: &GrepSearcher,
         sink_match: &SinkMatch,
     ) -> Result<bool, std::io::Error> {
-        //(self.0)(searcher, sink_match)
-        //self.matcher.find_iter(sink_match.bytes(), )
         let line_number = sink_match.line_number().unwrap();
         let text = std::str::from_utf8(sink_match.bytes());
+
+        let mut offsets = vec![];
+        self.matcher
+            .find_iter(sink_match.bytes(), |m| {
+                offsets.push((m.start(), m.end()));
+                true
+            })
+            .ok();
+
         if let Ok(t) = text {
-            self.matches.push(Match::new(line_number, t, None));
+            self.matches_in_entry
+                .push(Match::new(line_number, t, offsets));
         };
 
         Ok(true)
-    }
-}
-
-struct MatchesSink<F>(pub F)
-where
-    F: FnMut(&GrepSearcher, &SinkMatch) -> Result<bool, std::io::Error>;
-
-impl<F> Sink for MatchesSink<F>
-where
-    F: FnMut(&GrepSearcher, &SinkMatch) -> Result<bool, std::io::Error>,
-{
-    type Error = std::io::Error;
-
-    fn matched(
-        &mut self,
-        searcher: &GrepSearcher,
-        sink_match: &SinkMatch,
-    ) -> Result<bool, std::io::Error> {
-        (self.0)(searcher, sink_match)
     }
 }

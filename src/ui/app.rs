@@ -82,8 +82,6 @@ impl App {
     }
 
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
-        let width = f.size().width as usize;
-
         let files_list: Vec<ListItem> = self
             .ig
             .result_list
@@ -92,21 +90,29 @@ impl App {
                 EntryType::Header(h) => {
                     ListItem::new(Span::styled(h, Style::default().fg(Color::LightMagenta)))
                 }
-                EntryType::Match(n, t, offset) => {
+                EntryType::Match(n, t, offsets) => {
                     let line_number =
                         Span::styled(format!(" {}: ", n), Style::default().fg(Color::Green));
-                    let spans = if let Some(span) = offset {
-                        let pre = Span::raw(&t[0..span.0]);
-                        let actual =
-                            Span::styled(&t[span.0..span.1], Style::default().fg(Color::Red));
-                        let post = Span::raw(format!("{: <1$}", &t[span.1..], width));
-                        Spans::from(vec![line_number, pre, actual, post])
-                    } else {
-                        let result = format!("{: <1$}", t, width);
-                        Spans::from(vec![line_number, Span::raw(result)])
-                    };
 
-                    ListItem::new(spans)
+                    let mut spans = vec![line_number];
+
+                    let mut current_position = 0;
+                    for offset in offsets {
+                        let before_match = Span::raw(&t[current_position..offset.0]);
+                        let actual_match =
+                            Span::styled(&t[offset.0..offset.1], Style::default().fg(Color::Red));
+
+                        // sut current position to the end of current match
+                        current_position = offset.1;
+
+                        spans.push(before_match);
+                        spans.push(actual_match);
+                    }
+
+                    // push remaining text of a line
+                    spans.push(Span::raw(&t[current_position..]));
+
+                    ListItem::new(Spans::from(spans))
                 }
             })
             .collect();

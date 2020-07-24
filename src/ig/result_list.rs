@@ -333,13 +333,16 @@ mod tests {
     #[test]
     fn test_add_entry() {
         let mut list = ResultList::default();
-        list.add_entry(FileEntry::new("entry1", vec![Match::new(0, "e1m1", None)]));
+        list.add_entry(FileEntry::new(
+            "entry1",
+            vec![Match::new(0, "e1m1", vec![])],
+        ));
         assert_eq!(list.entries.len(), 2);
         assert_eq!(list.state.selected(), Some(1));
 
         list.add_entry(FileEntry::new(
             "entry2",
-            vec![Match::new(0, "e1m2", None), Match::new(0, "e2m2", None)],
+            vec![Match::new(0, "e1m2", vec![]), Match::new(0, "e2m2", vec![])],
         ));
         assert_eq!(list.entries.len(), 5);
         assert_eq!(list.state.selected(), Some(1));

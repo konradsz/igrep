@@ -8,7 +8,8 @@ Runs ripgrep in the background, allows interactively pick its results and open s
 ```
 -h, --help           Prints help information
 -i, --ignore-case    Searches case insensitively.
--S, --smart-case     Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise.
+-S, --smart-case     Searches case insensitively if the pattern is all lowercase.
+                     Search case sensitively otherwise.
 -V, --version        Prints version information
 ```
 

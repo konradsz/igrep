@@ -1,5 +1,7 @@
 # ig - Interactive Grep
-Runs ripgrep in the background, allows interactively pick its results and open selected match in vim (this may be subject to change).
+Runs ripgrep in the background, allows interactively pick its results and open selected match in neovim (this is awfully hardcoded, but is subject to change).
+
+<img src="./assets/demo.gif"/>
 
 ## Usage
 `ig [FLAGS] <PATTERN> [PATH]`

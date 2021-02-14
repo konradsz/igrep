@@ -15,10 +15,13 @@ impl InputHandler {
         if poll(poll_timeout)? {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {
-                if matches!(key_event, KeyEvent {
-                    code: KeyCode::Char(_),
-                ..})
-                {
+                if matches!(
+                    key_event,
+                    KeyEvent {
+                        code: KeyCode::Char(_),
+                        ..
+                    }
+                ) {
                     self.handle_char_input(key_event.code, ig);
                 } else {
                     self.handle_non_char_input(key_event.code, ig);

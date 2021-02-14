@@ -54,7 +54,7 @@ impl Ig {
     }
 
     pub fn handle_searcher_event(&mut self) {
-        if let Ok(event) = self.rx.try_recv() {
+        while let Ok(event) = self.rx.try_recv() {
             match event {
                 Event::NewEntry(e) => self.result_list.add_entry(e),
                 Event::SearchingFinished => self.state = State::Idle,

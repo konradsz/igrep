@@ -56,6 +56,13 @@ impl SearcherImpl {
     }
 
     pub fn run(&self, tx2: mpsc::Sender<Event>) -> Result<(), Box<dyn std::error::Error>> {
+        let grep_searcher = GrepSearcherBuilder::new()
+            .binary_detection(BinaryDetection::quit(b'\x00'))
+            .line_terminator(LineTerminator::byte(b'\n'))
+            .line_number(true)
+            .multi_line(false)
+            .build();
+
         let matcher = RegexMatcherBuilder::new()
             .line_terminator(Some(b'\n'))
             .case_insensitive(self.config.case_insensitive)
@@ -67,12 +74,7 @@ impl SearcherImpl {
         walk_parallel.run(move || {
             let tx = tx2.clone();
             let matcher = matcher.clone();
-            let mut grep_searcher = GrepSearcherBuilder::new()
-                .binary_detection(BinaryDetection::quit(b'\x00'))
-                .line_terminator(LineTerminator::byte(b'\n'))
-                .line_number(true)
-                .multi_line(false)
-                .build();
+            let mut grep_searcher = grep_searcher.clone();
 
             Box::new(move |result| {
                 let dir_entry = match result {

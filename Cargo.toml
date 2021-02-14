@@ -5,9 +5,9 @@ authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-grep = "0.2.4"
-ignore = "0.4.11"
-clap = "2.33.1"
-crossterm = "0.17.5"
-tui = { version = "0.10", default-features = false, features = ['crossterm'] }
+grep = "0.2.7"
+ignore = "0.4.17"
+clap = "2.33.3"
+crossterm = "0.19"
+tui = { version = "0.14", default-features = false, features = ['crossterm'] }
 unicode-width = "0.1"

@@ -1,5 +1,5 @@
 # ig - Interactive Grep
-Runs ripgrep in the background, allows interactively pick its results and open selected match in neovim (this is awfully hardcoded, but is subject to change).
+Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/BurntSushi/ripgrep/) library) in the background, allows interactively pick its results and open selected match in neovim (this is awfully hardcoded, but is subject to change).
 
 <img src="./assets/demo.gif"/>
 

@@ -88,6 +88,7 @@ impl App {
             .iter()
             .map(|e| match e {
                 EntryType::Header(h) => {
+                    let h = h.trim_start_matches("./");
                     ListItem::new(Span::styled(h, Style::default().fg(Color::LightMagenta)))
                 }
                 EntryType::Match(n, t, offsets) => {
@@ -102,7 +103,7 @@ impl App {
                         let actual_match =
                             Span::styled(&t[offset.0..offset.1], Style::default().fg(Color::Red));
 
-                        // sut current position to the end of current match
+                        // set current position to the end of current match
                         current_position = offset.1;
 
                         spans.push(before_match);

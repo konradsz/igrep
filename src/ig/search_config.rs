@@ -1,3 +1,4 @@
+use ignore::types::{Types, TypesBuilder};
 use std::path::PathBuf;
 
 pub struct SearchConfig {
@@ -5,15 +6,21 @@ pub struct SearchConfig {
     pub path: PathBuf,
     pub case_insensitive: bool,
     pub case_smart: bool,
+    pub types: Types,
 }
 
 impl SearchConfig {
     pub fn from(pattern: &str, path: &str) -> Self {
+        let mut builder = TypesBuilder::new();
+        builder.add_defaults();
+        let types = builder.build().unwrap();
+
         Self {
             pattern: pattern.into(),
             path: PathBuf::from(path),
             case_insensitive: false,
             case_smart: false,
+            types,
         }
     }
 
@@ -24,6 +31,17 @@ impl SearchConfig {
 
     pub fn case_smart(mut self, case_smart: bool) -> Self {
         self.case_smart = case_smart;
+        self
+    }
+
+    pub fn file_types(mut self, file_types: Vec<&str>) -> Self {
+        let mut builder = TypesBuilder::new();
+        builder.add_defaults();
+        for file_type in file_types {
+            builder.select(file_type);
+        }
+        let types = builder.build().unwrap();
+        self.types = types;
         self
     }
 }

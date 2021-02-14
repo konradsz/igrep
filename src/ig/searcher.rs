@@ -61,9 +61,9 @@ impl SearcherImpl {
             .case_insensitive(self.config.case_insensitive)
             .case_smart(self.config.case_smart)
             .build(&self.config.pattern)?;
-        let builder = WalkBuilder::new(&self.config.path);
+        let mut builder = WalkBuilder::new(&self.config.path);
 
-        let walk_parallel = builder.build_parallel();
+        let walk_parallel = builder.types(self.config.types.clone()).build_parallel();
         walk_parallel.run(move || {
             let tx = tx2.clone();
             let matcher = matcher.clone();

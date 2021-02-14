@@ -4,7 +4,7 @@ Runs ripgrep in the background, allows interactively pick its results and open s
 <img src="./assets/demo.gif"/>
 
 ## Usage
-`ig [FLAGS] <PATTERN> [PATH]`
+`ig [FLAGS] <PATTERN> [PATH] [OPTIONS]`
 
 ### Flags
 ```
@@ -13,6 +13,11 @@ Runs ripgrep in the background, allows interactively pick its results and open s
 -S, --smart-case     Searches case insensitively if the pattern is all lowercase.
                      Search case sensitively otherwise.
 -V, --version        Prints version information
+```
+
+### OPTIONS:
+```
+-t, --type <TYPE>...    Only search files matching TYPE. Multiple type flags may be provided.
 ```
 
 ### Keybindings

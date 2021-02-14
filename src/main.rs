@@ -29,6 +29,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .short("S")
                 .help("Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise."),
         )
+        .arg(
+            clap::Arg::with_name("TYPE")
+                .long("type")
+                .short("t")
+                .help("Only search files matching TYPE. Multiple type flags may be provided.")
+                .takes_value(true)
+                .multiple(true)
+        )
         .get_matches();
 
     let pattern = matches.value_of("PATTERN").unwrap();
@@ -40,9 +48,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let search_config = ig::SearchConfig::from(pattern, path)
         .case_insensitive(matches.is_present("ignore-case"))
-        .case_smart(matches.is_present("smart-case"));
+        .case_smart(matches.is_present("smart-case"))
+        .file_types(matches.values_of("TYPE").unwrap_or_default().collect());
 
-    let mut app = ui::app::App::new(search_config);
+    let mut app = ui::App::new(search_config);
     app.run()?;
 
     Ok(())

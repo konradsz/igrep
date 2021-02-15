@@ -18,13 +18,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .index(2),
         )
         .arg(
-            clap::Arg::with_name("ignore-case")
+            clap::Arg::with_name("IGNORE-CASE")
                 .long("ignore-case")
                 .short("i")
                 .help("Searches case insensitively."),
         )
         .arg(
-            clap::Arg::with_name("smart-case")
+            clap::Arg::with_name("SMART-CASE")
                 .long("smart-case")
                 .short("S")
                 .help("Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise."),
@@ -55,8 +55,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let search_config = ig::SearchConfig::from(pattern, path)
-        .case_insensitive(matches.is_present("ignore-case"))
-        .case_smart(matches.is_present("smart-case"))
+        .case_insensitive(matches.is_present("IGNORE-CASE"))
+        .case_smart(matches.is_present("SMART-CASE"))
         .file_types(
             matches.values_of("TYPE").unwrap_or_default().collect(),
             matches.values_of("TYPE-NOT").unwrap_or_default().collect(),

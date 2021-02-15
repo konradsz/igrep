@@ -1,3 +1,5 @@
+use std::io::Write;
+
 mod ig;
 mod ui;
 
@@ -8,7 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg(
             clap::Arg::with_name("PATTERN")
                 .help("Pattern to search")
-                .required(true)
+                .required_unless("TYPE-LIST")
                 .index(1),
         )
         .arg(
@@ -30,6 +32,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .help("Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise."),
         )
         .arg(
+            clap::Arg::with_name("TYPE-LIST")
+                .long("type-list")
+                .help("Show all supported file types and their corresponding globs.")
+        )
+        .arg(
             clap::Arg::with_name("TYPE")
                 .long("type")
                 .short("t")
@@ -46,6 +53,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .multiple(true)
         )
         .get_matches();
+
+    if matches.is_present("TYPE-LIST") {
+        use itertools::Itertools;
+        let mut builder = ignore::types::TypesBuilder::new();
+        builder.add_defaults();
+        for definition in builder.definitions() {
+            writeln!(
+                std::io::stdout(),
+                "{}: {}",
+                definition.name(),
+                definition.globs().iter().format(", "),
+            )?;
+        }
+        return Ok(());
+    }
 
     let pattern = matches.value_of("PATTERN").unwrap();
     let path = if let Some(p) = matches.value_of("PATH") {

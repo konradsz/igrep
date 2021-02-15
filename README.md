@@ -12,13 +12,14 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 -i, --ignore-case    Searches case insensitively.
 -S, --smart-case     Searches case insensitively if the pattern is all lowercase.
                      Search case sensitively otherwise.
+    --type-list      Show all supported file types and their corresponding globs.
 -V, --version        Prints version information
 ```
 
 ### Options
 ```
 -t, --type <TYPE>...     Only search files matching TYPE. Multiple type flags may be provided.
--T, --type-not <TYPE>... Do not search files matching TYPE. Multiple type-not flags may be provided.
+-T, --type-not <TYPE>... Do not search files matching TYPE-NOT. Multiple type-not flags may be provided.
 ```
 
 ### Keybindings

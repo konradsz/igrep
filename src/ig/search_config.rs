@@ -34,14 +34,16 @@ impl SearchConfig {
         self
     }
 
-    pub fn file_types(mut self, file_types: Vec<&str>) -> Self {
+    pub fn file_types(mut self, file_types: Vec<&str>, file_types_not: Vec<&str>) -> Self {
         let mut builder = TypesBuilder::new();
         builder.add_defaults();
         for file_type in file_types {
             builder.select(file_type);
         }
-        let types = builder.build().unwrap();
-        self.types = types;
+        for file_type in file_types_not {
+            builder.negate(file_type);
+        }
+        self.types = builder.build().unwrap();
         self
     }
 }

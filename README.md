@@ -15,13 +15,14 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 -V, --version        Prints version information
 ```
 
-### OPTIONS:
+### Options
 ```
--t, --type <TYPE>...    Only search files matching TYPE. Multiple type flags may be provided.
+-t, --type <TYPE>...     Only search files matching TYPE. Multiple type flags may be provided.
+-T, --type-not <TYPE>... Do not search files matching TYPE. Multiple type-not flags may be provided.
 ```
 
 ### Keybindings
-|                                                |                                                |
+| Key                                            | Action                                         |
 |------------------------------------------------|------------------------------------------------|
 | `q`, `Esc`                                     | Quit                                           |
 | `Down`, `j`                                    | Select next match                              |

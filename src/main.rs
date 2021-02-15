@@ -37,6 +37,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .takes_value(true)
                 .multiple(true)
         )
+        .arg(
+            clap::Arg::with_name("TYPE-NOT")
+                .long("type-not")
+                .short("T")
+                .help("Do not search files matching TYPE. Multiple type-not flags may be provided.")
+                .takes_value(true)
+                .multiple(true)
+        )
         .get_matches();
 
     let pattern = matches.value_of("PATTERN").unwrap();
@@ -49,7 +57,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let search_config = ig::SearchConfig::from(pattern, path)
         .case_insensitive(matches.is_present("ignore-case"))
         .case_smart(matches.is_present("smart-case"))
-        .file_types(matches.values_of("TYPE").unwrap_or_default().collect());
+        .file_types(
+            matches.values_of("TYPE").unwrap_or_default().collect(),
+            matches.values_of("TYPE-NOT").unwrap_or_default().collect(),
+        );
 
     let mut app = ui::App::new(search_config);
     app.run()?;

@@ -14,7 +14,7 @@ impl InputHandler {
         let poll_timeout = if ig.is_searching() {
             Duration::from_millis(1)
         } else {
-            Duration::from_millis(1000)
+            Duration::from_millis(100)
         };
         if poll(poll_timeout)? {
             let read_event = read()?;

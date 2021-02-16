@@ -199,7 +199,7 @@ impl ResultList {
             return;
         }
 
-        let selected_index = self.state.selected().unwrap();
+        let selected_index = self.state.selected().expect("Nothing selected");
 
         let mut current_file_header_index = 0;
         for index in (0..selected_index).rev() {
@@ -239,14 +239,14 @@ impl ResultList {
     }
 
     fn is_last_match_in_file(&self) -> bool {
-        let current_index = self.state.selected().unwrap();
+        let current_index = self.state.selected().expect("Nothing selected");
 
         self.is_header(current_index - 1)
             && (current_index == self.entries.len() - 1 || self.is_header(current_index + 1))
     }
 
     fn remove_current_entry_and_select_previous(&mut self) {
-        let selected_index = self.state.selected().unwrap();
+        let selected_index = self.state.selected().expect("Nothing selected");
         self.entries.remove(selected_index);
         self.filtered_matches_count += 1;
 
@@ -262,7 +262,10 @@ impl ResultList {
                 for index in (0..=i).rev() {
                     match &self.entries[index] {
                         EntryType::Header(name) => {
-                            return Some((name.as_str(), line_number.unwrap()));
+                            return Some((
+                                name.as_str(),
+                                line_number.expect("Line number not specified"),
+                            ));
                         }
                         EntryType::Match(number, _, _) => {
                             if line_number.is_none() {

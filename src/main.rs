@@ -70,20 +70,20 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let pattern = matches.value_of("PATTERN").unwrap();
+    let pattern = matches.value_of("PATTERN").expect("PATTERN is required");
     let path = if let Some(p) = matches.value_of("PATH") {
         p
     } else {
         "./"
     };
 
-    let search_config = ig::SearchConfig::from(pattern, path)
+    let search_config = ig::SearchConfig::from(pattern, path)?
         .case_insensitive(matches.is_present("IGNORE-CASE"))
         .case_smart(matches.is_present("SMART-CASE"))
         .file_types(
             matches.values_of("TYPE").unwrap_or_default().collect(),
             matches.values_of("TYPE-NOT").unwrap_or_default().collect(),
-        );
+        )?;
 
     let mut app = ui::App::new(search_config);
     app.run()?;

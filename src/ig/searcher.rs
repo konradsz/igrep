@@ -95,7 +95,7 @@ impl SearcherImpl {
 
                 if !matches_in_entry.is_empty() {
                     tx.send(Event::NewEntry(FileEntry::new(
-                        dir_entry.path().to_str().unwrap(),
+                        dir_entry.path().to_str().expect("Cannot read file path"),
                         matches_in_entry,
                     )))
                     .ok();
@@ -140,7 +140,9 @@ where
         _: &GrepSearcher,
         sink_match: &SinkMatch,
     ) -> Result<bool, std::io::Error> {
-        let line_number = sink_match.line_number().unwrap();
+        let line_number = sink_match
+            .line_number()
+            .ok_or(std::io::ErrorKind::InvalidData)?;
         let text = std::str::from_utf8(sink_match.bytes());
 
         let mut offsets = vec![];

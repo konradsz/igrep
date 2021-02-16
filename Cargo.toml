@@ -12,3 +12,4 @@ crossterm = "0.19"
 tui = { version = "0.14", default-features = false, features = ['crossterm'] }
 unicode-width = "0.1"
 itertools = "0.10.0"
+anyhow = "1.0.38"

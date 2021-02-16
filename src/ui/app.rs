@@ -1,10 +1,9 @@
+use anyhow::Result;
 use crossterm::{
     event::DisableMouseCapture,
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-
-use std::error::Error;
 
 use tui::{
     backend::CrosstermBackend,
@@ -37,7 +36,7 @@ impl App {
         }
     }
 
-    pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn run(&mut self) -> Result<()> {
         self.ig.search();
 
         loop {

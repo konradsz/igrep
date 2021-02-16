@@ -1,9 +1,10 @@
+use anyhow::Result;
 use std::io::Write;
 
 mod ig;
 mod ui;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     let matches = clap::App::new("ig")
         .about("Interactive Grep")
         .author("Konrad Szymoniak <szymoniak.konrad@gmail.com>")

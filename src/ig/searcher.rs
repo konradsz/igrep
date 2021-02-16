@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::sync::{mpsc, Arc};
 
 use grep::{
@@ -55,7 +56,7 @@ impl SearcherImpl {
         Self { config }
     }
 
-    pub fn run(&self, tx2: mpsc::Sender<Event>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run(&self, tx2: mpsc::Sender<Event>) -> Result<()> {
         let grep_searcher = GrepSearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
             .line_terminator(LineTerminator::byte(b'\n'))

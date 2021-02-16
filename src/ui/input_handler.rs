@@ -1,4 +1,5 @@
-use std::{error::Error, time::Duration};
+use anyhow::Result;
+use std::time::Duration;
 
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 
@@ -10,7 +11,7 @@ pub struct InputHandler {
 }
 
 impl InputHandler {
-    pub fn handle_input(&mut self, ig: &mut Ig) -> Result<(), Box<dyn Error>> {
+    pub fn handle_input(&mut self, ig: &mut Ig) -> Result<()> {
         let poll_timeout = if ig.is_searching() {
             Duration::from_millis(1)
         } else {

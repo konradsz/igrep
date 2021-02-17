@@ -71,7 +71,10 @@ impl SearcherImpl {
             .build(&self.config.pattern)?;
         let mut builder = WalkBuilder::new(&self.config.path);
 
-        let walk_parallel = builder.types(self.config.types.clone()).build_parallel();
+        let walk_parallel = builder
+            .overrides(self.config.overrides.clone())
+            .types(self.config.types.clone())
+            .build_parallel();
         walk_parallel.run(move || {
             let tx = tx2.clone();
             let matcher = matcher.clone();

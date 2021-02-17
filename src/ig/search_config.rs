@@ -1,5 +1,8 @@
 use anyhow::Result;
-use ignore::types::{Types, TypesBuilder};
+use ignore::{
+    overrides::{Override, OverrideBuilder},
+    types::{Types, TypesBuilder},
+};
 use std::path::PathBuf;
 
 pub struct SearchConfig {
@@ -7,6 +10,7 @@ pub struct SearchConfig {
     pub path: PathBuf,
     pub case_insensitive: bool,
     pub case_smart: bool,
+    pub overrides: Override,
     pub types: Types,
 }
 
@@ -21,6 +25,7 @@ impl SearchConfig {
             path: PathBuf::from(path),
             case_insensitive: false,
             case_smart: false,
+            overrides: Override::empty(),
             types,
         })
     }
@@ -33,6 +38,15 @@ impl SearchConfig {
     pub fn case_smart(mut self, case_smart: bool) -> Self {
         self.case_smart = case_smart;
         self
+    }
+
+    pub fn globs(mut self, globs: Vec<&str>) -> Result<Self> {
+        let mut builder = OverrideBuilder::new(std::env::current_dir()?);
+        for glob in globs {
+            builder.add(&glob)?;
+        }
+        self.overrides = builder.build()?;
+        Ok(self)
     }
 
     pub fn file_types(mut self, file_types: Vec<&str>, file_types_not: Vec<&str>) -> Result<Self> {

@@ -33,6 +33,14 @@ fn main() -> Result<()> {
                 .help("Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise."),
         )
         .arg(
+            clap::Arg::with_name("GLOB")
+                .long("glob")
+                .short("g")
+                .help("Include files and directories for searching that match the given glob. Multiple globs may be provided.")
+                .takes_value(true)
+                .multiple(true)
+        )
+        .arg(
             clap::Arg::with_name("TYPE-LIST")
                 .long("type-list")
                 .help("Show all supported file types and their corresponding globs.")
@@ -41,7 +49,7 @@ fn main() -> Result<()> {
             clap::Arg::with_name("TYPE")
                 .long("type")
                 .short("t")
-                .help("Only search files matching TYPE. Multiple type flags may be provided.")
+                .help("Only search files matching TYPE. Multiple types may be provided.")
                 .takes_value(true)
                 .multiple(true)
         )
@@ -49,7 +57,7 @@ fn main() -> Result<()> {
             clap::Arg::with_name("TYPE-NOT")
                 .long("type-not")
                 .short("T")
-                .help("Do not search files matching TYPE. Multiple type-not flags may be provided.")
+                .help("Do not search files matching TYPE. Multiple types-not may be provided.")
                 .takes_value(true)
                 .multiple(true)
         )
@@ -80,6 +88,7 @@ fn main() -> Result<()> {
     let search_config = ig::SearchConfig::from(pattern, path)?
         .case_insensitive(matches.is_present("IGNORE-CASE"))
         .case_smart(matches.is_present("SMART-CASE"))
+        .globs(matches.values_of("GLOB").unwrap_or_default().collect())?
         .file_types(
             matches.values_of("TYPE").unwrap_or_default().collect(),
             matches.values_of("TYPE-NOT").unwrap_or_default().collect(),

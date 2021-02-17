@@ -20,8 +20,10 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 ```
 -g, --glob <GLOB>...        Include files and directories for searching that match the given glob.
                             Multiple globs may be provided.
--t, --type <TYPE>...        Only search files matching TYPE. Multiple types may be provided.
--T, --type-not <TYPE>...    Do not search files matching TYPE-NOT. Multiple types-not may be provided.
+-t, --type <TYPE>...        Only search files matching TYPE.
+                            Multiple types may be provided.
+-T, --type-not <TYPE>...    Do not search files matching TYPE-NOT.
+                            Multiple types-not may be provided.
 ```
 
 ### Keybindings

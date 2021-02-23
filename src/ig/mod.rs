@@ -1,15 +1,14 @@
 mod entries;
-mod result_list;
 mod search_config;
 mod searcher;
 mod sink;
 
-pub use entries::EntryType;
+pub use entries::{EntryType, FileEntry, Match};
 pub use search_config::SearchConfig;
 
 use std::{process::Command, sync::mpsc};
 
-use result_list::ResultList;
+use crate::ui::result_list::ResultList;
 use searcher::{Event, Searcher};
 
 #[derive(PartialEq)]
@@ -24,7 +23,6 @@ pub struct Ig {
     rx: mpsc::Receiver<Event>,
     state: State,
     searcher: Searcher,
-    pub result_list: ResultList,
 }
 
 impl Ig {
@@ -35,13 +33,12 @@ impl Ig {
             rx,
             state: State::Idle,
             searcher: Searcher::new(config, tx),
-            result_list: ResultList::default(),
         }
     }
 
-    pub fn open_file_if_requested(&mut self) {
+    pub fn open_file_if_requested(&mut self, selected_entry: Option<(&str, u64)>) {
         if let State::OpenFile(idle) = self.state {
-            if let Some((file_name, line_number)) = self.result_list.get_selected_entry() {
+            if let Some((file_name, line_number)) = selected_entry {
                 let mut child_process = Command::new("nvim")
                     .arg(file_name)
                     .arg(format!("+{}", line_number))
@@ -54,19 +51,21 @@ impl Ig {
         }
     }
 
-    pub fn handle_searcher_event(&mut self) {
+    pub fn handle_searcher_event(&mut self) -> Option<FileEntry> {
         while let Ok(event) = self.rx.try_recv() {
             match event {
-                Event::NewEntry(e) => self.result_list.add_entry(e),
+                Event::NewEntry(e) => return Some(e),
                 Event::SearchingFinished => self.state = State::Idle,
                 Event::Error => self.state = State::Exit,
             }
         }
+
+        None
     }
 
-    pub fn search(&mut self) {
+    pub fn search(&mut self, result_list: &mut ResultList) {
         if self.state == State::Idle {
-            self.result_list.clear();
+            result_list.clear();
             self.state = State::Searching;
             self.searcher.search();
         }

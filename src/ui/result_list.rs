@@ -1,4 +1,4 @@
-use super::entries::{EntryType, FileEntry};
+use crate::ig::{EntryType, FileEntry};
 use std::cmp;
 
 #[derive(Copy, Clone, Default)]
@@ -321,7 +321,7 @@ impl ResultList {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ig::entries::Match;
+    use crate::ig::Match;
 
     #[test]
     fn test_empty_list() {

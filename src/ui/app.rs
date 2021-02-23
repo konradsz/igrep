@@ -14,16 +14,17 @@ use tui::{
     Frame, Terminal,
 };
 
-use super::input_handler::InputHandler;
-use super::scroll_offset_list::{List, ListItem, ListState, ScrollOffset};
-
-use crate::ig::EntryType;
-use crate::ig::Ig;
-use crate::ig::SearchConfig;
+use super::{
+    input_handler::InputHandler,
+    result_list::ResultList,
+    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+};
+use crate::ig::{EntryType, Ig, SearchConfig};
 
 pub struct App {
     ig: Ig,
     input_handler: InputHandler,
+    result_list: ResultList,
     result_list_state: ListState,
 }
 
@@ -32,12 +33,13 @@ impl App {
         Self {
             ig: Ig::new(config),
             input_handler: InputHandler::default(),
+            result_list: ResultList::default(),
             result_list_state: ListState::default(),
         }
     }
 
     pub fn run(&mut self) -> Result<()> {
-        self.ig.search();
+        self.ig.search(&mut self.result_list);
 
         loop {
             let backend = CrosstermBackend::new(std::io::stdout());
@@ -54,11 +56,15 @@ impl App {
             while self.ig.is_searching() || self.ig.is_idle() {
                 terminal.draw(|mut f| self.draw(&mut f))?;
 
-                self.ig.handle_searcher_event();
-                self.input_handler.handle_input(&mut self.ig)?;
+                if let Some(entry) = self.ig.handle_searcher_event() {
+                    self.result_list.add_entry(entry);
+                }
+                self.input_handler
+                    .handle_input(&mut self.result_list, &mut self.ig)?;
             }
 
-            self.ig.open_file_if_requested();
+            self.ig
+                .open_file_if_requested(self.result_list.get_selected_entry());
 
             if self.ig.exit_requested() {
                 execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
@@ -82,7 +88,6 @@ impl App {
 
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         let files_list: Vec<ListItem> = self
-            .ig
             .result_list
             .iter()
             .map(|e| match e {
@@ -128,12 +133,12 @@ impl App {
             .scroll_offset(ScrollOffset::default().top(1).bottom(0));
 
         self.result_list_state
-            .select(self.ig.result_list.get_state().selected());
+            .select(self.result_list.get_state().selected());
         f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
     }
 
     fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
-        let current_match_index = self.ig.result_list.get_current_match_index();
+        let current_match_index = self.result_list.get_current_match_index();
 
         let app_status_color = if self.ig.is_searching() {
             Color::LightRed
@@ -155,11 +160,11 @@ impl App {
         let search_result = if self.ig.is_searching() {
             Span::raw("")
         } else {
-            let total_no_of_matches = self.ig.result_list.get_total_number_of_matches();
+            let total_no_of_matches = self.result_list.get_total_number_of_matches();
             let message = if total_no_of_matches == 0 {
                 " No matches found.".into()
             } else {
-                let no_of_files = self.ig.result_list.get_total_number_of_file_entries();
+                let no_of_files = self.result_list.get_total_number_of_file_entries();
 
                 let matches_str = if total_no_of_matches == 1 {
                     "match"
@@ -168,7 +173,7 @@ impl App {
                 };
                 let files_str = if no_of_files == 1 { "file" } else { "files" };
 
-                let filtered_count = self.ig.result_list.get_filtered_matches_count();
+                let filtered_count = self.result_list.get_filtered_matches_count();
                 let filtered_str = if filtered_count != 0 {
                     format!(" ({} filtered out)", filtered_count)
                 } else {
@@ -189,7 +194,7 @@ impl App {
             )
         };
 
-        let current_no_of_matches = self.ig.result_list.get_current_number_of_matches();
+        let current_no_of_matches = self.result_list.get_current_number_of_matches();
         let selected_info_text = format!("{}/{} ", current_match_index, current_no_of_matches);
         let selected_info_length = selected_info_text.len();
 

@@ -1,14 +1,12 @@
-mod entries;
 mod search_config;
 mod searcher;
 mod sink;
 
-pub use entries::{EntryType, FileEntry, Match};
 pub use search_config::SearchConfig;
 
 use std::{process::Command, sync::mpsc};
 
-use crate::ui::result_list::ResultList;
+use crate::{file_entry::FileEntry, ui::result_list::ResultList};
 use searcher::{Event, Searcher};
 
 #[derive(PartialEq)]

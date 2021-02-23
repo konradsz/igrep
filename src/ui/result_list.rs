@@ -1,4 +1,4 @@
-use crate::ig::{EntryType, FileEntry};
+use crate::file_entry::{EntryType, FileEntry};
 use std::cmp;
 
 #[derive(Copy, Clone, Default)]
@@ -24,15 +24,11 @@ pub struct ResultList {
 }
 
 impl ResultList {
-    pub fn add_entry(&mut self, mut entry: FileEntry) {
+    pub fn add_entry(&mut self, entry: FileEntry) {
         self.file_entries_count += 1;
-        self.matches_count += entry
-            .0
-            .iter()
-            .filter(|&e| matches!(e, EntryType::Match(_, _, _)))
-            .count();
+        self.matches_count += entry.get_matches_count();
 
-        self.entries.append(&mut entry.0);
+        self.entries.append(&mut entry.get_entries());
 
         if self.state.selected().is_none() {
             self.next_match();
@@ -321,7 +317,7 @@ impl ResultList {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ig::Match;
+    use crate::grep_match::GrepMatch;
 
     #[test]
     fn test_empty_list() {
@@ -338,14 +334,17 @@ mod tests {
         let mut list = ResultList::default();
         list.add_entry(FileEntry::new(
             "entry1",
-            vec![Match::new(0, "e1m1", vec![])],
+            vec![GrepMatch::new(0, "e1m1".into(), vec![])],
         ));
         assert_eq!(list.entries.len(), 2);
         assert_eq!(list.state.selected(), Some(1));
 
         list.add_entry(FileEntry::new(
             "entry2",
-            vec![Match::new(0, "e1m2", vec![]), Match::new(0, "e2m2", vec![])],
+            vec![
+                GrepMatch::new(0, "e1m2".into(), vec![]),
+                GrepMatch::new(0, "e2m2".into(), vec![]),
+            ],
         ));
         assert_eq!(list.entries.len(), 5);
         assert_eq!(list.state.selected(), Some(1));

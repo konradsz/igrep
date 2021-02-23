@@ -1,4 +1,4 @@
-use super::entries::Match;
+use crate::grep_match::GrepMatch;
 use grep::{
     matcher::Matcher,
     searcher::{Searcher, Sink, SinkMatch},
@@ -9,14 +9,14 @@ where
     M: Matcher,
 {
     matcher: M,
-    matches_in_entry: &'a mut Vec<Match>,
+    matches_in_entry: &'a mut Vec<GrepMatch>,
 }
 
 impl<'a, M> MatchesSink<'a, M>
 where
     M: Matcher,
 {
-    pub(crate) fn new(matcher: M, matches_in_entry: &'a mut Vec<Match>) -> Self {
+    pub(crate) fn new(matcher: M, matches_in_entry: &'a mut Vec<GrepMatch>) -> Self {
         Self {
             matcher,
             matches_in_entry,
@@ -46,7 +46,7 @@ where
 
         if let Ok(t) = text {
             self.matches_in_entry
-                .push(Match::new(line_number, t, offsets));
+                .push(GrepMatch::new(line_number, t.into(), offsets));
         };
 
         Ok(true)

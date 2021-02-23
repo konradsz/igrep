@@ -19,7 +19,10 @@ use super::{
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
 };
-use crate::ig::{EntryType, Ig, SearchConfig};
+use crate::{
+    file_entry::EntryType,
+    ig::{Ig, SearchConfig},
+};
 
 pub struct App {
     ig: Ig,

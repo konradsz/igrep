@@ -1,7 +1,8 @@
 use anyhow::Result;
 use std::sync::{mpsc, Arc};
 
-use super::{entries::FileEntry, sink::MatchesSink, SearchConfig};
+use super::{sink::MatchesSink, SearchConfig};
+use crate::file_entry::FileEntry;
 use grep::{
     matcher::LineTerminator,
     regex::RegexMatcherBuilder,

@@ -1,6 +1,8 @@
 use anyhow::Result;
 use std::io::Write;
 
+mod file_entry;
+mod grep_match;
 mod ig;
 mod ui;
 

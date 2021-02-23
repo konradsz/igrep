@@ -6,12 +6,12 @@ use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use crate::ig::Ig;
 
 #[derive(Default)]
-pub struct InputHandler {
+pub(crate) struct InputHandler {
     input_buffer: String,
 }
 
 impl InputHandler {
-    pub fn handle_input(&mut self, ig: &mut Ig) -> Result<()> {
+    pub(crate) fn handle_input(&mut self, ig: &mut Ig) -> Result<()> {
         let poll_timeout = if ig.is_searching() {
             Duration::from_millis(1)
         } else {

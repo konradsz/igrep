@@ -2,6 +2,7 @@ mod entries;
 mod result_list;
 mod search_config;
 mod searcher;
+mod sink;
 
 pub use entries::EntryType;
 pub use search_config::SearchConfig;

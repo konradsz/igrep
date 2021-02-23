@@ -1,40 +1,34 @@
 use anyhow::Result;
 use std::sync::{mpsc, Arc};
 
+use super::{entries::FileEntry, sink::MatchesSink, SearchConfig};
 use grep::{
     matcher::LineTerminator,
-    matcher::Matcher,
     regex::RegexMatcherBuilder,
-    searcher::{
-        BinaryDetection, Searcher as GrepSearcher, SearcherBuilder as GrepSearcherBuilder, Sink,
-        SinkMatch,
-    },
+    searcher::{BinaryDetection, SearcherBuilder},
 };
 use ignore::WalkBuilder;
 
-use super::entries::{FileEntry, Match};
-use super::SearchConfig;
-
-pub enum Event {
+pub(crate) enum Event {
     NewEntry(FileEntry),
     SearchingFinished,
     Error,
 }
 
-pub struct Searcher {
+pub(crate) struct Searcher {
     inner: Arc<SearcherImpl>,
     tx: mpsc::Sender<Event>,
 }
 
 impl Searcher {
-    pub fn new(config: SearchConfig, tx: mpsc::Sender<Event>) -> Self {
+    pub(crate) fn new(config: SearchConfig, tx: mpsc::Sender<Event>) -> Self {
         Self {
             inner: Arc::new(SearcherImpl::new(config)),
             tx,
         }
     }
 
-    pub fn search(&self) {
+    pub(crate) fn search(&self) {
         let local_self = self.inner.clone();
         let tx_local = self.tx.clone();
         let _ = std::thread::spawn(move || {
@@ -52,12 +46,12 @@ struct SearcherImpl {
 }
 
 impl SearcherImpl {
-    pub fn new(config: SearchConfig) -> Self {
+    fn new(config: SearchConfig) -> Self {
         Self { config }
     }
 
-    pub fn run(&self, tx2: mpsc::Sender<Event>) -> Result<()> {
-        let grep_searcher = GrepSearcherBuilder::new()
+    fn run(&self, tx2: mpsc::Sender<Event>) -> Result<()> {
+        let grep_searcher = SearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
             .line_terminator(LineTerminator::byte(b'\n'))
             .line_number(true)
@@ -91,7 +85,7 @@ impl SearcherImpl {
                     Err(_) => return ignore::WalkState::Continue,
                 };
                 let mut matches_in_entry = Vec::new();
-                let sr = SinkRecorder::new(&matcher, &mut matches_in_entry);
+                let sr = MatchesSink::new(&matcher, &mut matches_in_entry);
                 grep_searcher
                     .search_path(&matcher, dir_entry.path(), sr)
                     .ok();
@@ -109,58 +103,5 @@ impl SearcherImpl {
         });
 
         Ok(())
-    }
-}
-
-struct SinkRecorder<'a, M>
-where
-    M: Matcher,
-{
-    matcher: M,
-    matches_in_entry: &'a mut Vec<Match>,
-}
-
-impl<'a, M> SinkRecorder<'a, M>
-where
-    M: Matcher,
-{
-    fn new(matcher: M, matches_in_entry: &'a mut Vec<Match>) -> Self {
-        Self {
-            matcher,
-            matches_in_entry,
-        }
-    }
-}
-
-impl<'a, M> Sink for SinkRecorder<'a, M>
-where
-    M: Matcher,
-{
-    type Error = std::io::Error;
-
-    fn matched(
-        &mut self,
-        _: &GrepSearcher,
-        sink_match: &SinkMatch,
-    ) -> Result<bool, std::io::Error> {
-        let line_number = sink_match
-            .line_number()
-            .ok_or(std::io::ErrorKind::InvalidData)?;
-        let text = std::str::from_utf8(sink_match.bytes());
-
-        let mut offsets = vec![];
-        self.matcher
-            .find_iter(sink_match.bytes(), |m| {
-                offsets.push((m.start(), m.end()));
-                true
-            })
-            .ok();
-
-        if let Ok(t) = text {
-            self.matches_in_entry
-                .push(Match::new(line_number, t, offsets));
-        };
-
-        Ok(true)
     }
 }

@@ -57,7 +57,7 @@ impl App {
             )?;
 
             while self.ig.is_searching() || self.ig.is_idle() {
-                terminal.draw(|mut f| self.draw(&mut f))?;
+                terminal.draw(|f| self.draw(f))?;
 
                 if let Some(entry) = self.ig.handle_searcher_event() {
                     self.result_list.add_entry(entry);

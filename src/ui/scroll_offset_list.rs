@@ -1,4 +1,4 @@
-use std::iter::{self, Iterator};
+use std::iter::Iterator;
 use tui::{
     buffer::Buffer,
     layout::{Corner, Rect},
@@ -8,19 +8,10 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct ListState {
     offset: usize,
     selected: Option<usize>,
-}
-
-impl Default for ListState {
-    fn default() -> ListState {
-        ListState {
-            offset: 0,
-            selected: None,
-        }
-    }
 }
 
 impl ListState {
@@ -201,9 +192,7 @@ impl<'a> StatefulWidget for List<'a> {
         }
 
         let highlight_symbol = self.highlight_symbol.unwrap_or("");
-        let blank_symbol = iter::repeat(" ")
-            .take(highlight_symbol.width())
-            .collect::<String>();
+        let blank_symbol = " ".repeat(highlight_symbol.width());
 
         let mut current_height = 0;
         let has_selection = state.selected.is_some();

@@ -2,7 +2,7 @@
 name = "ig"
 version = "0.1.0"
 authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 grep = "0.2.7"

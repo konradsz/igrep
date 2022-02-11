@@ -43,7 +43,7 @@ impl SearchConfig {
     pub fn globs(mut self, globs: Vec<&str>) -> Result<Self> {
         let mut builder = OverrideBuilder::new(std::env::current_dir()?);
         for glob in globs {
-            builder.add(&glob)?;
+            builder.add(glob)?;
         }
         self.overrides = builder.build()?;
         Ok(self)

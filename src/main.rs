@@ -96,7 +96,7 @@ fn main() -> Result<()> {
             matches.values_of("TYPE-NOT").unwrap_or_default().collect(),
         )?;
 
-    let mut app = ui::App::new(search_config);
+    let mut app = ui::App::new(search_config, ui::editor::Editor::Neovim);
     app.run()?;
 
     Ok(())

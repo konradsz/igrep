@@ -1,6 +1,7 @@
 pub mod app;
 pub use app::App;
 
+pub mod editor;
 pub mod result_list;
 
 mod input_handler;

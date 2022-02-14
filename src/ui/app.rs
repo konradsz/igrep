@@ -15,6 +15,7 @@ use tui::{
 };
 
 use super::{
+    editor::Editor,
     input_handler::InputHandler,
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
@@ -32,9 +33,9 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(config: SearchConfig) -> Self {
+    pub fn new(config: SearchConfig, editor: Editor) -> Self {
         Self {
-            ig: Ig::new(config),
+            ig: Ig::new(config, editor),
             input_handler: InputHandler::default(),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),

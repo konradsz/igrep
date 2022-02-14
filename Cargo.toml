@@ -2,12 +2,13 @@
 name = "ig"
 version = "0.1.0"
 authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
+description = "Interactive Grep"
 edition = "2021"
 
 [dependencies]
-grep = "0.2.7"
+grep = "0.2.8"
 ignore = "0.4.17"
-clap = "2.33.3"
+clap = { version = "3.0.14", features = ["derive"] }
 crossterm = "0.19"
 tui = { version = "0.14", default-features = false, features = ['crossterm'] }
 unicode-width = "0.1"

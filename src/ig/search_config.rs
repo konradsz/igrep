@@ -15,13 +15,13 @@ pub struct SearchConfig {
 }
 
 impl SearchConfig {
-    pub fn from(pattern: &str, path: &str) -> Result<Self> {
+    pub fn from(pattern: String, path: String) -> Result<Self> {
         let mut builder = TypesBuilder::new();
         builder.add_defaults();
         let types = builder.build()?;
 
         Ok(Self {
-            pattern: pattern.into(),
+            pattern,
             path: PathBuf::from(path),
             case_insensitive: false,
             case_smart: false,
@@ -40,23 +40,27 @@ impl SearchConfig {
         self
     }
 
-    pub fn globs(mut self, globs: Vec<&str>) -> Result<Self> {
+    pub fn globs(mut self, globs: Vec<String>) -> Result<Self> {
         let mut builder = OverrideBuilder::new(std::env::current_dir()?);
         for glob in globs {
-            builder.add(glob)?;
+            builder.add(&glob)?;
         }
         self.overrides = builder.build()?;
         Ok(self)
     }
 
-    pub fn file_types(mut self, file_types: Vec<&str>, file_types_not: Vec<&str>) -> Result<Self> {
+    pub fn file_types(
+        mut self,
+        file_types: Vec<String>,
+        file_types_not: Vec<String>,
+    ) -> Result<Self> {
         let mut builder = TypesBuilder::new();
         builder.add_defaults();
         for file_type in file_types {
-            builder.select(file_type);
+            builder.select(&file_type);
         }
         for file_type in file_types_not {
-            builder.negate(file_type);
+            builder.negate(&file_type);
         }
         self.types = builder.build()?;
         Ok(self)

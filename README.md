@@ -4,26 +4,24 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 <img src="./assets/demo.gif"/>
 
 ## Usage
-`ig [FLAGS] <PATTERN> [PATH] [OPTIONS]`
+`ig [OPTIONS] [ARGS]`
 
-### Flags
+### Args
 ```
--h, --help           Prints help information
--i, --ignore-case    Searches case insensitively.
--S, --smart-case     Searches case insensitively if the pattern is all lowercase.
-                     Search case sensitively otherwise.
-    --type-list      Show all supported file types and their corresponding globs.
--V, --version        Prints version information
+<PATTERN>    Regular expression used for searching.
+<PATH>       File or directory to search. Directories are searched recursively. If not specified, searching starts from current directory.
 ```
 
 ### Options
 ```
--g, --glob <GLOB>...        Include files and directories for searching that match the given glob.
-                            Multiple globs may be provided.
--t, --type <TYPE>...        Only search files matching TYPE.
-                            Multiple types may be provided.
--T, --type-not <TYPE>...    Do not search files matching TYPE-NOT.
-                            Multiple types-not may be provided.
+-g, --glob <GLOB>             Include files and directories for searching that match the given glob. Multiple globs may be provided.
+-h, --help                    Print help information
+-i, --ignore-case             Searches case insensitively.
+-S, --smart-case              Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise.
+-t, --type <TYPE_MATCHING>    Only search files matching TYPE. Multiple types may be provided.
+-T, --type-not <TYPE_NOT>     Do not search files matching TYPE-NOT. Multiple types-not may be provided.
+    --type-list               Show all supported file types and their corresponding globs.
+-V, --version                 Print version information
 ```
 
 ### Keybindings

@@ -8,9 +8,9 @@ pub enum EntryType {
 pub struct FileEntry(Vec<EntryType>);
 
 impl FileEntry {
-    pub fn new(name: &str, matches: Vec<GrepMatch>) -> Self {
+    pub fn new(name: String, matches: Vec<GrepMatch>) -> Self {
         Self(
-            std::iter::once(EntryType::Header(name.into()))
+            std::iter::once(EntryType::Header(name))
                 .chain(
                     matches
                         .into_iter()

@@ -51,7 +51,7 @@ impl SearcherImpl {
         Self { config }
     }
 
-    fn run(&self, tx2: mpsc::Sender<Event>) -> Result<()> {
+    fn run(&self, tx: mpsc::Sender<Event>) -> Result<()> {
         let grep_searcher = SearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
             .line_terminator(LineTerminator::byte(b'\n'))
@@ -71,7 +71,7 @@ impl SearcherImpl {
             .types(self.config.types.clone())
             .build_parallel();
         walk_parallel.run(move || {
-            let tx = tx2.clone();
+            let tx = tx.clone();
             let matcher = matcher.clone();
             let mut grep_searcher = grep_searcher.clone();
 
@@ -93,7 +93,7 @@ impl SearcherImpl {
 
                 if !matches_in_entry.is_empty() {
                     tx.send(Event::NewEntry(FileEntry::new(
-                        dir_entry.path().to_str().expect("Cannot read file path"),
+                        dir_entry.path().to_string_lossy().into_owned(),
                         matches_in_entry,
                     )))
                     .ok();

@@ -333,14 +333,14 @@ mod tests {
     fn test_add_entry() {
         let mut list = ResultList::default();
         list.add_entry(FileEntry::new(
-            "entry1",
+            "entry1".into(),
             vec![GrepMatch::new(0, "e1m1".into(), vec![])],
         ));
         assert_eq!(list.entries.len(), 2);
         assert_eq!(list.state.selected(), Some(1));
 
         list.add_entry(FileEntry::new(
-            "entry2",
+            "entry2".into(),
             vec![
                 GrepMatch::new(0, "e1m2".into(), vec![]),
                 GrepMatch::new(0, "e2m2".into(), vec![]),

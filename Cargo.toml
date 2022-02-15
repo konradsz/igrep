@@ -9,8 +9,8 @@ edition = "2021"
 grep = "0.2.8"
 ignore = "0.4.17"
 clap = { version = "3.0.14", features = ["derive"] }
-crossterm = "0.19"
-tui = { version = "0.14", default-features = false, features = ['crossterm'] }
+crossterm = "0.23.0"
+tui = { version = "0.17", default-features = false, features = ['crossterm'] }
 unicode-width = "0.1"
 itertools = "0.10.0"
 anyhow = "1.0.38"

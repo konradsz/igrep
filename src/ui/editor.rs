@@ -1,5 +1,8 @@
 use std::fmt::Display;
 
+use clap::ArgEnum;
+
+#[derive(Copy, Clone, Debug, ArgEnum)]
 pub enum Editor {
     Vim,
     Neovim,

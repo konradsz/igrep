@@ -10,11 +10,10 @@ mod ui;
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 #[clap(group(
-            ArgGroup::new("vers")
-                .args(&["pattern", "path", "ignore-case", "smart-case", "glob", "type-not", "type-matching"])
-                .multiple(true)
-                .conflicts_with("type-list"),
-        ))]
+            ArgGroup::new("excl")
+                .args(&["pattern", "type-list"])
+                .required(true)
+))]
 struct Args {
     #[clap(help = "Regular expression used for searching.")]
     pattern: Option<String>,
@@ -23,6 +22,13 @@ struct Args {
                 If not specified, searching starts from current directory."
     )]
     path: Option<String>,
+    #[clap(
+        long,
+        arg_enum,
+        default_value_t = ui::editor::Editor::Vim,
+        help = "Text editor used to open selected match."
+    )]
+    editor: ui::editor::Editor,
     #[clap(short, long, help = "Searches case insensitively.")]
     ignore_case: bool,
     #[clap(
@@ -84,7 +90,7 @@ fn main() -> Result<()> {
         .globs(args.glob)?
         .file_types(args.type_matching, args.type_not)?;
 
-    let mut app = ui::App::new(search_config, ui::editor::Editor::Neovim);
+    let mut app = ui::App::new(search_config, args.editor);
     app.run()?;
 
     Ok(())

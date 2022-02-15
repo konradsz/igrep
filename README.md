@@ -1,10 +1,10 @@
 # ig - Interactive Grep
-Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/BurntSushi/ripgrep/) library) in the background, allows interactively pick its results and open selected match in neovim (this is awfully hardcoded, but is subject to change).
+Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/BurntSushi/ripgrep/) library) in the background, allows interactively pick its results and open selected match in text editor of choice (vim by default).
 
 <img src="./assets/demo.gif"/>
 
 ## Usage
-`ig [OPTIONS] [ARGS]`
+`ig [OPTIONS] <PATTERN|--type-list> [PATH]`
 
 ### Args
 ```
@@ -15,6 +15,8 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 
 ### Options
 ```
+    --editor <EDITOR>         Text editor used to open selected match. [default: vim]
+                              [possible values: vim, neovim, nano]
 -g, --glob <GLOB>             Include files and directories for searching that match the given glob.
                               Multiple globs may be provided.
 -h, --help                    Print help information
@@ -26,7 +28,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 -T, --type-not <TYPE_NOT>     Do not search files matching TYPE-NOT.
                               Multiple types-not may be provided.
     --type-list               Show all supported file types and their corresponding globs.
--V, --version                 Print version information
+-V, --version                 Print version information.
 ```
 
 ### Keybindings

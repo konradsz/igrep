@@ -318,20 +318,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ig"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "crossterm 0.23.0",
- "grep",
- "ignore",
- "itertools",
- "tui",
- "unicode-width",
-]
-
-[[package]]
 name = "ignore"
 version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -347,6 +333,20 @@ dependencies = [
  "thread_local",
  "walkdir",
  "winapi-util",
+]
+
+[[package]]
+name = "igrep"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossterm 0.23.0",
+ "grep",
+ "ignore",
+ "itertools",
+ "tui",
+ "unicode-width",
 ]
 
 [[package]]

@@ -1,14 +1,19 @@
 [package]
-name = "ig"
+name = "igrep"
 version = "0.1.0"
 authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
 license = "MIT"
 description = "Interactive Grep"
-homepage = "https://github.com/konradsz/ig"
-repository = "https://github.com/konradsz/ig"
+homepage = "https://github.com/konradsz/igrep"
+documentation = "https://github.com/konradsz/igrep"
+repository = "https://github.com/konradsz/igrep"
 keywords = ["cli", "tui", "grep"]
 categories = ["command-line-utilities"]
 edition = "2021"
+
+[[bin]]
+name = "ig"
+path = "src/main.rs"
 
 [dependencies]
 grep = "0.2.8"

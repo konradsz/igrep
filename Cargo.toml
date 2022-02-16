@@ -2,7 +2,12 @@
 name = "ig"
 version = "0.1.0"
 authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
+license = "MIT"
 description = "Interactive Grep"
+homepage = "https://github.com/konradsz/ig"
+repository = "https://github.com/konradsz/ig"
+keywords = ["cli", "tui", "grep"]
+categories = ["command-line-utilities"]
 edition = "2021"
 
 [dependencies]

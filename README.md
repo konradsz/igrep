@@ -45,3 +45,6 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 | `dd`, `Delete`                                 | Filter out selected match                      |
 | `dw`                                           | Filter out all matches in current file         |
 | `F5`                                           | Re-run search                                  |
+
+### Installation
+igrep binaries can be download from [GitHub](https://github.com/konradsz/igrep/releases) (for Linux and MacOS). One can also build and install it from source using Rust toolchain by running: `cargo install igrep`.

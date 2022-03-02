@@ -1,6 +1,8 @@
 # igrep - Interactive Grep
 Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/BurntSushi/ripgrep/) library) in the background, allows interactively pick its results and open selected match in text editor of choice (vim by default).
 
+`igrep` supports macOS and Linux. Windows support will be considered.
+
 <img src="./assets/demo.gif"/>
 
 ## Usage

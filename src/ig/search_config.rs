@@ -12,6 +12,7 @@ pub struct SearchConfig {
     pub case_smart: bool,
     pub overrides: Override,
     pub types: Types,
+    pub search_hidden: bool,
 }
 
 impl SearchConfig {
@@ -27,6 +28,7 @@ impl SearchConfig {
             case_smart: false,
             overrides: Override::empty(),
             types,
+            search_hidden: false,
         })
     }
 
@@ -64,5 +66,10 @@ impl SearchConfig {
         }
         self.types = builder.build()?;
         Ok(self)
+    }
+
+    pub fn search_hidden(mut self, search_hidden: bool) -> Self {
+        self.search_hidden = search_hidden;
+        self
     }
 }

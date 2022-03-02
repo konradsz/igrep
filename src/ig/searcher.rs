@@ -69,6 +69,7 @@ impl SearcherImpl {
         let walk_parallel = builder
             .overrides(self.config.overrides.clone())
             .types(self.config.types.clone())
+            .hidden(!self.config.search_hidden)
             .build_parallel();
         walk_parallel.run(move || {
             let tx = tx.clone();

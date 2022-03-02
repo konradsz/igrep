@@ -35,6 +35,10 @@ struct Args {
     /// Search case sensitively otherwise.
     #[clap(short = 'S', long)]
     smart_case: bool,
+    /// Search hidden files and directories.
+    /// By default, hidden files and directories are skipped.
+    #[clap(short = '.', long = "hidden")]
+    search_hidden: bool,
     /// Include files and directories for searching that match the given glob.
     /// Multiple globs may be provided.
     #[clap(short, long)]
@@ -73,6 +77,7 @@ fn main() -> Result<()> {
     let search_config = ig::SearchConfig::from(args.pattern.unwrap(), path)?
         .case_insensitive(args.ignore_case)
         .case_smart(args.smart_case)
+        .search_hidden(args.search_hidden)
         .globs(args.glob)?
         .file_types(args.type_matching, args.type_not)?;
 

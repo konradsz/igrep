@@ -15,6 +15,7 @@ impl Display for Editor {
             Editor::Vim => "vim",
             Editor::Neovim => "nvim",
             Editor::Nano => "nano",
+            Editor::Micro => 
         };
 
         write!(f, "{}", command)

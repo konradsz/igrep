@@ -15,53 +15,38 @@ mod ui;
                 .required(true)
 ))]
 struct Args {
-    #[clap(help = "Regular expression used for searching.")]
+    /// Regular expression used for searching.
     pattern: Option<String>,
-    #[clap(
-        help = "File or directory to search. Directories are searched recursively. \
-                If not specified, searching starts from current directory."
-    )]
+    /// File or directory to search. Directories are searched recursively.
+    /// If not specified, searching starts from current directory.
     path: Option<String>,
+    /// Text editor used to open selected match.
     #[clap(
         long,
         arg_enum,
         env = "IGREP_EDITOR",
-        default_value_t = ui::editor::Editor::Vim,
-        help = "Text editor used to open selected match."
+        default_value_t = ui::editor::Editor::Vim
     )]
     editor: ui::editor::Editor,
-    #[clap(short, long, help = "Searches case insensitively.")]
+    /// Searches case insensitively.
+    #[clap(short = 'i', long)]
     ignore_case: bool,
-    #[clap(
-        short = 'S',
-        long,
-        help = "Searches case insensitively if the pattern is all lowercase. \
-                Search case sensitively otherwise."
-    )]
+    /// Searches case insensitively if the pattern is all lowercase.
+    /// Search case sensitively otherwise.
+    #[clap(short = 'S', long)]
     smart_case: bool,
-    #[clap(
-        short,
-        long,
-        help = "Include files and directories for searching that match the given glob. \
-                Multiple globs may be provided."
-    )]
+    /// Include files and directories for searching that match the given glob.
+    /// Multiple globs may be provided.
+    #[clap(short, long)]
     glob: Vec<String>,
-    #[clap(
-        long,
-        help = "Show all supported file types and their corresponding globs."
-    )]
+    /// Show all supported file types and their corresponding globs.
+    #[clap(long)]
     type_list: bool,
-    #[clap(
-        short = 't',
-        long = "type",
-        help = "Only search files matching TYPE. Multiple types may be provided."
-    )]
+    /// Only search files matching TYPE. Multiple types may be provided.
+    #[clap(short = 't', long = "type")]
     type_matching: Vec<String>,
-    #[clap(
-        short = 'T',
-        long,
-        help = "Do not search files matching TYPE-NOT. Multiple types-not may be provided."
-    )]
+    /// Do not search files matching TYPE-NOT. Multiple types-not may be provided.
+    #[clap(short = 'T', long)]
     type_not: Vec<String>,
 }
 

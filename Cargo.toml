@@ -1,6 +1,6 @@
 [package]
 name = "igrep"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Konrad Szymoniak <szymoniak.konrad@gmail.com>"]
 license = "MIT"
 description = "Interactive Grep"

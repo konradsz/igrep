@@ -6,6 +6,7 @@ use clap::ArgEnum;
 pub enum Editor {
     Vim,
     Neovim,
+    Nvim,
     Nano,
 }
 
@@ -13,7 +14,7 @@ impl Display for Editor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let command = match self {
             Editor::Vim => "vim",
-            Editor::Neovim => "nvim",
+            Editor::Neovim | Editor::Nvim => "nvim",
             Editor::Nano => "nano",
         };
 

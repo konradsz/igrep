@@ -46,7 +46,12 @@ impl Ig {
                     .arg(format!("+{}", line_number))
                     .arg(file_name)
                     .spawn()
-                    .expect("Error: Failed to run editor.");
+                    .expect(&format!(
+                        "Error: Failed to run editor with a command: \"{} +{} {}\".",
+                        self.editor.to_string(),
+                        line_number,
+                        file_name
+                    ));
                 child_process.wait().expect("Error: Editor failed to exit.");
             }
 

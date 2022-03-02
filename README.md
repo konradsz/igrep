@@ -15,8 +15,8 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 
 ### Options
 ```
-    --editor <EDITOR>         Text editor used to open selected match. [default: vim]
-                              [possible values: vim, neovim, nvim, nano]
+    --editor <EDITOR>         Text editor used to open selected match. [env: IGREP_EDITOR=]
+                              [default: vim] [possible values: vim, neovim, nvim, nano]
 -g, --glob <GLOB>             Include files and directories for searching that match the given glob.
                               Multiple globs may be provided.
 -h, --help                    Print help information

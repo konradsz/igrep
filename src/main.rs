@@ -25,6 +25,7 @@ struct Args {
     #[clap(
         long,
         arg_enum,
+        env = "IGREP_EDITOR",
         default_value_t = ui::editor::Editor::Vim,
         help = "Text editor used to open selected match."
     )]

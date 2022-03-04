@@ -72,7 +72,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let path = args.path.unwrap_or("./".into());
+    let path = args.path.unwrap_or_else(|| "./".into());
 
     let search_config = ig::SearchConfig::from(args.pattern.unwrap(), path)?
         .case_insensitive(args.ignore_case)

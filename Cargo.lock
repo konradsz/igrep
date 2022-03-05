@@ -345,6 +345,8 @@ dependencies = [
  "grep",
  "ignore",
  "itertools",
+ "lazy_static",
+ "test-case",
  "tui",
  "unicode-width",
 ]
@@ -724,6 +726,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "test-case"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f7d58e237f65d5fe5eaf1105188c94c9a441e1fbc298ed5df45ec9c9af236d3"
+dependencies = [
+ "cfg-if 1.0.0",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

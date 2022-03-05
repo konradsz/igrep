@@ -1,13 +1,18 @@
+use clap::ArgEnum;
 use std::fmt::Display;
 
-use clap::ArgEnum;
-
-#[derive(Copy, Clone, Debug, ArgEnum)]
+#[derive(PartialEq, Copy, Clone, Debug, ArgEnum)]
 pub enum Editor {
     Vim,
     Neovim,
     Nvim,
     Nano,
+}
+
+impl Default for Editor {
+    fn default() -> Self {
+        Self::Vim
+    }
 }
 
 impl Display for Editor {

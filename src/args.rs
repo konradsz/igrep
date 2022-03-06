@@ -1,5 +1,6 @@
 use crate::ui::editor::Editor;
 use clap::{ArgGroup, Parser};
+use std::path::PathBuf;
 
 pub const IGREP_EDITOR_ENV: &str = "IGREP_EDITOR";
 pub const EDITOR_ENV: &str = "EDITOR";
@@ -16,7 +17,7 @@ pub struct Args {
     pub pattern: Option<String>,
     /// File or directory to search. Directories are searched recursively.
     /// If not specified, searching starts from current directory.
-    pub path: Option<String>, // TODO: use PathBuf
+    pub path: Option<PathBuf>,
     #[clap(flatten)]
     pub editor: EditorOpt,
     /// Searches case insensitively.

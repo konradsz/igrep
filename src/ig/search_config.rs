@@ -16,14 +16,14 @@ pub struct SearchConfig {
 }
 
 impl SearchConfig {
-    pub fn from(pattern: String, path: String) -> Result<Self> {
+    pub fn from(pattern: String, path: PathBuf) -> Result<Self> {
         let mut builder = TypesBuilder::new();
         builder.add_defaults();
         let types = builder.build()?;
 
         Ok(Self {
             pattern,
-            path: PathBuf::from(path),
+            path,
             case_insensitive: false,
             case_smart: false,
             overrides: Override::empty(),

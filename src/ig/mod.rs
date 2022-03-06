@@ -42,7 +42,7 @@ impl Ig {
     pub fn open_file_if_requested(&mut self, selected_entry: Option<(&str, u64)>) {
         if let State::OpenFile(idle) = self.state {
             if let Some((file_name, line_number)) = selected_entry {
-                let mut child_process = Command::new(self.editor.to_string())
+                let mut child_process = Command::new(self.editor.to_command())
                     .arg(format!("+{}", line_number))
                     .arg(file_name)
                     .spawn()

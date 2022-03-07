@@ -50,7 +50,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 | `dw`                                           | Filter out all matches in current file         |
 | `F5`                                           | Re-run search                                  |
 
-### Specyfing text editor
+### Specifying text editor
 `igrep` supports vim, neovim/nvim and nano.
 To specify the editor, use one of the following (listed in order of their precedence): 
 - `--editor` option,

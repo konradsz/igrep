@@ -1,6 +1,6 @@
 use anyhow::Result;
 use crossterm::{
-    event::DisableMouseCapture,
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -53,6 +53,10 @@ impl App {
             enable_raw_mode()?;
             execute!(
                 terminal.backend_mut(),
+                // NOTE: This is necessary due to upstream `crossterm` requiring that we "enable"
+                // mouse handling first, which saves some state that necessary for _disabling_
+                // mouse events.
+                EnableMouseCapture,
                 EnterAlternateScreen,
                 DisableMouseCapture
             )?;

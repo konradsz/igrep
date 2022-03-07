@@ -19,8 +19,8 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 ```
 -., --hidden                  Search hidden files and directories. By default, hidden files and
                               directories are skipped.
-    --editor <EDITOR>         Text editor used to open selected match. [env: IGREP_EDITOR=]
-                              [default: vim] [possible values: vim, neovim, nvim, nano]
+    --editor <EDITOR>         Text editor used to open selected match [possible values: vim,
+                              neovim, nvim, nano]
 -g, --glob <GLOB>             Include files and directories for searching that match the given glob.
                               Multiple globs may be provided.
 -h, --help                    Print help information
@@ -50,5 +50,14 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 | `dw`                                           | Filter out all matches in current file         |
 | `F5`                                           | Re-run search                                  |
 
+### Specyfing text editor
+`igrep` supports vim, neovim/nvim and nano.
+To specify the editor, use one of the following (listed in order of their precedence): 
+- `--editor` option,
+- `$IGREP_EDITOR` variable,
+- `$EDITOR` variable.
+
+Higher priority option overrides lower one. If neither of these options is set, vim is used as a default.
+
 ### Installation
-igrep binaries can be download from [GitHub](https://github.com/konradsz/igrep/releases) (for Linux and MacOS). One can also build and install it from source using Rust toolchain by running: `cargo install igrep`.
+`igrep` binaries can be download from [GitHub](https://github.com/konradsz/igrep/releases) (for Linux and MacOS). One can also build and install it from source using Rust toolchain by running: `cargo install igrep`.

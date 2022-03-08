@@ -24,3 +24,9 @@ tui = { version = "0.17", default-features = false, features = ['crossterm'] }
 unicode-width = "0.1"
 itertools = "0.10.0"
 anyhow = "1.0.38"
+strum = { version = "0.24", features = ["derive"] }
+strum_macros = "0.24.0"
+
+[dev-dependencies]
+lazy_static = "1.4.0"
+test-case = "2.0.0"

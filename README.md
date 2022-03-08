@@ -1,7 +1,7 @@
 # igrep - Interactive Grep
 Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/BurntSushi/ripgrep/) library) in the background, allows interactively pick its results and open selected match in text editor of choice (vim by default).
 
-`igrep` supports macOS and Linux. Windows support will be considered.
+`igrep` supports macOS and Linux. Reportedly it works on Windows as well.
 
 <img src="./assets/demo.gif"/>
 
@@ -35,7 +35,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 -V, --version                 Print version information.
 ```
 
-### Keybindings
+## Keybindings
 | Key                                            | Action                                         |
 |------------------------------------------------|------------------------------------------------|
 | `q`, `Esc`                                     | Quit                                           |
@@ -50,7 +50,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 | `dw`                                           | Filter out all matches in current file         |
 | `F5`                                           | Re-run search                                  |
 
-### Specifying text editor
+## Specifying text editor
 `igrep` supports vim, neovim/nvim and nano.
 To specify the editor, use one of the following (listed in order of their precedence): 
 - `--editor` option,
@@ -59,5 +59,13 @@ To specify the editor, use one of the following (listed in order of their preced
 
 Higher priority option overrides lower one. If neither of these options is set, vim is used as a default.
 
-### Installation
-`igrep` binaries can be download from [GitHub](https://github.com/konradsz/igrep/releases) (for Linux and MacOS). One can also build and install it from source using Rust toolchain by running: `cargo install igrep`.
+## Installation
+### Prebuilt binaries
+`igrep` binaries can be download from [GitHub](https://github.com/konradsz/igrep/releases) (for Linux and MacOS).
+### Homebrew
+```
+brew tap konradsz/igrep https://github.com/konradsz/igrep.git
+brew install igrep
+```
+### Build from source
+Build and install from source using Rust toolchain by running: `cargo install igrep`.

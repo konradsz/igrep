@@ -1,3 +1,8 @@
+## v0.3.0 (2022-03-08)
+***
+- use $EDITOR as a fallback variable
+- fix Initial console modes not set error on Windows
+- make igrep available on Homebrew
 
 ## v0.2.0 (2022-03-02)
 ***

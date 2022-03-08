@@ -21,16 +21,12 @@ impl InputHandler {
         if poll(poll_timeout)? {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {
-                if matches!(
-                    key_event,
+                match key_event {
                     KeyEvent {
-                        code: KeyCode::Char(_),
+                        code: KeyCode::Char(character),
                         ..
-                    }
-                ) {
-                    self.handle_char_input(key_event.code, result_list, ig);
-                } else {
-                    self.handle_non_char_input(key_event.code, result_list, ig);
+                    } => self.handle_char_input(character, result_list, ig),
+                    _ => self.handle_non_char_input(key_event.code, result_list, ig),
                 }
             }
         }
@@ -38,10 +34,8 @@ impl InputHandler {
         Ok(())
     }
 
-    fn handle_char_input(&mut self, key_code: KeyCode, result_list: &mut ResultList, ig: &mut Ig) {
-        if let KeyCode::Char(c) = key_code {
-            self.input_buffer.push(c);
-        }
+    fn handle_char_input(&mut self, character: char, result_list: &mut ResultList, ig: &mut Ig) {
+        self.input_buffer.push(character);
 
         let consume_buffer_and_execute = |buffer: &mut String, op: &mut dyn FnMut()| {
             buffer.clear();

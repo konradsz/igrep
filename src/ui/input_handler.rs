@@ -1,18 +1,30 @@
-use anyhow::Result;
-use std::time::Duration;
-
-use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
-
 use super::result_list::ResultList;
 use crate::ig::Ig;
+use anyhow::Result;
+use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
+use std::time::Duration;
 
 #[derive(Default)]
-pub(crate) struct InputHandler {
-    input_buffer: String,
+pub struct InputHandler {
+    input_buffer: String, // TODO: remove, input_state can replace it
+    input_state: InputState,
+}
+
+pub enum InputState {
+    Empty,
+    Incomplete(String),
+    Successful(String),
+    Unsuccessful(String),
+}
+
+impl Default for InputState {
+    fn default() -> Self {
+        Self::Empty
+    }
 }
 
 impl InputHandler {
-    pub(crate) fn handle_input(&mut self, result_list: &mut ResultList, ig: &mut Ig) -> Result<()> {
+    pub fn handle_input(&mut self, result_list: &mut ResultList, ig: &mut Ig) -> Result<()> {
         let poll_timeout = if ig.is_searching() {
             Duration::from_millis(1)
         } else {
@@ -78,17 +90,56 @@ impl InputHandler {
         self.input_buffer.clear();
 
         match key_code {
-            KeyCode::Down => result_list.next_match(),
-            KeyCode::Up => result_list.previous_match(),
-            KeyCode::Right | KeyCode::PageDown => result_list.next_file(),
-            KeyCode::Left | KeyCode::PageUp => result_list.previous_file(),
-            KeyCode::Home => result_list.top(),
-            KeyCode::End => result_list.bottom(),
-            KeyCode::Delete => result_list.remove_current_entry(),
-            KeyCode::Enter => ig.open_file(),
-            KeyCode::F(5) => ig.search(result_list),
+            KeyCode::Down => {
+                self.input_state = InputState::Successful("↓".into());
+                result_list.next_match();
+            }
+            KeyCode::Up => {
+                self.input_state = InputState::Successful("↑".into());
+                result_list.previous_match();
+            }
+            KeyCode::Right => {
+                self.input_state = InputState::Successful("→".into());
+                result_list.next_file();
+            }
+            KeyCode::PageDown => {
+                self.input_state = InputState::Successful("PgDn".into());
+                result_list.next_file();
+            }
+            KeyCode::Left => {
+                self.input_state = InputState::Successful("←".into());
+                result_list.previous_file();
+            }
+            KeyCode::PageUp => {
+                self.input_state = InputState::Successful("PgUp".into());
+                result_list.previous_file();
+            }
+            KeyCode::Home => {
+                self.input_state = InputState::Successful("Home".into());
+                result_list.top();
+            }
+            KeyCode::End => {
+                self.input_state = InputState::Successful("End".into());
+                result_list.bottom();
+            }
+            KeyCode::Delete => {
+                self.input_state = InputState::Successful("Del".into());
+                result_list.remove_current_entry();
+            }
+            KeyCode::Enter => {
+                self.input_state = InputState::Empty;
+                ig.open_file();
+            }
+            KeyCode::F(5) => {
+                self.input_state = InputState::Empty;
+                ig.search(result_list);
+            }
             KeyCode::Esc => ig.exit(),
             _ => (),
         }
+    }
+
+    pub fn get_state(&self) -> &InputState {
+        &self.input_state
     }
 }

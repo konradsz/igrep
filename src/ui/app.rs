@@ -1,10 +1,19 @@
+use super::{
+    editor::Editor,
+    input_handler::{InputHandler, InputState},
+    result_list::ResultList,
+    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+};
+use crate::{
+    file_entry::EntryType,
+    ig::{Ig, SearchConfig},
+};
 use anyhow::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -12,17 +21,6 @@ use tui::{
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
-};
-
-use super::{
-    editor::Editor,
-    input_handler::InputHandler,
-    result_list::ResultList,
-    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
-};
-use crate::{
-    file_entry::EntryType,
-    ig::{Ig, SearchConfig},
 };
 
 pub struct App {
@@ -202,8 +200,27 @@ impl App {
             )
         };
 
+        let current_input_content = match self.input_handler.get_state() {
+            InputState::Empty => " ",
+            InputState::Incomplete(b) => b,
+            InputState::Successful(b) => b,
+            InputState::Unsuccessful(b) => b,
+        };
+        let current_input = Span::styled(
+            format!(" {current_input_content} "),
+            Style::default()
+                .bg(Color::Rgb(58, 58, 58))
+                .fg(Color::Rgb(147, 147, 147)),
+        );
+
         let current_no_of_matches = self.result_list.get_current_number_of_matches();
-        let selected_info_text = format!("{}/{} ", current_match_index, current_no_of_matches);
+        let selected_info_text = {
+            let width = current_no_of_matches.to_string().len();
+            format!(
+                "| {: >width$}/{} ",
+                current_match_index, current_no_of_matches
+            )
+        };
         let selected_info_length = selected_info_text.len();
 
         let selected_info = Span::styled(
@@ -219,6 +236,7 @@ impl App {
                 [
                     Constraint::Length(12),
                     Constraint::Min(1),
+                    Constraint::Length(7),
                     Constraint::Length(selected_info_length as u16),
                 ]
                 .as_ref(),
@@ -240,10 +258,17 @@ impl App {
         );
 
         f.render_widget(
-            Paragraph::new(selected_info)
+            Paragraph::new(current_input)
                 .style(Style::default().bg(Color::Rgb(58, 58, 58)))
                 .alignment(Alignment::Right),
             hsplit[2],
+        );
+
+        f.render_widget(
+            Paragraph::new(selected_info)
+                .style(Style::default().bg(Color::Rgb(58, 58, 58)))
+                .alignment(Alignment::Right),
+            hsplit[3],
         );
     }
 }

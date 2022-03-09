@@ -315,6 +315,31 @@ impl ResultList {
 }
 
 #[cfg(test)]
+mockall::mock! {
+    pub ResultList {
+        pub fn add_entry(&mut self, entry: FileEntry);
+        pub fn iter<'a>(&self) -> std::slice::Iter<'a, EntryType>;
+        pub fn clear(&mut self);
+        pub fn is_empty(&self) -> bool;
+        pub fn next_match(&mut self);
+        pub fn previous_match(&mut self);
+        pub fn next_file(&mut self);
+        pub fn previous_file(&mut self);
+        pub fn top(&mut self);
+        pub fn bottom(&mut self);
+        pub fn remove_current_entry(&mut self);
+        pub fn remove_current_file(&mut self);
+        pub fn get_selected_entry(&self) -> Option<(String, u64)>;
+        pub fn get_state(&self) -> ListState;
+        pub fn get_current_match_index(&self) -> usize;
+        pub fn get_current_number_of_matches(&self) -> usize;
+        pub fn get_total_number_of_matches(&self) -> usize;
+        pub fn get_total_number_of_file_entries(&self) -> usize;
+        pub fn get_filtered_matches_count(&self) -> usize;
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::grep_match::GrepMatch;

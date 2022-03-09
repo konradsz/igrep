@@ -8,7 +8,7 @@ mod args;
 mod file_entry;
 mod grep_match;
 pub mod ig;
-mod ui;
+pub mod ui;
 
 fn main() -> Result<()> {
     let args = Args::parse();

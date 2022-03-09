@@ -1,7 +1,8 @@
+#[mockall_double::double]
+use super::result_list::ResultList;
 use super::{
     editor::Editor,
     input_handler::{InputHandler, InputState},
-    result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
 };
 #[mockall_double::double]

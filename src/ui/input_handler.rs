@@ -1,3 +1,4 @@
+#[mockall_double::double]
 use super::result_list::ResultList;
 #[mockall_double::double]
 use crate::ig::Ig;
@@ -149,17 +150,20 @@ impl InputHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ig::MockIg;
+    use crate::{ig::MockIg, ui::result_list::MockResultList};
 
     #[test]
-    fn enter_sets_state_to_empty() {
+    fn enter() {
         let mut input_handler = InputHandler::default();
         input_handler.input_state = InputState::Successful("input".into());
-        let mut result_list = ResultList::default(); // mock it as well!
 
         let mut ig_mock = MockIg::default();
         ig_mock.expect_open_file().return_const(());
-        input_handler.handle_non_char_input(KeyCode::Enter, &mut result_list, &mut ig_mock);
+        input_handler.handle_non_char_input(
+            KeyCode::Enter,
+            &mut MockResultList::default(),
+            &mut ig_mock,
+        );
 
         assert_eq!(input_handler.input_state, InputState::Empty);
     }

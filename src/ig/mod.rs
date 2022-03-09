@@ -2,12 +2,9 @@ mod search_config;
 mod searcher;
 mod sink;
 
-use crate::{
-    file_entry::FileEntry,
-    ui::{editor::Editor, result_list::ResultList},
-};
-#[cfg(test)]
-use mockall::automock;
+#[mockall_double::double]
+use crate::ui::result_list::ResultList;
+use crate::{file_entry::FileEntry, ui::editor::Editor};
 pub use search_config::SearchConfig;
 use searcher::{Event, Searcher};
 use std::{process::Command, sync::mpsc};
@@ -27,7 +24,7 @@ pub struct Ig {
     editor: Editor,
 }
 
-#[cfg_attr(test, automock)]
+#[cfg_attr(test, mockall::automock)]
 impl Ig {
     pub fn new(config: SearchConfig, editor: Editor) -> Self {
         let (tx, rx) = mpsc::channel();
@@ -100,17 +97,3 @@ impl Ig {
         self.state == State::Exit
     }
 }
-
-// mockall::mock! {
-//     pub Ig {
-//         pub fn new(config: SearchConfig, editor: Editor) -> Self;
-//         pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>);
-//         pub fn handle_searcher_event(&mut self) -> Option<FileEntry>;
-//         pub fn search(&mut self, result_list: &mut ResultList);
-//         pub fn open_file(&mut self);
-//         pub fn exit(&mut self);
-//         pub fn is_idle(&self) -> bool;
-//         pub fn is_searching(&self) -> bool;
-//         pub fn exit_requested(&self) -> bool;
-//     }
-// }

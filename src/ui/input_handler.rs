@@ -12,7 +12,7 @@ pub struct InputHandler {
     input_state: InputState,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum InputState {
     Empty,
     Incomplete(String),
@@ -137,7 +137,12 @@ impl InputHandler {
                 self.input_state = InputState::Empty;
                 ig.search(result_list);
             }
-            KeyCode::Esc => ig.exit(),
+            KeyCode::Esc => match self.input_state {
+                InputState::Empty | InputState::Successful(_) | InputState::Unsuccessful(_) => {
+                    ig.exit()
+                }
+                InputState::Incomplete(_) => self.input_state = InputState::Empty,
+            },
             _ => (),
         }
     }
@@ -151,6 +156,170 @@ impl InputHandler {
 mod tests {
     use super::*;
     use crate::{ig::MockIg, ui::result_list::MockResultList};
+    use test_case::test_case;
+
+    #[test]
+    fn down() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_next_match().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::Down,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("↓".into())
+        );
+    }
+
+    #[test]
+    fn up() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_previous_match().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::Up,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("↑".into())
+        );
+    }
+    #[test]
+    fn right() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_next_file().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::Right,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("→".into())
+        );
+    }
+
+    #[test]
+    fn page_down() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_next_file().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::PageDown,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("PgDn".into())
+        );
+    }
+
+    #[test]
+    fn left() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_previous_file().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::Left,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("←".into())
+        );
+    }
+
+    #[test]
+    fn page_up() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_previous_file().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::PageUp,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("PgUp".into())
+        );
+    }
+
+    #[test]
+    fn home() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_top().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::Home,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("Home".into())
+        );
+    }
+
+    #[test]
+    fn end() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock.expect_bottom().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::End,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("End".into())
+        );
+    }
+
+    #[test]
+    fn delete() {
+        let mut input_handler = InputHandler::default();
+
+        let mut result_list_mock = MockResultList::default();
+        result_list_mock
+            .expect_remove_current_entry()
+            .return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::Delete,
+            &mut result_list_mock,
+            &mut MockIg::default(),
+        );
+
+        assert_eq!(
+            input_handler.input_state,
+            InputState::Successful("Del".into())
+        );
+    }
 
     #[test]
     fn enter() {
@@ -161,6 +330,55 @@ mod tests {
         ig_mock.expect_open_file().return_const(());
         input_handler.handle_non_char_input(
             KeyCode::Enter,
+            &mut MockResultList::default(),
+            &mut ig_mock,
+        );
+
+        assert_eq!(input_handler.input_state, InputState::Empty);
+    }
+
+    #[test]
+    fn f5() {
+        let mut input_handler = InputHandler::default();
+        input_handler.input_state = InputState::Successful("input".into());
+
+        let mut ig_mock = MockIg::default();
+        ig_mock.expect_search().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::F(5),
+            &mut MockResultList::default(),
+            &mut ig_mock,
+        );
+
+        assert_eq!(input_handler.input_state, InputState::Empty);
+    }
+
+    #[test_case(InputState::Empty)]
+    #[test_case(InputState::Successful("input".into()))]
+    #[test_case(InputState::Unsuccessful("input".into()))]
+    fn esc_to_exit(initial_state: InputState) {
+        let mut input_handler = InputHandler::default();
+        input_handler.input_state = initial_state.clone();
+
+        let mut ig_mock = MockIg::default();
+        ig_mock.expect_exit().return_const(());
+        input_handler.handle_non_char_input(
+            KeyCode::Esc,
+            &mut MockResultList::default(),
+            &mut ig_mock,
+        );
+
+        assert_eq!(input_handler.input_state, initial_state);
+    }
+
+    #[test]
+    fn esc_to_clear() {
+        let mut input_handler = InputHandler::default();
+        input_handler.input_state = InputState::Incomplete("input".into());
+
+        let mut ig_mock = MockIg::default();
+        input_handler.handle_non_char_input(
+            KeyCode::Esc,
             &mut MockResultList::default(),
             &mut ig_mock,
         );

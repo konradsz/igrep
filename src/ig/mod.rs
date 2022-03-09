@@ -2,15 +2,15 @@ mod search_config;
 mod searcher;
 mod sink;
 
-pub use search_config::SearchConfig;
-
-use std::{process::Command, sync::mpsc};
-
 use crate::{
     file_entry::FileEntry,
     ui::{editor::Editor, result_list::ResultList},
 };
+#[cfg(test)]
+use mockall::automock;
+pub use search_config::SearchConfig;
 use searcher::{Event, Searcher};
+use std::{process::Command, sync::mpsc};
 
 #[derive(PartialEq)]
 pub enum State {
@@ -27,6 +27,7 @@ pub struct Ig {
     editor: Editor,
 }
 
+#[cfg_attr(test, automock)]
 impl Ig {
     pub fn new(config: SearchConfig, editor: Editor) -> Self {
         let (tx, rx) = mpsc::channel();
@@ -39,9 +40,9 @@ impl Ig {
         }
     }
 
-    pub fn open_file_if_requested(&mut self, selected_entry: Option<(&str, u64)>) {
+    pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>) {
         if let State::OpenFile(idle) = self.state {
-            if let Some((file_name, line_number)) = selected_entry {
+            if let Some((ref file_name, line_number)) = selected_entry {
                 let mut child_process = Command::new(self.editor.to_command())
                     .arg(format!("+{}", line_number))
                     .arg(file_name)
@@ -99,3 +100,17 @@ impl Ig {
         self.state == State::Exit
     }
 }
+
+// mockall::mock! {
+//     pub Ig {
+//         pub fn new(config: SearchConfig, editor: Editor) -> Self;
+//         pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>);
+//         pub fn handle_searcher_event(&mut self) -> Option<FileEntry>;
+//         pub fn search(&mut self, result_list: &mut ResultList);
+//         pub fn open_file(&mut self);
+//         pub fn exit(&mut self);
+//         pub fn is_idle(&self) -> bool;
+//         pub fn is_searching(&self) -> bool;
+//         pub fn exit_requested(&self) -> bool;
+//     }
+// }

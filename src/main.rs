@@ -7,7 +7,7 @@ use ui::editor::Editor;
 mod args;
 mod file_entry;
 mod grep_match;
-mod ig;
+pub mod ig;
 mod ui;
 
 fn main() -> Result<()> {

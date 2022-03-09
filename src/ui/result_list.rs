@@ -251,7 +251,7 @@ impl ResultList {
         }
     }
 
-    pub fn get_selected_entry(&self) -> Option<(&str, u64)> {
+    pub fn get_selected_entry(&self) -> Option<(String, u64)> {
         match self.state.selected() {
             Some(i) => {
                 let mut line_number: Option<u64> = None;
@@ -259,7 +259,7 @@ impl ResultList {
                     match &self.entries[index] {
                         EntryType::Header(name) => {
                             return Some((
-                                name.as_str(),
+                                name.to_owned(),
                                 line_number.expect("Line number not specified"),
                             ));
                         }

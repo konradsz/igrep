@@ -4,10 +4,9 @@ use super::{
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
 };
-use crate::{
-    file_entry::EntryType,
-    ig::{Ig, SearchConfig},
-};
+#[mockall_double::double]
+use crate::ig::Ig;
+use crate::{file_entry::EntryType, ig::SearchConfig};
 use anyhow::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},

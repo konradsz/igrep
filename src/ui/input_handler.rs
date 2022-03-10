@@ -14,14 +14,14 @@ pub struct InputHandler {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum InputState {
-    Empty,
+    Valid,
     Incomplete(String),
     Invalid(String),
 }
 
 impl Default for InputState {
     fn default() -> Self {
-        Self::Empty
+        Self::Valid
     }
 }
 
@@ -50,7 +50,7 @@ impl InputHandler {
 
     fn handle_char_input(&mut self, character: char, result_list: &mut ResultList, ig: &mut Ig) {
         self.input_buffer.push(character);
-        self.input_state = InputState::Empty;
+        self.input_state = InputState::Valid;
 
         let consume_buffer_and_execute = |buffer: &mut String, op: &mut dyn FnMut()| {
             buffer.clear();
@@ -107,7 +107,7 @@ impl InputHandler {
             KeyCode::Enter => ig.open_file(),
             KeyCode::F(5) => ig.search(result_list),
             KeyCode::Esc => {
-                if matches!(self.input_state, InputState::Empty)
+                if matches!(self.input_state, InputState::Valid)
                     || matches!(self.input_state, InputState::Invalid(_))
                 {
                     ig.exit();
@@ -116,7 +116,7 @@ impl InputHandler {
             _ => (),
         }
 
-        self.input_state = InputState::Empty;
+        self.input_state = InputState::Valid;
     }
 
     pub fn get_state(&self) -> &InputState {

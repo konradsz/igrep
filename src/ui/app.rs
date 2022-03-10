@@ -201,12 +201,12 @@ impl App {
         };
 
         let (current_input_content, current_input_color) = match self.input_handler.get_state() {
-            InputState::Empty => (String::default(), Color::Gray),
-            InputState::Incomplete(b) => (b.to_owned(), Color::Rgb(147, 147, 147)),
-            InputState::Invalid(b) => (b.to_owned(), Color::Red),
+            InputState::Valid => (String::default(), Color::Gray),
+            InputState::Incomplete(input) => (input.to_owned(), Color::Rgb(147, 147, 147)),
+            InputState::Invalid(input) => (input.to_owned(), Color::Red),
         };
         let current_input = Span::styled(
-            format!("{current_input_content}"),
+            current_input_content,
             Style::default()
                 .bg(Color::Rgb(58, 58, 58))
                 .fg(current_input_color),

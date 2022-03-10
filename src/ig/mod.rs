@@ -2,15 +2,12 @@ mod search_config;
 mod searcher;
 mod sink;
 
+#[mockall_double::double]
+use crate::ui::result_list::ResultList;
+use crate::{file_entry::FileEntry, ui::editor::Editor};
 pub use search_config::SearchConfig;
-
-use std::{process::Command, sync::mpsc};
-
-use crate::{
-    file_entry::FileEntry,
-    ui::{editor::Editor, result_list::ResultList},
-};
 use searcher::{Event, Searcher};
+use std::{process::Command, sync::mpsc};
 
 #[derive(PartialEq)]
 pub enum State {
@@ -27,6 +24,7 @@ pub struct Ig {
     editor: Editor,
 }
 
+#[cfg_attr(test, mockall::automock)]
 impl Ig {
     pub fn new(config: SearchConfig, editor: Editor) -> Self {
         let (tx, rx) = mpsc::channel();
@@ -39,9 +37,9 @@ impl Ig {
         }
     }
 
-    pub fn open_file_if_requested(&mut self, selected_entry: Option<(&str, u64)>) {
+    pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>) {
         if let State::OpenFile(idle) = self.state {
-            if let Some((file_name, line_number)) = selected_entry {
+            if let Some((ref file_name, line_number)) = selected_entry {
                 let mut child_process = Command::new(self.editor.to_command())
                     .arg(format!("+{}", line_number))
                     .arg(file_name)

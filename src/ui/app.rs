@@ -1,10 +1,19 @@
+#[mockall_double::double]
+use super::result_list::ResultList;
+use super::{
+    editor::Editor,
+    input_handler::{InputHandler, InputState},
+    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+};
+#[mockall_double::double]
+use crate::ig::Ig;
+use crate::{file_entry::EntryType, ig::SearchConfig};
 use anyhow::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -12,17 +21,6 @@ use tui::{
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
-};
-
-use super::{
-    editor::Editor,
-    input_handler::InputHandler,
-    result_list::ResultList,
-    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
-};
-use crate::{
-    file_entry::EntryType,
-    ig::{Ig, SearchConfig},
 };
 
 pub struct App {
@@ -202,10 +200,27 @@ impl App {
             )
         };
 
-        let current_no_of_matches = self.result_list.get_current_number_of_matches();
-        let selected_info_text = format!("{}/{} ", current_match_index, current_no_of_matches);
-        let selected_info_length = selected_info_text.len();
+        let (current_input_content, current_input_color) = match self.input_handler.get_state() {
+            InputState::Valid => (String::default(), Color::Gray),
+            InputState::Incomplete(input) => (input.to_owned(), Color::Rgb(147, 147, 147)),
+            InputState::Invalid(input) => (input.to_owned(), Color::Red),
+        };
+        let current_input = Span::styled(
+            current_input_content,
+            Style::default()
+                .bg(Color::Rgb(58, 58, 58))
+                .fg(current_input_color),
+        );
 
+        let current_no_of_matches = self.result_list.get_current_number_of_matches();
+        let selected_info_text = {
+            let width = current_no_of_matches.to_string().len();
+            format!(
+                " | {: >width$}/{} ",
+                current_match_index, current_no_of_matches
+            )
+        };
+        let selected_info_length = selected_info_text.len();
         let selected_info = Span::styled(
             selected_info_text,
             Style::default()
@@ -219,6 +234,7 @@ impl App {
                 [
                     Constraint::Length(12),
                     Constraint::Min(1),
+                    Constraint::Length(2),
                     Constraint::Length(selected_info_length as u16),
                 ]
                 .as_ref(),
@@ -240,10 +256,17 @@ impl App {
         );
 
         f.render_widget(
-            Paragraph::new(selected_info)
+            Paragraph::new(current_input)
                 .style(Style::default().bg(Color::Rgb(58, 58, 58)))
                 .alignment(Alignment::Right),
             hsplit[2],
+        );
+
+        f.render_widget(
+            Paragraph::new(selected_info)
+                .style(Style::default().bg(Color::Rgb(58, 58, 58)))
+                .alignment(Alignment::Right),
+            hsplit[3],
         );
     }
 }

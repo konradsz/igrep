@@ -7,8 +7,8 @@ use ui::editor::Editor;
 mod args;
 mod file_entry;
 mod grep_match;
-mod ig;
-mod ui;
+pub mod ig;
+pub mod ui;
 
 fn main() -> Result<()> {
     let args = Args::parse();

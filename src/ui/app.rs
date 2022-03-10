@@ -201,16 +201,13 @@ impl App {
         };
 
         let current_input_content = match self.input_handler.get_state() {
-            InputState::Empty => " ",
+            InputState::Empty => "",
             InputState::Incomplete(b) => b,
-            InputState::Successful(b) => b,
-            InputState::Unsuccessful(b) => b,
+            InputState::Invalid(b) => b,
         };
         let current_input = Span::styled(
             format!(" {current_input_content} "),
-            Style::default()
-                .bg(Color::Rgb(58, 58, 58))
-                .fg(Color::Rgb(147, 147, 147)),
+            Style::default().bg(Color::Rgb(58, 58, 58)).fg(Color::Green),
         );
 
         let current_no_of_matches = self.result_list.get_current_number_of_matches();

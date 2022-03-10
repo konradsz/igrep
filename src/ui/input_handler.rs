@@ -8,7 +8,7 @@ use std::time::Duration;
 
 #[derive(Default)]
 pub struct InputHandler {
-    input_buffer: String, // TODO: remove, input_state can replace it
+    input_buffer: String,
     input_state: InputState,
 }
 

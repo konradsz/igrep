@@ -200,26 +200,27 @@ impl App {
             )
         };
 
-        let current_input_content = match self.input_handler.get_state() {
-            InputState::Empty => "",
-            InputState::Incomplete(b) => b,
-            InputState::Invalid(b) => b,
+        let (current_input_content, current_input_color) = match self.input_handler.get_state() {
+            InputState::Empty => (String::default(), Color::Gray),
+            InputState::Incomplete(b) => (b.to_owned(), Color::Rgb(147, 147, 147)),
+            InputState::Invalid(b) => (b.to_owned(), Color::Red),
         };
         let current_input = Span::styled(
-            format!(" {current_input_content} "),
-            Style::default().bg(Color::Rgb(58, 58, 58)).fg(Color::Green),
+            format!("{current_input_content}"),
+            Style::default()
+                .bg(Color::Rgb(58, 58, 58))
+                .fg(current_input_color),
         );
 
         let current_no_of_matches = self.result_list.get_current_number_of_matches();
         let selected_info_text = {
             let width = current_no_of_matches.to_string().len();
             format!(
-                "| {: >width$}/{} ",
+                " | {: >width$}/{} ",
                 current_match_index, current_no_of_matches
             )
         };
         let selected_info_length = selected_info_text.len();
-
         let selected_info = Span::styled(
             selected_info_text,
             Style::default()
@@ -233,7 +234,7 @@ impl App {
                 [
                     Constraint::Length(12),
                     Constraint::Min(1),
-                    Constraint::Length(7),
+                    Constraint::Length(2),
                     Constraint::Length(selected_info_length as u16),
                 ]
                 .as_ref(),

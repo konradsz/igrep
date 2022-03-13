@@ -2,6 +2,7 @@ use crate::args::{EDITOR_ENV, IGREP_EDITOR_ENV};
 use anyhow::{anyhow, Result};
 use clap::ArgEnum;
 use itertools::Itertools;
+use std::process::{Child, Command};
 use strum_macros::Display;
 
 #[derive(Display, PartialEq, Copy, Clone, Debug, ArgEnum)]
@@ -11,6 +12,8 @@ pub enum Editor {
     Neovim,
     Nvim,
     Nano,
+    Code,
+    Vscode,
 }
 
 impl Default for Editor {
@@ -45,11 +48,33 @@ impl Editor {
         }
     }
 
-    pub fn to_command(self) -> String {
+    pub fn spawn(self, file_name: &str, line_number: u64) -> Child {
+        Command::new(self.program())
+            .args(self.args(file_name, line_number))
+            .spawn()
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Error: Failed to run editor with a command: \"{} +{} {}\".",
+                    self, line_number, file_name
+                ) // TODO: fix panic message
+            })
+    }
+
+    fn program(self) -> String {
         match self {
             Editor::Vim => "vim".into(),
             Editor::Neovim | Editor::Nvim => "nvim".into(),
             Editor::Nano => "nano".into(),
+            Editor::Code | Editor::Vscode => "code".into(),
+        }
+    }
+
+    fn args(self, file_name: &str, line_number: u64) -> [String; 2] {
+        match self {
+            Editor::Vim | Editor::Neovim | Editor::Nvim | Editor::Nano => {
+                [format!("+{line_number}"), file_name.into()]
+            }
+            Editor::Code | Editor::Vscode => ["-g".into(), format!("{file_name}:{line_number}")],
         }
     }
 }

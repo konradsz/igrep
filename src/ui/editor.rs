@@ -69,7 +69,7 @@ impl Editor {
         }
     }
 
-    fn args(self, file_name: &str, line_number: u64) -> [String; 2] {
+    fn args(self, file_name: &str, line_number: u64) -> impl IntoIterator<Item = String> {
         match self {
             Editor::Vim | Editor::Neovim | Editor::Nvim | Editor::Nano => {
                 [format!("+{line_number}"), file_name.into()]

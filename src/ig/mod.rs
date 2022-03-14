@@ -7,7 +7,7 @@ use crate::ui::result_list::ResultList;
 use crate::{file_entry::FileEntry, ui::editor::Editor};
 pub use search_config::SearchConfig;
 use searcher::{Event, Searcher};
-use std::{process::Command, sync::mpsc};
+use std::sync::mpsc;
 
 #[derive(PartialEq)]
 pub enum State {
@@ -40,17 +40,10 @@ impl Ig {
     pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>) {
         if let State::OpenFile(idle) = self.state {
             if let Some((ref file_name, line_number)) = selected_entry {
-                let mut child_process = Command::new(self.editor.to_command())
-                    .arg(format!("+{}", line_number))
-                    .arg(file_name)
-                    .spawn()
-                    .unwrap_or_else(|_| {
-                        panic!(
-                            "Error: Failed to run editor with a command: \"{} +{} {}\".",
-                            self.editor, line_number, file_name
-                        )
-                    });
-                child_process.wait().expect("Error: Editor failed to exit.");
+                let mut editor_process = self.editor.spawn(file_name, line_number);
+                editor_process
+                    .wait()
+                    .expect("Error: Editor failed to exit.");
             }
 
             self.state = if idle { State::Idle } else { State::Searching };

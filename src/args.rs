@@ -1,6 +1,12 @@
 use crate::ui::{editor::Editor, theme::ThemeVariant};
-use clap::{ArgGroup, Parser};
-use std::path::PathBuf;
+use clap::{Arg, ArgGroup, CommandFactory, Parser};
+use std::{
+    collections::HashSet,
+    env::ArgsOs,
+    ffi::{OsStr, OsString},
+    fmt::Arguments,
+    path::PathBuf,
+};
 
 pub const IGREP_EDITOR_ENV: &str = "IGREP_EDITOR";
 pub const EDITOR_ENV: &str = "EDITOR";
@@ -54,4 +60,38 @@ pub struct EditorOpt {
     /// Text editor used to open selected match.
     #[clap(long, arg_enum)]
     pub editor: Option<Editor>,
+}
+
+impl Args {
+    pub fn parse_cli_args_and_config_file() -> Self {
+        // validate if CLI arguments are ok
+        Args::parse_from(std::env::args_os());
+
+        let mut args_os: Vec<_> = std::env::args_os().collect();
+        args_os.extend(Self::read_config_file());
+
+        Args::parse_from(args_os)
+    }
+
+    pub fn read_config_file() -> impl Iterator<Item = OsString> {
+        let app = Args::command();
+        let to_exclude: Vec<_> = app.get_positionals().map(Arg::get_id).collect();
+        let supported_long: HashSet<_> = app
+            .get_arguments()
+            .map(Arg::get_id)
+            .filter(|arg| !to_exclude.contains(arg))
+            .collect();
+
+        let supported_short: HashSet<_> = app.get_arguments().filter_map(Arg::get_short).collect();
+
+        for i in supported_long {
+            println!("{i}");
+        }
+
+        for i in supported_short {
+            println!("{i}");
+        }
+
+        vec!["a".into()].into_iter()
+    }
 }

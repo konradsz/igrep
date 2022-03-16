@@ -19,6 +19,8 @@ pub enum Editor {
     Nano,
     Code,
     Vscode,
+    Emacs,
+    Emacsclient,
 }
 
 impl Default for Editor {
@@ -79,15 +81,22 @@ impl EditorCommand {
             Editor::Neovim | Editor::Nvim => "nvim".into(),
             Editor::Nano => "nano".into(),
             Editor::Code | Editor::Vscode => "code".into(),
+            Editor::Emacs => "emacs".into(),
+            Editor::Emacsclient => "emacsclient".into(),
         }
     }
 
-    fn args(editor: Editor, file_name: &str, line_number: u64) -> impl IntoIterator<Item = String> {
+    fn args(editor: Editor, file_name: &str, line_number: u64) -> Box<dyn Iterator<Item = String>> {
         match editor {
             Editor::Vim | Editor::Neovim | Editor::Nvim | Editor::Nano => {
-                [format!("+{line_number}"), file_name.into()]
+                Box::new([format!("+{line_number}"), file_name.into()].into_iter())
             }
-            Editor::Code | Editor::Vscode => ["-g".into(), format!("{file_name}:{line_number}")],
+            Editor::Code | Editor::Vscode => {
+                Box::new(["-g".into(), format!("{file_name}:{line_number}")].into_iter())
+            }
+            Editor::Emacs | Editor::Emacsclient => {
+                Box::new(["-nw".into(), format!("+{line_number}"), file_name.into()].into_iter())
+            }
         }
     }
 
@@ -161,6 +170,8 @@ mod tests {
     #[test_case(Editor::Nano => format!("nano +{LINE_NUMBER} {FILE_NAME}"); "nano command")]
     #[test_case(Editor::Code => format!("code -g {FILE_NAME}:{LINE_NUMBER}"); "code command")]
     #[test_case(Editor::Vscode => format!("code -g {FILE_NAME}:{LINE_NUMBER}"); "vscode command")]
+    #[test_case(Editor::Emacs => format!("emacs -nw +{LINE_NUMBER} {FILE_NAME}"); "emacs command")]
+    #[test_case(Editor::Emacsclient => format!("emacsclient -nw +{LINE_NUMBER} {FILE_NAME}"); "emacsclient command")]
     fn editor_command(editor: Editor) -> String {
         EditorCommand::new(editor, FILE_NAME, LINE_NUMBER).to_string()
     }

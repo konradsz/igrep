@@ -1,3 +1,9 @@
+## v0.4.0 (2022-03-16)
+***
+- improve clarity of using multi character input
+- add support for opening files in VS Code
+- add support for opening files in emacs and emacsclient
+
 ## v0.3.0 (2022-03-08)
 ***
 - use $EDITOR as a fallback variable

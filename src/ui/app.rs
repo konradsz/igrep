@@ -4,6 +4,7 @@ use super::{
     editor::Editor,
     input_handler::{InputHandler, InputState},
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+    theme::{dark::Dark, Theme},
 };
 #[mockall_double::double]
 use crate::ig::Ig;
@@ -17,7 +18,7 @@ use crossterm::{
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::Style,
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
@@ -28,6 +29,7 @@ pub struct App {
     input_handler: InputHandler,
     result_list: ResultList,
     result_list_state: ListState,
+    theme: Box<dyn Theme>,
 }
 
 impl App {
@@ -37,6 +39,7 @@ impl App {
             input_handler: InputHandler::default(),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
+            theme: Box::new(Dark),
         }
     }
 
@@ -89,7 +92,7 @@ impl App {
             .split(f.size());
 
         self.draw_list(f, chunks[0]);
-        self.draw_footer(f, chunks[1]);
+        self.draw_bottom_bar(f, chunks[1]);
     }
 
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
@@ -99,19 +102,22 @@ impl App {
             .map(|e| match e {
                 EntryType::Header(h) => {
                     let h = h.trim_start_matches("./");
-                    ListItem::new(Span::styled(h, Style::default().fg(Color::LightMagenta)))
+                    ListItem::new(Span::styled(h, self.theme.file_path_color()))
                 }
                 EntryType::Match(n, t, offsets) => {
                     let line_number =
-                        Span::styled(format!(" {}: ", n), Style::default().fg(Color::Green));
+                        Span::styled(format!(" {}: ", n), self.theme.line_number_color());
 
                     let mut spans = vec![line_number];
 
                     let mut current_position = 0;
                     for offset in offsets {
-                        let before_match = Span::raw(&t[current_position..offset.0]);
+                        let before_match = Span::styled(
+                            &t[current_position..offset.0],
+                            self.theme.list_font_color(),
+                        );
                         let actual_match =
-                            Span::styled(&t[offset.0..offset.1], Style::default().fg(Color::Red));
+                            Span::styled(&t[offset.0..offset.1], self.theme.match_color());
 
                         // set current position to the end of current match
                         current_position = offset.1;
@@ -121,7 +127,10 @@ impl App {
                     }
 
                     // push remaining text of a line
-                    spans.push(Span::raw(&t[current_position..]));
+                    spans.push(Span::styled(
+                        &t[current_position..],
+                        self.theme.list_font_color(),
+                    ));
 
                     ListItem::new(Spans::from(spans))
                 }
@@ -134,8 +143,8 @@ impl App {
                     .borders(Borders::ALL)
                     .border_type(tui::widgets::BorderType::Rounded),
             )
-            .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().bg(Color::Rgb(58, 58, 58)))
+            .style(self.theme.background_color())
+            .highlight_style(self.theme.highlight_color())
             .scroll_offset(ScrollOffset::default().top(1).bottom(0));
 
         self.result_list_state
@@ -143,31 +152,21 @@ impl App {
         f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
     }
 
-    fn draw_footer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+    fn draw_bottom_bar(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
         let current_match_index = self.result_list.get_current_match_index();
 
-        let app_status_color = if self.ig.is_searching() {
-            Color::LightRed
+        let (app_status_text, app_status_style) = if self.ig.is_searching() {
+            ("SEARCHING", self.theme.searching_state_style())
         } else {
-            Color::Green
+            ("FINISHED", self.theme.finished_state_style())
         };
-        let app_status = Span::styled(
-            if self.ig.is_searching() {
-                "SEARCHING"
-            } else {
-                "FINISHED"
-            },
-            Style::default()
-                .add_modifier(Modifier::BOLD)
-                .bg(app_status_color)
-                .fg(Color::Black),
-        );
+        let app_status = Span::styled(app_status_text, app_status_style);
 
-        let search_result = if self.ig.is_searching() {
-            Span::raw("")
+        let search_result = Span::raw(if self.ig.is_searching() {
+            "".into()
         } else {
             let total_no_of_matches = self.result_list.get_total_number_of_matches();
-            let message = if total_no_of_matches == 0 {
+            if total_no_of_matches == 0 {
                 " No matches found.".into()
             } else {
                 let no_of_files = self.result_list.get_total_number_of_file_entries();
@@ -190,25 +189,18 @@ impl App {
                     " Found {} {} in {} {}{}.",
                     total_no_of_matches, matches_str, no_of_files, files_str, filtered_str
                 )
-            };
-
-            Span::styled(
-                message,
-                Style::default()
-                    .bg(Color::Rgb(58, 58, 58))
-                    .fg(Color::Rgb(147, 147, 147)),
-            )
-        };
+            }
+        });
 
         let (current_input_content, current_input_color) = match self.input_handler.get_state() {
-            InputState::Valid => (String::default(), Color::Gray),
-            InputState::Incomplete(input) => (input.to_owned(), Color::Rgb(147, 147, 147)),
-            InputState::Invalid(input) => (input.to_owned(), Color::Red),
+            InputState::Valid => (String::default(), self.theme.bottom_bar_font_color()),
+            InputState::Incomplete(input) => (input.to_owned(), self.theme.bottom_bar_font_color()),
+            InputState::Invalid(input) => (input.to_owned(), self.theme.invalid_input_color()),
         };
         let current_input = Span::styled(
             current_input_content,
             Style::default()
-                .bg(Color::Rgb(58, 58, 58))
+                .bg(self.theme.bottom_bar_color())
                 .fg(current_input_color),
         );
 
@@ -221,12 +213,7 @@ impl App {
             )
         };
         let selected_info_length = selected_info_text.len();
-        let selected_info = Span::styled(
-            selected_info_text,
-            Style::default()
-                .bg(Color::Rgb(58, 58, 58))
-                .fg(Color::Rgb(147, 147, 147)),
-        );
+        let selected_info = Span::styled(selected_info_text, self.theme.bottom_bar_style());
 
         let hsplit = Layout::default()
             .direction(Direction::Horizontal)
@@ -243,28 +230,28 @@ impl App {
 
         f.render_widget(
             Paragraph::new(app_status)
-                .style(Style::default().bg(app_status_color))
+                .style(Style::default().bg(app_status_style.bg.expect("Background not set")))
                 .alignment(Alignment::Center),
             hsplit[0],
         );
 
         f.render_widget(
             Paragraph::new(search_result)
-                .style(Style::default().bg(Color::Rgb(58, 58, 58)))
+                .style(self.theme.bottom_bar_style())
                 .alignment(Alignment::Left),
             hsplit[1],
         );
 
         f.render_widget(
             Paragraph::new(current_input)
-                .style(Style::default().bg(Color::Rgb(58, 58, 58)))
+                .style(self.theme.bottom_bar_style())
                 .alignment(Alignment::Right),
             hsplit[2],
         );
 
         f.render_widget(
             Paragraph::new(selected_info)
-                .style(Style::default().bg(Color::Rgb(58, 58, 58)))
+                .style(self.theme.bottom_bar_style())
                 .alignment(Alignment::Right),
             hsplit[3],
         );

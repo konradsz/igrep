@@ -4,7 +4,7 @@ use super::{
     editor::Editor,
     input_handler::{InputHandler, InputState},
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
-    theme::{dark::Dark, Theme},
+    theme::Theme,
 };
 #[mockall_double::double]
 use crate::ig::Ig;
@@ -33,13 +33,13 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(config: SearchConfig, editor: Editor) -> Self {
+    pub fn new(config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
         Self {
             ig: Ig::new(config, editor),
             input_handler: InputHandler::default(),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
-            theme: Box::new(Dark),
+            theme,
         }
     }
 

@@ -1,4 +1,4 @@
-use crate::ui::editor::Editor;
+use crate::ui::{editor::Editor, theme::ThemeVariant};
 use clap::{ArgGroup, Parser};
 use std::path::PathBuf;
 
@@ -20,6 +20,9 @@ pub struct Args {
     pub path: Option<PathBuf>,
     #[clap(flatten)]
     pub editor: EditorOpt,
+    /// UI color theme.
+    #[clap(long, arg_enum, default_value_t = ThemeVariant::Dark)]
+    pub theme: ThemeVariant,
     /// Searches case insensitively.
     #[clap(short = 'i', long)]
     pub ignore_case: bool,

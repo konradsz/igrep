@@ -2,7 +2,11 @@ use anyhow::Result;
 use args::Args;
 use clap::Parser;
 use std::io::Write;
-use ui::editor::Editor;
+use ui::{
+    editor::Editor,
+    theme::{dark::Dark, light::Light, Theme, ThemeVariant},
+    App,
+};
 
 mod args;
 mod file_entry;
@@ -37,7 +41,11 @@ fn main() -> Result<()> {
         .globs(args.glob)?
         .file_types(args.type_matching, args.type_not)?;
 
-    let mut app = ui::App::new(search_config, Editor::determine(args.editor.editor)?);
+    let theme: Box<dyn Theme> = match args.theme {
+        ThemeVariant::Light => Box::new(Light),
+        ThemeVariant::Dark => Box::new(Dark),
+    };
+    let mut app = App::new(search_config, Editor::determine(args.editor.editor)?, theme);
     app.run()?;
 
     Ok(())

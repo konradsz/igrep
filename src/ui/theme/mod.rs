@@ -69,9 +69,3 @@ pub trait Theme {
         Color::Red
     }
 }
-
-impl Theme for ThemeVariant {
-    fn highlight_color(&self) -> Style {
-        todo!()
-    }
-}

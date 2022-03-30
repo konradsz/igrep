@@ -61,7 +61,7 @@ Higher priority option overrides lower one. If neither of these options is set, 
 
 ## Installation
 ### Prebuilt binaries
-`igrep` binaries can be downloaded from [GitHub](https://github.com/konradsz/igrep/releases) (for Linux and MacOS).
+`igrep` binaries can be downloaded from [GitHub](https://github.com/konradsz/igrep/releases).
 ### Homebrew
 ```
 brew tap konradsz/igrep https://github.com/konradsz/igrep.git

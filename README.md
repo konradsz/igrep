@@ -67,5 +67,10 @@ Higher priority option overrides lower one. If neither of these options is set, 
 brew tap konradsz/igrep https://github.com/konradsz/igrep.git
 brew install igrep
 ```
+### Scoop
+```
+scoop bucket add igrep https://github.com/konradsz/igrep.git
+scoop install igrep
+```
 ### Build from source
 Build and install from source using Rust toolchain by running: `cargo install igrep`.

@@ -1,0 +1,21 @@
+{
+    "version": "0.4.0",
+    "description": "Runs grep (ripgrep's library) and allows to interactively pick its results and open selected match in a text editor.",
+    "homepage": "https://github.com/konradsz/igrep",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/konradsz/igrep/releases/download/v0.4.0/igrep-v0.4.0-x86_64-pc-windows-msvc.zip",
+            "hash": "bbddc1bc2cdd6c3aec9e9bee855706b3a01368235a81125378f07492dfd6981a"
+        }
+    },
+    "bin": "ig.exe",
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/konradsz/igrep/releases/download/v$version/igrep-v$version-x86_64-pc-windows-msvc.zip"
+            }
+        }
+    }
+}

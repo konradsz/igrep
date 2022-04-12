@@ -113,26 +113,24 @@ fn parse_reader<R: io::Read>(
     let mut ignore_next_line = false;
 
     for line in reader.lines() {
-        let line = line.unwrap();
+        let line = line.expect("Not valid UTF-8");
         let line = line.trim();
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
 
-        if line.starts_with("--") {
-            let el = line.split_terminator('=').next().unwrap();
-            let el = el.strip_prefix("--").unwrap();
-            if supported_long.contains(el) {
+        if let Some(long) = line.strip_prefix("--") {
+            let opt_name = long.split_terminator('=').next().expect("Empty line");
+            if supported_long.contains(opt_name) {
                 args.push(OsString::from(line));
             } else {
                 if !line.contains('=') {
                     ignore_next_line = true;
                 }
             }
-        } else if line.starts_with('-') {
-            let el = line.split_terminator('=').next().unwrap();
-            let el = el.strip_prefix('-').unwrap();
-            if supported_short.contains(el) {
+        } else if let Some(short) = line.strip_prefix('-') {
+            let opt_name = short.split_terminator('=').next().expect("Empty line");
+            if supported_short.contains(opt_name) {
                 args.push(OsString::from(line));
             } else {
                 if !line.contains('=') {
@@ -155,6 +153,40 @@ fn parse_reader<R: io::Read>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test1() {
+        let supported_long = HashSet::from(["glob".to_owned(), "smart-case".to_owned()]);
+        let supported_short = HashSet::from(["g".to_owned()]);
+        let input = "\
+# Don't let ripgrep vomit really long lines to my terminal, and show a preview.
+--max-columns=150
+--max-columns-preview
+
+# Add my 'web' type.
+--type-add
+web:*.{html,css,js}*
+
+# Using glob patterns to include/exclude files or folders
+-g=!git/*
+
+# or
+--glob
+!git/*
+
+# Set the colors.
+--colors=line:none
+--colors=line:style:bold
+
+# Because who cares about case!?
+--smart-case";
+
+        let args = parse_reader(input.as_bytes(), supported_long, supported_short)
+            .into_iter()
+            .map(|s| s.into_string().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(args, ["-g=!git/*", "--glob", "!git/*", "--smart-case"]);
+    }
 
     #[test]
     fn test2() {

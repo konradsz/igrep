@@ -2,9 +2,9 @@ use crate::ui::{editor::Editor, theme::ThemeVariant};
 use clap::{Arg, ArgGroup, CommandFactory, Parser};
 use std::{
     collections::HashSet,
-    env::ArgsOs,
-    ffi::{OsStr, OsString},
-    fmt::Arguments,
+    ffi::OsString,
+    fs::File,
+    io::{self, BufRead, BufReader},
     path::PathBuf,
 };
 
@@ -74,24 +74,131 @@ impl Args {
     }
 
     pub fn read_config_file() -> impl Iterator<Item = OsString> {
+        let (supported_long, supported_short) = Self::collect_supported_options();
+
+        let path = "./config"; // Path
+        match File::open(&path) {
+            Ok(file) => parse_reader(file, supported_long, supported_short),
+            Err(err) => panic!(),
+        }
+    }
+
+    fn collect_supported_options() -> (HashSet<String>, HashSet<String>) {
         let app = Args::command();
         let to_exclude: Vec<_> = app.get_positionals().map(Arg::get_id).collect();
-        let supported_long: HashSet<_> = app
+
+        let supported_long = app
             .get_arguments()
             .map(Arg::get_id)
             .filter(|arg| !to_exclude.contains(arg))
+            .map(String::from)
+            .collect();
+        let supported_short = app
+            .get_arguments()
+            .filter_map(Arg::get_short)
+            .map(String::from)
             .collect();
 
-        let supported_short: HashSet<_> = app.get_arguments().filter_map(Arg::get_short).collect();
-
-        for i in supported_long {
-            println!("{i}");
-        }
-
-        for i in supported_short {
-            println!("{i}");
-        }
-
-        vec!["a".into()].into_iter()
+        (supported_long, supported_short)
     }
+}
+
+fn parse_reader<R: io::Read>(
+    reader: R,
+    supported_long: HashSet<String>,
+    supported_short: HashSet<String>,
+) -> impl Iterator<Item = OsString> {
+    let reader = BufReader::new(reader);
+    let mut args = vec![];
+    let mut ignore_next_line = false;
+
+    for line in reader.lines() {
+        let line = line.unwrap();
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        if line.starts_with("--") {
+            let el = line.split_terminator('=').next().unwrap();
+            let el = el.strip_prefix("--").unwrap();
+            if supported_long.contains(el) {
+                args.push(OsString::from(line));
+            } else {
+                if !line.contains('=') {
+                    ignore_next_line = true;
+                }
+            }
+        } else if line.starts_with('-') {
+            let el = line.split_terminator('=').next().unwrap();
+            let el = el.strip_prefix('-').unwrap();
+            if supported_short.contains(el) {
+                args.push(OsString::from(line));
+            } else {
+                if !line.contains('=') {
+                    ignore_next_line = true;
+                }
+            }
+        } else {
+            if ignore_next_line {
+                ignore_next_line = false;
+                continue;
+            }
+            args.push(OsString::from(line));
+        }
+    }
+
+    // println!("{args:?}");
+    args.into_iter()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test2() {
+        let supported_long = HashSet::from(["sup".to_owned()]);
+        let supported_short = HashSet::from(["s".to_owned()]);
+
+        let input = "\
+# comment
+--sup=value\n\r\
+-s  \n\
+value
+--unsup
+
+    # --comment
+    value
+        -s";
+        let args = parse_reader(input.as_bytes(), supported_long, supported_short)
+            .into_iter()
+            .map(|s| s.into_string().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(args, ["--sup=value", "-s", "value", "-s"]);
+    }
+
+    //     #[test]
+    //     fn foo() {
+    //         let supported_long = HashSet::from([
+    //             "context".to_owned(),
+    //             "smart-case".to_owned(),
+    //             "bar".to_owned(),
+    //             "foo".to_owned(),
+    //         ]);
+    //         let supported_short = HashSet::new();
+    //         let errs = parse_reader(
+    //             &b"\
+    // # Test
+    // --context=0
+    //    --smart-case
+    // -u
+
+    //    # --bar
+    // --foo
+    // "[..],
+    //             supported_long,
+    //             supported_short,
+    //         );
+    //     }
 }

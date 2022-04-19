@@ -79,7 +79,7 @@ impl Args {
 
         let path = "./config"; // Path
         match File::open(&path) {
-            Ok(file) => parse_from_reader(file, supported_long, supported_short),
+            Ok(file) => Self::parse_from_reader(file, supported_long, supported_short),
             Err(_) => Vec::default(),
         }
     }
@@ -102,54 +102,54 @@ impl Args {
 
         (supported_long, supported_short)
     }
-}
 
-fn parse_from_reader<R: io::Read>(
-    reader: R,
-    supported_long: HashSet<String>,
-    supported_short: HashSet<String>,
-) -> Vec<OsString> {
-    let reader = BufReader::new(reader);
-    let mut ignore_next_line = false;
+    fn parse_from_reader<R: io::Read>(
+        reader: R,
+        supported_long: HashSet<String>,
+        supported_short: HashSet<String>,
+    ) -> Vec<OsString> {
+        let reader = BufReader::new(reader);
+        let mut ignore_next_line = false;
 
-    reader
-        .lines()
-        .filter_map(|line| {
-            let line = line.expect("Not valid UTF-8");
-            let line = line.trim();
-            if line.is_empty() || line.starts_with('#') {
-                return None;
-            }
+        reader
+            .lines()
+            .filter_map(|line| {
+                let line = line.expect("Not valid UTF-8");
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') {
+                    return None;
+                }
 
-            if let Some(long) = line.strip_prefix("--") {
-                let opt_name = long.split_terminator('=').next().expect("Empty line");
-                if supported_long.contains(opt_name) {
-                    return Some(OsString::from(line));
-                } else {
-                    if !line.contains('=') {
-                        ignore_next_line = true;
+                if let Some(long) = line.strip_prefix("--") {
+                    let opt_name = long.split_terminator('=').next().expect("Empty line");
+                    if supported_long.contains(opt_name) {
+                        return Some(OsString::from(line));
+                    } else {
+                        if !line.contains('=') {
+                            ignore_next_line = true;
+                        }
+                        return None;
                     }
-                    return None;
-                }
-            } else if let Some(short) = line.strip_prefix('-') {
-                let opt_name = short.split_terminator('=').next().expect("Empty line");
-                if supported_short.contains(opt_name) {
-                    return Some(OsString::from(line));
-                } else {
-                    if !line.contains('=') {
-                        ignore_next_line = true;
+                } else if let Some(short) = line.strip_prefix('-') {
+                    let opt_name = short.split_terminator('=').next().expect("Empty line");
+                    if supported_short.contains(opt_name) {
+                        return Some(OsString::from(line));
+                    } else {
+                        if !line.contains('=') {
+                            ignore_next_line = true;
+                        }
+                        return None;
                     }
-                    return None;
+                } else {
+                    if ignore_next_line {
+                        ignore_next_line = false;
+                        return None;
+                    }
+                    return Some(OsString::from(line));
                 }
-            } else {
-                if ignore_next_line {
-                    ignore_next_line = false;
-                    return None;
-                }
-                return Some(OsString::from(line));
-            }
-        })
-        .collect()
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -183,7 +183,7 @@ mod tests {
             # Because who cares about case!?
             --smart-case";
 
-        let args = parse_from_reader(input.as_bytes(), supported_long, supported_short)
+        let args = Args::parse_from_reader(input.as_bytes(), supported_long, supported_short)
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();
@@ -205,7 +205,7 @@ value
     # --comment
     value
         -s";
-        let args = parse_from_reader(input.as_bytes(), supported_long, supported_short)
+        let args = Args::parse_from_reader(input.as_bytes(), supported_long, supported_short)
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();

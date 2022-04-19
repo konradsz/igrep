@@ -63,23 +63,23 @@ pub struct EditorOpt {
 }
 
 impl Args {
-    pub fn parse_cli_args_and_config_file() -> Self {
-        // validate if CLI arguments are ok
+    pub fn parse_cli_and_config_file() -> Self {
+        // validate if CLI arguments are valid
         Args::parse_from(std::env::args_os());
 
         let mut args_os: Vec<_> = std::env::args_os().collect();
-        args_os.extend(Self::read_config_file());
+        args_os.extend(Self::parse_config_file());
 
         Args::parse_from(args_os)
     }
 
-    pub fn read_config_file() -> impl Iterator<Item = OsString> {
+    pub fn parse_config_file() -> Box<dyn Iterator<Item = OsString>> {
         let (supported_long, supported_short) = Self::collect_supported_options();
 
         let path = "./config"; // Path
         match File::open(&path) {
             Ok(file) => parse_reader(file, supported_long, supported_short),
-            Err(err) => panic!(),
+            Err(_) => Box::new(std::iter::empty()),
         }
     }
 
@@ -107,7 +107,7 @@ fn parse_reader<R: io::Read>(
     reader: R,
     supported_long: HashSet<String>,
     supported_short: HashSet<String>,
-) -> impl Iterator<Item = OsString> {
+) -> Box<dyn Iterator<Item = OsString>> {
     let reader = BufReader::new(reader);
     let mut args = vec![];
     let mut ignore_next_line = false;
@@ -147,7 +147,7 @@ fn parse_reader<R: io::Read>(
     }
 
     // println!("{args:?}");
-    args.into_iter()
+    Box::new(args.into_iter())
 }
 
 #[cfg(test)]
@@ -159,27 +159,27 @@ mod tests {
         let supported_long = HashSet::from(["glob".to_owned(), "smart-case".to_owned()]);
         let supported_short = HashSet::from(["g".to_owned()]);
         let input = "\
-# Don't let ripgrep vomit really long lines to my terminal, and show a preview.
---max-columns=150
---max-columns-preview
+            # Don't let ripgrep vomit really long lines to my terminal, and show a preview.
+            --max-columns=150
+            --max-columns-preview
 
-# Add my 'web' type.
---type-add
-web:*.{html,css,js}*
+            # Add my 'web' type.
+            --type-add
+            web:*.{html,css,js}*
 
-# Using glob patterns to include/exclude files or folders
--g=!git/*
+            # Using glob patterns to include/exclude files or folders
+            -g=!git/*
 
-# or
---glob
-!git/*
+            # or
+            --glob
+            !git/*
 
-# Set the colors.
---colors=line:none
---colors=line:style:bold
+            # Set the colors.
+            --colors=line:none
+            --colors=line:style:bold
 
-# Because who cares about case!?
---smart-case";
+            # Because who cares about case!?
+            --smart-case";
 
         let args = parse_reader(input.as_bytes(), supported_long, supported_short)
             .into_iter()

@@ -16,7 +16,7 @@ pub mod ui;
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let args = Args::parse_cli_args_and_config_file();
+    let args = Args::parse_cli_and_config_file();
 
     if args.type_list {
         use itertools::Itertools;

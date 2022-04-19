@@ -1,7 +1,6 @@
 use crate::ui::{editor::Editor, theme::ThemeVariant};
-use clap::{Arg, ArgGroup, CommandFactory, Parser};
+use clap::{ArgGroup, CommandFactory, Parser};
 use std::{
-    collections::HashSet,
     ffi::OsString,
     fs::File,
     io::{self, BufRead, BufReader},
@@ -69,44 +68,35 @@ impl Args {
 
         // then extend them with those from config file
         let mut args_os: Vec<_> = std::env::args_os().collect();
+        println!("{:?}", args_os);
         args_os.extend(Self::parse_config_file());
 
         Args::parse_from(args_os)
     }
 
     fn parse_config_file() -> Vec<OsString> {
-        let (supported_long, supported_short) = Self::collect_supported_options();
+        let supported_arguments = Self::collect_supported_arguments();
 
         let path = "./config"; // Path
         match File::open(&path) {
-            Ok(file) => Self::parse_from_reader(file, supported_long, supported_short),
+            Ok(file) => Self::parse_from_reader(file, supported_arguments),
             Err(_) => Vec::default(),
         }
     }
 
-    fn collect_supported_options() -> (HashSet<String>, HashSet<String>) {
-        let app = Args::command();
-        let to_exclude: Vec<_> = app.get_positionals().map(Arg::get_id).collect();
-
-        let supported_long = app
+    fn collect_supported_arguments() -> Vec<(Option<String>, Option<String>)> {
+        Args::command()
             .get_arguments()
-            .map(Arg::get_id)
-            .filter(|arg| !to_exclude.contains(arg))
-            .map(String::from)
-            .collect();
-        let supported_short = app
-            .get_arguments()
-            .filter_map(Arg::get_short)
-            .map(String::from)
-            .collect();
-
-        (supported_long, supported_short)
+            .filter_map(|arg| match (arg.get_long(), arg.get_short()) {
+                (None, None) => None,
+                (l, s) => Some((l.map(|l| l.to_string()), s.map(|s| s.to_string()))),
+            })
+            .collect::<Vec<_>>()
     }
 
     fn parse_from_reader<R: io::Read>(
         reader: R,
-        supported_long: HashSet<String>,
-        supported_short: HashSet<String>,
+        supported: Vec<(Option<String>, Option<String>)>,
     ) -> Vec<OsString> {
         let reader = BufReader::new(reader);
         let mut ignore_next_line = false;
@@ -121,31 +111,31 @@ impl Args {
                 }
 
                 if let Some(long) = line.strip_prefix("--") {
-                    let opt_name = long.split_terminator('=').next().expect("Empty line");
-                    if supported_long.contains(opt_name) {
-                        return Some(OsString::from(line));
+                    let long = long.split_terminator('=').next().expect("Empty line");
+                    if supported.iter().any(|el| el.0 == Some(long.to_string())) {
+                        Some(OsString::from(line))
                     } else {
                         if !line.contains('=') {
                             ignore_next_line = true;
                         }
-                        return None;
+                        None
                     }
                 } else if let Some(short) = line.strip_prefix('-') {
-                    let opt_name = short.split_terminator('=').next().expect("Empty line");
-                    if supported_short.contains(opt_name) {
-                        return Some(OsString::from(line));
+                    let short = short.split_terminator('=').next().expect("Empty line");
+                    if supported.iter().any(|el| el.1 == Some(short.to_string())) {
+                        Some(OsString::from(line))
                     } else {
                         if !line.contains('=') {
                             ignore_next_line = true;
                         }
-                        return None;
+                        None
                     }
                 } else {
                     if ignore_next_line {
                         ignore_next_line = false;
                         return None;
                     }
-                    return Some(OsString::from(line));
+                    Some(OsString::from(line))
                 }
             })
             .collect()
@@ -158,8 +148,10 @@ mod tests {
 
     #[test]
     fn test1() {
-        let supported_long = HashSet::from(["glob".to_owned(), "smart-case".to_owned()]);
-        let supported_short = HashSet::from(["g".to_owned()]);
+        let supported_args = vec![
+            (Some("glob".to_owned()), Some("g".to_owned())),
+            (Some("smart-case".to_owned()), None),
+        ];
         let input = "\
             # Don't let ripgrep vomit really long lines to my terminal, and show a preview.
             --max-columns=150
@@ -183,7 +175,7 @@ mod tests {
             # Because who cares about case!?
             --smart-case";
 
-        let args = Args::parse_from_reader(input.as_bytes(), supported_long, supported_short)
+        let args = Args::parse_from_reader(input.as_bytes(), supported_args)
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();
@@ -192,20 +184,19 @@ mod tests {
 
     #[test]
     fn test2() {
-        let supported_long = HashSet::from(["sup".to_owned()]);
-        let supported_short = HashSet::from(["s".to_owned()]);
+        let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()))];
 
         let input = "\
-# comment
---sup=value\n\r\
--s  \n\
-value
---unsup
-
-    # --comment
+    # comment
+    --sup=value\n\r\
+    -s  \n\
     value
-        -s";
-        let args = Args::parse_from_reader(input.as_bytes(), supported_long, supported_short)
+    --unsup
+
+        # --comment
+        value
+            -s";
+        let args = Args::parse_from_reader(input.as_bytes(), supported_args)
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();

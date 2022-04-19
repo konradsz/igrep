@@ -64,22 +64,23 @@ pub struct EditorOpt {
 
 impl Args {
     pub fn parse_cli_and_config_file() -> Self {
-        // validate if CLI arguments are valid
+        // first validate if CLI arguments are valid
         Args::parse_from(std::env::args_os());
 
+        // then extend them with those from config file
         let mut args_os: Vec<_> = std::env::args_os().collect();
         args_os.extend(Self::parse_config_file());
 
         Args::parse_from(args_os)
     }
 
-    pub fn parse_config_file() -> Box<dyn Iterator<Item = OsString>> {
+    fn parse_config_file() -> Vec<OsString> {
         let (supported_long, supported_short) = Self::collect_supported_options();
 
         let path = "./config"; // Path
         match File::open(&path) {
-            Ok(file) => parse_reader(file, supported_long, supported_short),
-            Err(_) => Box::new(std::iter::empty()),
+            Ok(file) => parse_from_reader(file, supported_long, supported_short),
+            Err(_) => Vec::default(),
         }
     }
 
@@ -103,51 +104,52 @@ impl Args {
     }
 }
 
-fn parse_reader<R: io::Read>(
+fn parse_from_reader<R: io::Read>(
     reader: R,
     supported_long: HashSet<String>,
     supported_short: HashSet<String>,
-) -> Box<dyn Iterator<Item = OsString>> {
+) -> Vec<OsString> {
     let reader = BufReader::new(reader);
-    let mut args = vec![];
     let mut ignore_next_line = false;
 
-    for line in reader.lines() {
-        let line = line.expect("Not valid UTF-8");
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
+    reader
+        .lines()
+        .filter_map(|line| {
+            let line = line.expect("Not valid UTF-8");
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                return None;
+            }
 
-        if let Some(long) = line.strip_prefix("--") {
-            let opt_name = long.split_terminator('=').next().expect("Empty line");
-            if supported_long.contains(opt_name) {
-                args.push(OsString::from(line));
-            } else {
-                if !line.contains('=') {
-                    ignore_next_line = true;
+            if let Some(long) = line.strip_prefix("--") {
+                let opt_name = long.split_terminator('=').next().expect("Empty line");
+                if supported_long.contains(opt_name) {
+                    return Some(OsString::from(line));
+                } else {
+                    if !line.contains('=') {
+                        ignore_next_line = true;
+                    }
+                    return None;
                 }
-            }
-        } else if let Some(short) = line.strip_prefix('-') {
-            let opt_name = short.split_terminator('=').next().expect("Empty line");
-            if supported_short.contains(opt_name) {
-                args.push(OsString::from(line));
-            } else {
-                if !line.contains('=') {
-                    ignore_next_line = true;
+            } else if let Some(short) = line.strip_prefix('-') {
+                let opt_name = short.split_terminator('=').next().expect("Empty line");
+                if supported_short.contains(opt_name) {
+                    return Some(OsString::from(line));
+                } else {
+                    if !line.contains('=') {
+                        ignore_next_line = true;
+                    }
+                    return None;
                 }
+            } else {
+                if ignore_next_line {
+                    ignore_next_line = false;
+                    return None;
+                }
+                return Some(OsString::from(line));
             }
-        } else {
-            if ignore_next_line {
-                ignore_next_line = false;
-                continue;
-            }
-            args.push(OsString::from(line));
-        }
-    }
-
-    // println!("{args:?}");
-    Box::new(args.into_iter())
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -181,7 +183,7 @@ mod tests {
             # Because who cares about case!?
             --smart-case";
 
-        let args = parse_reader(input.as_bytes(), supported_long, supported_short)
+        let args = parse_from_reader(input.as_bytes(), supported_long, supported_short)
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();
@@ -203,34 +205,10 @@ value
     # --comment
     value
         -s";
-        let args = parse_reader(input.as_bytes(), supported_long, supported_short)
+        let args = parse_from_reader(input.as_bytes(), supported_long, supported_short)
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();
         assert_eq!(args, ["--sup=value", "-s", "value", "-s"]);
     }
-
-    //     #[test]
-    //     fn foo() {
-    //         let supported_long = HashSet::from([
-    //             "context".to_owned(),
-    //             "smart-case".to_owned(),
-    //             "bar".to_owned(),
-    //             "foo".to_owned(),
-    //         ]);
-    //         let supported_short = HashSet::new();
-    //         let errs = parse_reader(
-    //             &b"\
-    // # Test
-    // --context=0
-    //    --smart-case
-    // -u
-
-    //    # --bar
-    // --foo
-    // "[..],
-    //             supported_long,
-    //             supported_short,
-    //         );
-    //     }
 }

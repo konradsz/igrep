@@ -10,6 +10,7 @@ use std::{
 
 pub const IGREP_EDITOR_ENV: &str = "IGREP_EDITOR";
 pub const EDITOR_ENV: &str = "EDITOR";
+pub const RIPGREP_CONFIG_PATH_ENV: &str = "RIPGREP_CONFIG_PATH";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -86,7 +87,7 @@ impl Args {
     }
 
     fn parse_config_file(to_ignore: Vec<String>) -> Vec<OsString> {
-        match std::env::var_os("RIPGREP_CONFIG_PATH") {
+        match std::env::var_os(RIPGREP_CONFIG_PATH_ENV) {
             None => Vec::default(),
             Some(config_path) => match File::open(&config_path) {
                 Ok(file) => {

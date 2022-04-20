@@ -1,6 +1,5 @@
 use anyhow::Result;
 use args::Args;
-use clap::Parser;
 use std::io::Write;
 use ui::{
     editor::Editor,
@@ -15,7 +14,6 @@ pub mod ig;
 pub mod ui;
 
 fn main() -> Result<()> {
-    let args = Args::parse();
     let args = Args::parse_cli_and_config_file();
 
     if args.type_list {
@@ -47,7 +45,7 @@ fn main() -> Result<()> {
         ThemeVariant::Dark => Box::new(Dark),
     };
     let mut app = App::new(search_config, Editor::determine(args.editor.editor)?, theme);
-    // app.run()?;
+    app.run()?;
 
     Ok(())
 }

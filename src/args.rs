@@ -4,6 +4,7 @@ use std::{
     ffi::OsString,
     fs::File,
     io::{self, BufRead, BufReader},
+    iter::once,
     path::PathBuf,
 };
 
@@ -85,14 +86,16 @@ impl Args {
     }
 
     fn parse_config_file(to_ignore: Vec<String>) -> Vec<OsString> {
-        let path = "./config"; // Path
-        match File::open(&path) {
-            Ok(file) => {
-                let supported_arguments = Self::collect_supported_arguments();
-                let to_ignore = Self::pair_ignored(to_ignore, &supported_arguments);
-                Self::parse_from_reader(file, supported_arguments, to_ignore)
-            }
-            Err(_) => Vec::default(),
+        match std::env::var_os("RIPGREP_CONFIG_PATH") {
+            None => Vec::default(),
+            Some(config_path) => match File::open(&config_path) {
+                Ok(file) => {
+                    let supported_arguments = Self::collect_supported_arguments();
+                    let to_ignore = Self::pair_ignored(to_ignore, &supported_arguments);
+                    Self::parse_from_reader(file, supported_arguments, to_ignore)
+                }
+                Err(_) => Vec::default(),
+            },
         }
     }
 
@@ -100,26 +103,21 @@ impl Args {
         to_ignore: Vec<String>,
         supported_arguments: &[(Option<String>, Option<String>, bool)],
     ) -> Vec<String> {
-        let to_ignore = to_ignore
-            .into_iter()
+        to_ignore
+            .iter()
             .filter(|i| {
                 supported_arguments
                     .iter()
                     .any(|arg| (arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i)) && !arg.2)
             })
-            .collect::<Vec<_>>();
-
-        to_ignore
-            .iter()
             .flat_map(|i| {
                 match supported_arguments
                     .iter()
                     .find(|arg| arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i))
                 {
-                    Some(asd) => Box::new(
-                        std::iter::once(asd.0.clone()).chain(std::iter::once(asd.1.clone())),
-                    ) as Box<dyn Iterator<Item = _>>,
-                    None => Box::new(std::iter::once(None)),
+                    Some(arg) => Box::new(once(arg.0.clone()).chain(once(arg.1.clone())))
+                        as Box<dyn Iterator<Item = _>>,
+                    None => Box::new(once(None)),
                 }
             })
             .flatten()
@@ -235,7 +233,7 @@ mod tests {
     }
 
     #[test]
-    fn test2() {
+    fn trim_whitespaces() {
         let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()), false)];
 
         let input = "\
@@ -360,7 +358,7 @@ mod tests {
     }
 
     #[test]
-    fn ignore_implicit() {
+    fn pair_ignored() {
         let to_ignore = Args::pair_ignored(
             vec![
                 "a".to_owned(),

@@ -269,6 +269,27 @@ mod tests {
     }
 
     #[test]
+    fn ignore_explicit2() {
+        let supported_args = vec![
+            (Some("aaa".to_owned()), None),
+            (Some("bbb".to_owned()), None),
+        ];
+
+        let input = "\
+        --aaa
+        value
+        --bbb
+        value
+        ";
+        let args =
+            Args::parse_from_reader(input.as_bytes(), supported_args, vec!["aaa".to_owned()])
+                .into_iter()
+                .map(|s| s.into_string().unwrap())
+                .collect::<Vec<_>>();
+        assert_eq!(args, ["--bbb", "value"]);
+    }
+
+    #[test]
     fn ignore_implicit() {
         let to_ignore = Args::extend_ignored(
             vec![

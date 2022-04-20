@@ -154,9 +154,13 @@ impl Args {
                 }
 
                 if let Some(long) = line.strip_prefix("--") {
+                    ignore_next_line = false;
                     let long = long.split_terminator('=').next().expect("Empty line");
                     if supported.iter().any(|el| el.0 == Some(long.to_owned())) {
                         if to_ignore.contains(&long.to_owned()) {
+                            if !line.contains('=') {
+                                ignore_next_line = true;
+                            }
                             None
                         } else {
                             Some(OsString::from(line))
@@ -168,9 +172,13 @@ impl Args {
                         None
                     }
                 } else if let Some(short) = line.strip_prefix('-') {
+                    ignore_next_line = false;
                     let short = short.split_terminator('=').next().expect("Empty line");
                     if supported.iter().any(|el| el.1 == Some(short.to_string())) {
                         if to_ignore.contains(&short.to_owned()) {
+                            if !line.contains('=') {
+                                ignore_next_line = true;
+                            }
                             None
                         } else {
                             Some(OsString::from(line))
@@ -199,7 +207,7 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn test1() {
+    fn ripgrep_example_config() {
         let supported_args = vec![
             (Some("glob".to_owned()), Some("g".to_owned())),
             (Some("smart-case".to_owned()), None),
@@ -256,23 +264,10 @@ mod tests {
     }
 
     #[test]
-    fn ignore_explicit() {
-        let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()))];
-
-        let input = "--sup";
-        let args =
-            Args::parse_from_reader(input.as_bytes(), supported_args, vec!["sup".to_owned()])
-                .into_iter()
-                .map(|s| s.into_string().unwrap())
-                .collect::<Vec<_>>();
-        assert!(args.is_empty());
-    }
-
-    #[test]
-    fn ignore_explicit2() {
+    fn skip_line_after_ignored_option() {
         let supported_args = vec![
-            (Some("aaa".to_owned()), None),
-            (Some("bbb".to_owned()), None),
+            (Some("aaa".to_owned()), Some("a".to_owned())),
+            (Some("bbb".to_owned()), Some("b".to_owned())),
         ];
 
         let input = "\
@@ -281,12 +276,95 @@ mod tests {
         --bbb
         value
         ";
-        let args =
-            Args::parse_from_reader(input.as_bytes(), supported_args, vec!["aaa".to_owned()])
-                .into_iter()
-                .map(|s| s.into_string().unwrap())
-                .collect::<Vec<_>>();
+        let args = Args::parse_from_reader(
+            input.as_bytes(),
+            supported_args.clone(),
+            vec!["aaa".to_owned()],
+        )
+        .into_iter()
+        .map(|s| s.into_string().unwrap())
+        .collect::<Vec<_>>();
         assert_eq!(args, ["--bbb", "value"]);
+
+        let input = "\
+        -a
+        value
+        -b
+        value
+        ";
+        let args = Args::parse_from_reader(input.as_bytes(), supported_args, vec!["a".to_owned()])
+            .into_iter()
+            .map(|s| s.into_string().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(args, ["-b", "value"]);
+    }
+
+    #[test]
+    fn do_not_skip_line_after_ignored_option_if_value_inline() {
+        let supported_args = vec![
+            (Some("aaa".to_owned()), Some("a".to_owned())),
+            (Some("bbb".to_owned()), Some("b".to_owned())),
+        ];
+
+        let input = "\
+        --aaa=value
+        --bbb
+        value
+        ";
+        let args = Args::parse_from_reader(
+            input.as_bytes(),
+            supported_args.clone(),
+            vec!["aaa".to_owned()],
+        )
+        .into_iter()
+        .map(|s| s.into_string().unwrap())
+        .collect::<Vec<_>>();
+        assert_eq!(args, ["--bbb", "value"]);
+
+        let input = "\
+        -a=value
+        -b
+        value
+        ";
+        let args = Args::parse_from_reader(input.as_bytes(), supported_args, vec!["a".to_owned()])
+            .into_iter()
+            .map(|s| s.into_string().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(args, ["-b", "value"]);
+    }
+
+    #[test]
+    fn do_not_skip_line_after_ignored_flag() {
+        let supported_args = vec![
+            (Some("aaa".to_owned()), Some("a".to_owned())),
+            (Some("bbb".to_owned()), Some("b".to_owned())),
+        ];
+
+        let input = "\
+        --aaa
+        --bbb
+        value
+        ";
+        let args = Args::parse_from_reader(
+            input.as_bytes(),
+            supported_args.clone(),
+            vec!["aaa".to_owned()],
+        )
+        .into_iter()
+        .map(|s| s.into_string().unwrap())
+        .collect::<Vec<_>>();
+        assert_eq!(args, ["--bbb", "value"]);
+
+        let input = "\
+        -a
+        -b
+        value
+        ";
+        let args = Args::parse_from_reader(input.as_bytes(), supported_args, vec!["a".to_owned()])
+            .into_iter()
+            .map(|s| s.into_string().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(args, ["-b", "value"]);
     }
 
     #[test]

@@ -72,8 +72,7 @@ impl Args {
             .iter()
             .filter_map(|arg| {
                 let arg = arg.to_str().expect("Not valid UTF-8");
-                // arg.st
-                if arg.starts_with("--") || arg.starts_with('-') {
+                if arg.starts_with('-') {
                     Some(arg.trim_start_matches('-').to_owned())
                 } else {
                     None
@@ -98,8 +97,29 @@ impl Args {
 
     fn extend_ignored(
         to_ignore: Vec<String>,
-        supported_arguments: &Vec<(Option<String>, Option<String>)>,
+        supported_arguments: &Vec<(Option<String>, Option<String>, bool)>,
     ) -> Vec<String> {
+        let to_ignore = to_ignore
+            .into_iter()
+            .filter(|i| {
+                match supported_arguments.iter().find(|arg| {
+                    if let Some(l) = &arg.0 {
+                        if l == i {
+                            return true;
+                        }
+                    }
+                    if let Some(s) = &arg.1 {
+                        if s == i {
+                            return true;
+                        }
+                    }
+                    false
+                }) {
+                    Some(arg) => !arg.2,
+                    None => false,
+                }
+            })
+            .collect::<Vec<_>>();
         to_ignore
             .iter()
             .flat_map(|i| {
@@ -126,19 +146,23 @@ impl Args {
             .collect()
     }
 
-    fn collect_supported_arguments() -> Vec<(Option<String>, Option<String>)> {
+    fn collect_supported_arguments() -> Vec<(Option<String>, Option<String>, bool)> {
         Args::command()
             .get_arguments()
             .filter_map(|arg| match (arg.get_long(), arg.get_short()) {
                 (None, None) => None,
-                (l, s) => Some((l.map(|l| l.to_string()), s.map(|s| s.to_string()))),
+                (l, s) => Some((
+                    l.map(|l| l.to_string()),
+                    s.map(|s| s.to_string()),
+                    arg.is_multiple_occurrences_set(),
+                )),
             })
             .collect::<Vec<_>>()
     }
 
     fn parse_from_reader<R: io::Read>(
         reader: R,
-        supported: Vec<(Option<String>, Option<String>)>,
+        supported: Vec<(Option<String>, Option<String>, bool)>,
         to_ignore: Vec<String>,
     ) -> Vec<OsString> {
         let reader = BufReader::new(reader);
@@ -209,8 +233,8 @@ mod tests {
     #[test]
     fn ripgrep_example_config() {
         let supported_args = vec![
-            (Some("glob".to_owned()), Some("g".to_owned())),
-            (Some("smart-case".to_owned()), None),
+            (Some("glob".to_owned()), Some("g".to_owned()), false),
+            (Some("smart-case".to_owned()), None, false),
         ];
         let input = "\
             # Don't let ripgrep vomit really long lines to my terminal, and show a preview.
@@ -244,7 +268,7 @@ mod tests {
 
     #[test]
     fn test2() {
-        let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()))];
+        let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()), false)];
 
         let input = "\
     # comment
@@ -266,8 +290,8 @@ mod tests {
     #[test]
     fn skip_line_after_ignored_option() {
         let supported_args = vec![
-            (Some("aaa".to_owned()), Some("a".to_owned())),
-            (Some("bbb".to_owned()), Some("b".to_owned())),
+            (Some("aaa".to_owned()), Some("a".to_owned()), false),
+            (Some("bbb".to_owned()), Some("b".to_owned()), false),
         ];
 
         let input = "\
@@ -302,8 +326,8 @@ mod tests {
     #[test]
     fn do_not_skip_line_after_ignored_option_if_value_inline() {
         let supported_args = vec![
-            (Some("aaa".to_owned()), Some("a".to_owned())),
-            (Some("bbb".to_owned()), Some("b".to_owned())),
+            (Some("aaa".to_owned()), Some("a".to_owned()), false),
+            (Some("bbb".to_owned()), Some("b".to_owned()), false),
         ];
 
         let input = "\
@@ -336,8 +360,8 @@ mod tests {
     #[test]
     fn do_not_skip_line_after_ignored_flag() {
         let supported_args = vec![
-            (Some("aaa".to_owned()), Some("a".to_owned())),
-            (Some("bbb".to_owned()), Some("b".to_owned())),
+            (Some("aaa".to_owned()), Some("a".to_owned()), false),
+            (Some("bbb".to_owned()), Some("b".to_owned()), false),
         ];
 
         let input = "\
@@ -377,11 +401,11 @@ mod tests {
                 "e".to_owned(),
             ],
             &vec![
-                (Some("aaa".to_owned()), Some("a".to_owned())),
-                (Some("bbb".to_owned()), Some("b".to_owned())),
-                (Some("ccc".to_owned()), Some("c".to_owned())),
-                (Some("ddd".to_owned()), None),
-                (None, Some("e".to_owned())),
+                (Some("aaa".to_owned()), Some("a".to_owned()), false),
+                (Some("bbb".to_owned()), Some("b".to_owned()), false),
+                (Some("ccc".to_owned()), Some("c".to_owned()), false),
+                (Some("ddd".to_owned()), None, false),
+                (None, Some("e".to_owned()), false),
             ],
         );
 
@@ -394,6 +418,23 @@ mod tests {
             "ddd".to_owned(),
             "e".to_owned(),
         ]);
+
+        assert_eq!(extended, expected);
+    }
+
+    #[test]
+    fn do_not_ignore_multi_value_options() {
+        let to_ignore = Args::extend_ignored(
+            vec!["aaa".to_owned(), "b".to_owned(), "c".to_owned()],
+            &vec![
+                (Some("aaa".to_owned()), Some("a".to_owned()), true),
+                (Some("bbb".to_owned()), Some("b".to_owned()), false),
+                (Some("ccc".to_owned()), Some("c".to_owned()), true),
+            ],
+        );
+
+        let extended: HashSet<String> = HashSet::from_iter(to_ignore.into_iter());
+        let expected: HashSet<String> = HashSet::from(["bbb".to_owned(), "b".to_owned()]);
 
         assert_eq!(extended, expected);
     }

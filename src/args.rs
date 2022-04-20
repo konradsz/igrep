@@ -85,57 +85,37 @@ impl Args {
     }
 
     fn parse_config_file(to_ignore: Vec<String>) -> Vec<OsString> {
-        let supported_arguments = Self::collect_supported_arguments();
-        let to_ignore = Self::extend_ignored(to_ignore, &supported_arguments);
-
         let path = "./config"; // Path
         match File::open(&path) {
-            Ok(file) => Self::parse_from_reader(file, supported_arguments, to_ignore),
+            Ok(file) => {
+                let supported_arguments = Self::collect_supported_arguments();
+                let to_ignore = Self::pair_ignored(to_ignore, &supported_arguments);
+                Self::parse_from_reader(file, supported_arguments, to_ignore)
+            }
             Err(_) => Vec::default(),
         }
     }
 
-    fn extend_ignored(
+    fn pair_ignored(
         to_ignore: Vec<String>,
-        supported_arguments: &Vec<(Option<String>, Option<String>, bool)>,
+        supported_arguments: &[(Option<String>, Option<String>, bool)],
     ) -> Vec<String> {
         let to_ignore = to_ignore
             .into_iter()
             .filter(|i| {
-                match supported_arguments.iter().find(|arg| {
-                    if let Some(l) = &arg.0 {
-                        if l == i {
-                            return true;
-                        }
-                    }
-                    if let Some(s) = &arg.1 {
-                        if s == i {
-                            return true;
-                        }
-                    }
-                    false
-                }) {
-                    Some(arg) => !arg.2,
-                    None => false,
-                }
+                supported_arguments
+                    .iter()
+                    .any(|arg| (arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i)) && !arg.2)
             })
             .collect::<Vec<_>>();
+
         to_ignore
             .iter()
             .flat_map(|i| {
-                match supported_arguments.iter().find(|arg| {
-                    if let Some(l) = &arg.0 {
-                        if l == i {
-                            return true;
-                        }
-                    }
-                    if let Some(s) = &arg.1 {
-                        if s == i {
-                            return true;
-                        }
-                    }
-                    false
-                }) {
+                match supported_arguments
+                    .iter()
+                    .find(|arg| arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i))
+                {
                     Some(asd) => Box::new(
                         std::iter::once(asd.0.clone()).chain(std::iter::once(asd.1.clone())),
                     ) as Box<dyn Iterator<Item = _>>,
@@ -393,7 +373,7 @@ mod tests {
 
     #[test]
     fn ignore_implicit() {
-        let to_ignore = Args::extend_ignored(
+        let to_ignore = Args::pair_ignored(
             vec![
                 "a".to_owned(),
                 "bbb".to_owned(),
@@ -424,7 +404,7 @@ mod tests {
 
     #[test]
     fn do_not_ignore_multi_value_options() {
-        let to_ignore = Args::extend_ignored(
+        let to_ignore = Args::pair_ignored(
             vec!["aaa".to_owned(), "b".to_owned(), "c".to_owned()],
             &vec![
                 (Some("aaa".to_owned()), Some("a".to_owned()), true),

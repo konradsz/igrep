@@ -68,19 +68,17 @@ impl Args {
         // first validate if CLI arguments are valid
         Args::parse_from(std::env::args_os());
 
-        // then extend them with those from config file
         let mut args_os: Vec<_> = std::env::args_os().collect();
         let to_ignore = args_os
             .iter()
             .filter_map(|arg| {
                 let arg = arg.to_str().expect("Not valid UTF-8");
-                if arg.starts_with('-') {
-                    Some(arg.trim_start_matches('-').to_owned())
-                } else {
-                    None
-                }
+                arg.starts_with('-')
+                    .then(|| arg.trim_start_matches('-').to_owned())
             })
             .collect::<Vec<_>>();
+
+        // then extend them with those from config file
         args_os.extend(Self::parse_config_file(to_ignore));
 
         Args::parse_from(args_os)

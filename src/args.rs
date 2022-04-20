@@ -68,20 +68,62 @@ impl Args {
 
         // then extend them with those from config file
         let mut args_os: Vec<_> = std::env::args_os().collect();
-        println!("{:?}", args_os);
-        args_os.extend(Self::parse_config_file());
+        let to_ignore = args_os
+            .iter()
+            .filter_map(|arg| {
+                let arg = arg.to_str().expect("Not valid UTF-8");
+                // arg.st
+                if arg.starts_with("--") || arg.starts_with('-') {
+                    Some(arg.trim_start_matches('-').to_owned())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        args_os.extend(Self::parse_config_file(to_ignore));
 
         Args::parse_from(args_os)
     }
 
-    fn parse_config_file() -> Vec<OsString> {
+    fn parse_config_file(to_ignore: Vec<String>) -> Vec<OsString> {
         let supported_arguments = Self::collect_supported_arguments();
+        let to_ignore = Self::extend_ignored(to_ignore, &supported_arguments);
 
         let path = "./config"; // Path
         match File::open(&path) {
-            Ok(file) => Self::parse_from_reader(file, supported_arguments),
+            Ok(file) => Self::parse_from_reader(file, supported_arguments, to_ignore),
             Err(_) => Vec::default(),
         }
+    }
+
+    fn extend_ignored(
+        to_ignore: Vec<String>,
+        supported_arguments: &Vec<(Option<String>, Option<String>)>,
+    ) -> Vec<String> {
+        to_ignore
+            .iter()
+            .flat_map(|i| {
+                match supported_arguments.iter().find(|arg| {
+                    if let Some(l) = &arg.0 {
+                        if l == i {
+                            return true;
+                        }
+                    }
+                    if let Some(s) = &arg.1 {
+                        if s == i {
+                            return true;
+                        }
+                    }
+                    false
+                }) {
+                    Some(asd) => Box::new(
+                        std::iter::once(asd.0.clone()).chain(std::iter::once(asd.1.clone())),
+                    ) as Box<dyn Iterator<Item = _>>,
+                    None => Box::new(std::iter::once(None)),
+                }
+            })
+            .flatten()
+            .collect()
     }
 
     fn collect_supported_arguments() -> Vec<(Option<String>, Option<String>)> {
@@ -97,6 +139,7 @@ impl Args {
     fn parse_from_reader<R: io::Read>(
         reader: R,
         supported: Vec<(Option<String>, Option<String>)>,
+        to_ignore: Vec<String>,
     ) -> Vec<OsString> {
         let reader = BufReader::new(reader);
         let mut ignore_next_line = false;
@@ -112,8 +155,12 @@ impl Args {
 
                 if let Some(long) = line.strip_prefix("--") {
                     let long = long.split_terminator('=').next().expect("Empty line");
-                    if supported.iter().any(|el| el.0 == Some(long.to_string())) {
-                        Some(OsString::from(line))
+                    if supported.iter().any(|el| el.0 == Some(long.to_owned())) {
+                        if to_ignore.contains(&long.to_owned()) {
+                            None
+                        } else {
+                            Some(OsString::from(line))
+                        }
                     } else {
                         if !line.contains('=') {
                             ignore_next_line = true;
@@ -123,7 +170,11 @@ impl Args {
                 } else if let Some(short) = line.strip_prefix('-') {
                     let short = short.split_terminator('=').next().expect("Empty line");
                     if supported.iter().any(|el| el.1 == Some(short.to_string())) {
-                        Some(OsString::from(line))
+                        if to_ignore.contains(&short.to_owned()) {
+                            None
+                        } else {
+                            Some(OsString::from(line))
+                        }
                     } else {
                         if !line.contains('=') {
                             ignore_next_line = true;
@@ -145,6 +196,7 @@ impl Args {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
     fn test1() {
@@ -175,7 +227,7 @@ mod tests {
             # Because who cares about case!?
             --smart-case";
 
-        let args = Args::parse_from_reader(input.as_bytes(), supported_args)
+        let args = Args::parse_from_reader(input.as_bytes(), supported_args, vec![])
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();
@@ -196,10 +248,54 @@ mod tests {
         # --comment
         value
             -s";
-        let args = Args::parse_from_reader(input.as_bytes(), supported_args)
+        let args = Args::parse_from_reader(input.as_bytes(), supported_args, vec![])
             .into_iter()
             .map(|s| s.into_string().unwrap())
             .collect::<Vec<_>>();
         assert_eq!(args, ["--sup=value", "-s", "value", "-s"]);
+    }
+
+    #[test]
+    fn ignore_explicit() {
+        let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()))];
+
+        let input = "--sup";
+        let args =
+            Args::parse_from_reader(input.as_bytes(), supported_args, vec!["sup".to_owned()])
+                .into_iter()
+                .map(|s| s.into_string().unwrap())
+                .collect::<Vec<_>>();
+        assert!(args.is_empty());
+    }
+
+    #[test]
+    fn ignore_implicit() {
+        let to_ignore = Args::extend_ignored(
+            vec![
+                "a".to_owned(),
+                "bbb".to_owned(),
+                "ddd".to_owned(),
+                "e".to_owned(),
+            ],
+            &vec![
+                (Some("aaa".to_owned()), Some("a".to_owned())),
+                (Some("bbb".to_owned()), Some("b".to_owned())),
+                (Some("ccc".to_owned()), Some("c".to_owned())),
+                (Some("ddd".to_owned()), None),
+                (None, Some("e".to_owned())),
+            ],
+        );
+
+        let extended: HashSet<String> = HashSet::from_iter(to_ignore.into_iter());
+        let expected: HashSet<String> = HashSet::from([
+            "aaa".to_owned(),
+            "a".to_owned(),
+            "bbb".to_owned(),
+            "b".to_owned(),
+            "ddd".to_owned(),
+            "e".to_owned(),
+        ]);
+
+        assert_eq!(extended, expected);
     }
 }

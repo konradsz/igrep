@@ -1,3 +1,9 @@
+## v0.5.0 (2022-04-24)
+***
+- add theme for light environments
+- support for ripgrep's configuration file
+- add Scoop package
+
 ## v0.4.0 (2022-03-16)
 ***
 - improve clarity of using multi character input

@@ -157,10 +157,10 @@ impl Args {
                 if let Some(long) = line.strip_prefix("--") {
                     ignore_next_line = false;
                     let long = long.split_terminator('=').next().expect("Empty line");
-                    if supported.iter().any(|el| el.0 == Some(long.to_string())) {
-                        if !to_ignore.contains(&long.to_owned()) {
-                            return Some(OsString::from(line));
-                        }
+                    if supported.iter().any(|el| el.0 == Some(long.to_string()))
+                        && !to_ignore.contains(&long.to_owned())
+                    {
+                        return Some(OsString::from(line));
                     }
                     if !line.contains('=') {
                         ignore_next_line = true;
@@ -169,10 +169,10 @@ impl Args {
                 } else if let Some(short) = line.strip_prefix('-') {
                     ignore_next_line = false;
                     let short = short.split_terminator('=').next().expect("Empty line");
-                    if supported.iter().any(|el| el.1 == Some(short.to_string())) {
-                        if !to_ignore.contains(&short.to_owned()) {
-                            return Some(OsString::from(line));
-                        }
+                    if supported.iter().any(|el| el.1 == Some(short.to_string()))
+                        && !to_ignore.contains(&short.to_owned())
+                    {
+                        return Some(OsString::from(line));
                     }
                     if !line.contains('=') {
                         ignore_next_line = true;

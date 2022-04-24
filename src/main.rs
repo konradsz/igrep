@@ -1,6 +1,5 @@
 use anyhow::Result;
 use args::Args;
-use clap::Parser;
 use std::io::Write;
 use ui::{
     editor::Editor,
@@ -15,7 +14,7 @@ pub mod ig;
 pub mod ui;
 
 fn main() -> Result<()> {
-    let args = Args::parse();
+    let args = Args::parse_cli_and_config_file();
 
     if args.type_list {
         use itertools::Itertools;

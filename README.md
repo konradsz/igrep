@@ -53,7 +53,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `F5`                     | Re-run search                          |
 
 ## Specifying text editor
-`igrep` supports Vim, Neovim, nano, VS Code, Emacs and EmacsClient.
+`igrep` supports Vim, Neovim, nano, VS Code (stable and insiders), Emacs and EmacsClient.
 To specify the editor, use one of the following (listed in order of their precedence): 
 - `--editor` option,
 - `$IGREP_EDITOR` variable,

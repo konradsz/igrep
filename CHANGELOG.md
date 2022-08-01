@@ -1,3 +1,7 @@
+## v0.5.1 (2022-08-01)
+***
+- add support for opening files in VS Code Insiders
+
 ## v0.5.0 (2022-04-24)
 ***
 - add theme for light environments

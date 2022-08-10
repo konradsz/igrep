@@ -1,3 +1,7 @@
+## v0.6.0 (2022-08-10)
+***
+- add context viewer for matching files
+
 ## v0.5.1 (2022-08-01)
 ***
 - add support for opening files in VS Code Insiders

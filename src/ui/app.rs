@@ -1,11 +1,15 @@
 #[mockall_double::double]
 use super::result_list::ResultList;
+
+use super::result_list::HighlightedFile;
+
 use super::{
     editor::Editor,
     input_handler::{InputHandler, InputState},
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
     theme::Theme,
 };
+
 #[mockall_double::double]
 use crate::ig::Ig;
 use crate::{file_entry::EntryType, ig::SearchConfig};
@@ -15,14 +19,17 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+
+use std::io;
 use tui::{
-    backend::CrosstermBackend,
+    backend::{CrosstermBackend, Backend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::Style,
+    style::{Style, Color},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Paragraph, Wrap},
     Frame, Terminal,
 };
+
 
 pub struct App {
     ig: Ig,
@@ -32,8 +39,11 @@ pub struct App {
     theme: Box<dyn Theme>,
 }
 
+
+
 impl App {
     pub fn new(config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
+
         Self {
             ig: Ig::new(config, editor),
             input_handler: InputHandler::default(),
@@ -41,6 +51,20 @@ impl App {
             result_list_state: ListState::default(),
             theme,
         }
+    }
+
+    fn open_file<B: Backend>(&mut self, term: &mut Terminal<B> ){{
+
+        term.clear().unwrap();
+
+        self.ig
+            .open_file_if_requested(self.result_list.get_selected_entry());
+
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
+        term.clear().unwrap();
+    }
+
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -70,10 +94,11 @@ impl App {
                 }
                 self.input_handler
                     .handle_input(&mut self.result_list, &mut self.ig)?;
-            }
 
-            self.ig
-                .open_file_if_requested(self.result_list.get_selected_entry());
+                if self.ig.file_open_requested() {
+                    self.open_file(&mut terminal);
+                }
+            }
 
             if self.ig.exit_requested() {
                 execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
@@ -86,13 +111,26 @@ impl App {
     }
 
     fn draw(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
             .split(f.size());
 
-        self.draw_list(f, chunks[0]);
-        self.draw_bottom_bar(f, chunks[1]);
+        let (top, bottombar_area) = (chunks[0], chunks[1]);
+
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(top);
+
+        let (left, right) = (chunks[0], chunks[1]);
+       
+
+        self.draw_list(f, left);
+        self.draw_bottom_bar(f, bottombar_area);
+        self.draw_context_viewer(f, right);
     }
 
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
@@ -150,6 +188,70 @@ impl App {
         self.result_list_state
             .select(self.result_list.get_state().selected());
         f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
+    }
+
+    fn make_styled<'a>(&'a self, highlighted: &'a HighlightedFile) -> Vec<Spans<'a>> {
+
+        let mut  out = vec![];
+        let (_, line_nr) = self.result_list.get_selected_entry().unwrap();
+
+        for (idx, line) in highlighted.iter().enumerate() {
+            let spans: Vec<_> = line.iter().map(|(hl, s)|{
+                let fg = hl.foreground;
+                let mut style = Style::default()
+                    .fg(
+                        Color::Rgb(fg.r, fg.g, fg.b)
+                    );
+
+                if idx + 1 == line_nr as usize{
+                    let bg = Color::Rgb(23, 30, 102);
+                    style = style.bg(
+                        bg
+                    );
+                }
+                Span::styled(s, style)
+            }).collect();
+
+            out.push(Spans::from(spans));
+        }
+
+        out
+    }
+
+
+    fn draw_context_viewer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect ) {
+        let selected_file = &self.result_list.current_file();
+
+        // let height = codeblock.inner(codechunk).height as u64;
+
+        if let Some((_, h)) = selected_file{
+
+            let (path, line_nr) = self.result_list.get_selected_entry().unwrap();
+            let height = area.height as u64;
+
+            let line_lower = line_nr.saturating_sub(height/2);
+
+            let line_upper = std::cmp::min(line_lower + height, h.len() as u64);
+
+            let p = Paragraph::new::<Vec<_>>(
+                self.make_styled(h)[(line_lower as usize)..(line_upper as usize)]
+                    .iter().map(|l|{
+                        l.clone()
+                    }).collect()
+            ).wrap(
+                Wrap {trim: false}
+            ).block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(tui::widgets::BorderType::Rounded)
+                    .title(path)
+            );
+
+            f.render_widget(p, area);
+        }
+
+
+
     }
 
     fn draw_bottom_bar(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {

@@ -53,7 +53,7 @@ impl App {
         }
     }
 
-    fn open_file<B: Backend>(&mut self, term: &mut Terminal<B> ){{
+    fn open_file<B: Backend>(&mut self, term: &mut Terminal<B> ){
 
         term.clear().unwrap();
 
@@ -63,8 +63,6 @@ impl App {
         let mut stdout = io::stdout();
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
         term.clear().unwrap();
-    }
-
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -99,6 +97,7 @@ impl App {
                     self.open_file(&mut terminal);
                 }
             }
+
 
             if self.ig.exit_requested() {
                 execute!(terminal.backend_mut(), LeaveAlternateScreen)?;

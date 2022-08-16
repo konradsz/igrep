@@ -50,9 +50,12 @@ impl Ig {
         }
     }
 
-    pub fn file_open_requested(&mut self) -> bool{
-        return if let State::OpenFile(_) = self.state{ true} 
-        else {false}
+    pub fn file_open_requested(&mut self) -> bool {
+        if let State::OpenFile(_) = self.state {
+            true
+        } else {
+            false
+        }
     }
 
     pub fn handle_searcher_event(&mut self) -> Option<FileEntry> {

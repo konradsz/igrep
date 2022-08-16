@@ -1,28 +1,29 @@
 use crate::file_entry::{EntryType, FileEntry};
 use std::cmp;
+use std::io::BufRead;
+use syntect::easy::HighlightFile;
 use syntect::highlighting as highl;
 use syntect::parsing::SyntaxSet;
-use syntect::easy::HighlightFile;
-use std::io::BufRead;
 
 pub type HighlightedFile = Vec<Vec<(highl::Style, String)>>;
-
 
 fn highlight_file(file_path: &str) -> HighlightedFile {
     let ss = SyntaxSet::load_defaults_newlines();
     let ts = highl::ThemeSet::load_defaults();
 
-    let mut highlighter = HighlightFile::new(file_path, &ss, &ts.themes["base16-ocean.dark"]).unwrap();
+    let mut highlighter =
+        HighlightFile::new(file_path, &ss, &ts.themes["base16-ocean.dark"]).unwrap();
     let mut line = String::new();
 
     let mut out: HighlightedFile = Vec::new();
     while highlighter.reader.read_line(&mut line).unwrap() > 0 {
         {
-            let regions: Vec<(highl::Style, &str)> = highlighter.highlight_lines.highlight_line(&line, &ss).unwrap();
+            let regions: Vec<(highl::Style, &str)> = highlighter
+                .highlight_lines
+                .highlight_line(&line, &ss)
+                .unwrap();
             // out.push_str(as_24_bit_terminal_escaped(&regions[..], false).as_str());
-            let span_vec = regions.into_iter().map(|(hl, s)|{
-                (hl, s.to_string())
-            });
+            let span_vec = regions.into_iter().map(|(hl, s)| (hl, s.to_string()));
             out.push(span_vec.collect());
 
             // print!("{}", as_24_bit_terminal_escaped(&regions[..], true));
@@ -31,14 +32,10 @@ fn highlight_file(file_path: &str) -> HighlightedFile {
     }
 
     out
-
 }
-
-
 
 #[derive(Copy, Clone, Default)]
 pub struct ListState(Option<usize>);
-
 
 impl ListState {
     pub fn select(&mut self, index: Option<usize>) {
@@ -163,11 +160,8 @@ impl ResultList {
             None => 1,
         };
 
-
-
         self.state.select(Some(index));
         self.make_highlighted();
-
     }
 
     pub fn previous_file(&mut self) {
@@ -205,7 +199,6 @@ impl ResultList {
 
         self.state.select(Some(index));
         self.make_highlighted();
-
     }
 
     pub fn top(&mut self) {
@@ -327,15 +320,13 @@ impl ResultList {
     }
 
     pub fn make_highlighted(&mut self) {
-        if let Some((file_path, _)) = self.get_selected_entry(){
-            if self.current_file.is_none() 
-                || self.current_file.as_ref().unwrap().0 != file_path {
+        if let Some((file_path, _)) = self.get_selected_entry() {
+            if self.current_file.is_none() || self.current_file.as_ref().unwrap().0 != file_path {
                 self.current_file = Some((file_path.clone(), highlight_file(file_path.as_str())));
             }
         } else {
             self.current_file = None;
         }
-
     }
 
     pub fn get_state(&self) -> ListState {

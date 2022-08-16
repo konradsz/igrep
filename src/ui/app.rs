@@ -22,14 +22,13 @@ use crossterm::{
 
 use std::io;
 use tui::{
-    backend::{CrosstermBackend, Backend},
+    backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Style, Color},
+    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Wrap},
     Frame, Terminal,
 };
-
 
 pub struct App {
     ig: Ig,
@@ -39,11 +38,8 @@ pub struct App {
     theme: Box<dyn Theme>,
 }
 
-
-
 impl App {
     pub fn new(config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
-
         Self {
             ig: Ig::new(config, editor),
             input_handler: InputHandler::default(),
@@ -53,8 +49,7 @@ impl App {
         }
     }
 
-    fn open_file<B: Backend>(&mut self, term: &mut Terminal<B> ){
-
+    fn open_file<B: Backend>(&mut self, term: &mut Terminal<B>) {
         term.clear().unwrap();
 
         self.ig
@@ -98,9 +93,12 @@ impl App {
                 }
             }
 
-
             if self.ig.exit_requested() {
-                execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+                execute!(
+                    terminal.backend_mut(),
+                    LeaveAlternateScreen,
+                    DisableMouseCapture
+                )?;
                 disable_raw_mode()?;
                 break;
             }
@@ -110,8 +108,6 @@ impl App {
     }
 
     fn draw(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
-
-
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
@@ -125,7 +121,6 @@ impl App {
             .split(top);
 
         let (left, right) = (chunks[0], chunks[1]);
-       
 
         self.draw_list(f, left);
         self.draw_bottom_bar(f, bottombar_area);
@@ -190,26 +185,23 @@ impl App {
     }
 
     fn make_styled<'a>(&'a self, highlighted: &'a HighlightedFile) -> Vec<Spans<'a>> {
-
-        let mut  out = vec![];
+        let mut out = vec![];
         let (_, line_nr) = self.result_list.get_selected_entry().unwrap();
 
         for (idx, line) in highlighted.iter().enumerate() {
-            let spans: Vec<_> = line.iter().map(|(hl, s)|{
-                let fg = hl.foreground;
-                let mut style = Style::default()
-                    .fg(
-                        Color::Rgb(fg.r, fg.g, fg.b)
-                    );
+            let spans: Vec<_> = line
+                .iter()
+                .map(|(hl, s)| {
+                    let fg = hl.foreground;
+                    let mut style = Style::default().fg(Color::Rgb(fg.r, fg.g, fg.b));
 
-                if idx + 1 == line_nr as usize{
-                    let bg = Color::Rgb(23, 30, 102);
-                    style = style.bg(
-                        bg
-                    );
-                }
-                Span::styled(s, style)
-            }).collect();
+                    if idx + 1 == line_nr as usize {
+                        let bg = Color::Rgb(23, 30, 102);
+                        style = style.bg(bg);
+                    }
+                    Span::styled(s, style)
+                })
+                .collect();
 
             out.push(Spans::from(spans));
         }
@@ -217,40 +209,40 @@ impl App {
         out
     }
 
-
-    fn draw_context_viewer(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect ) {
+    fn draw_context_viewer(
+        &mut self,
+        f: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        area: Rect,
+    ) {
         let selected_file = &self.result_list.current_file();
 
         // let height = codeblock.inner(codechunk).height as u64;
 
-        if let Some((_, h)) = selected_file{
+        let blocc = Block::default()
+            .borders(Borders::ALL)
+            .border_type(tui::widgets::BorderType::Rounded);
 
+        if let Some((_, h)) = selected_file {
             let (path, line_nr) = self.result_list.get_selected_entry().unwrap();
             let height = area.height as u64;
 
-            let line_lower = line_nr.saturating_sub(height/2);
+            let line_lower = line_nr.saturating_sub(height / 2);
 
             let line_upper = std::cmp::min(line_lower + height, h.len() as u64);
 
             let p = Paragraph::new::<Vec<_>>(
                 self.make_styled(h)[(line_lower as usize)..(line_upper as usize)]
-                    .iter().map(|l|{
-                        l.clone()
-                    }).collect()
-            ).wrap(
-                Wrap {trim: false}
-            ).block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_type(tui::widgets::BorderType::Rounded)
-                    .title(path)
-            );
+                    .iter()
+                    .map(|l| l.clone())
+                    .collect(),
+            )
+            .wrap(Wrap { trim: false })
+            .block(blocc.title(path));
 
             f.render_widget(p, area);
+        } else {
+            f.render_widget(blocc, area);
         }
-
-
-
     }
 
     fn draw_bottom_bar(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {

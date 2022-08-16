@@ -231,10 +231,7 @@ impl App {
             let line_upper = std::cmp::min(line_lower + height, h.len() as u64);
 
             let p = Paragraph::new::<Vec<_>>(
-                self.make_styled(h)[(line_lower as usize)..(line_upper as usize)]
-                    .iter()
-                    .map(|l| l.clone())
-                    .collect(),
+                self.make_styled(h)[(line_lower as usize)..(line_upper as usize)].to_vec(),
             )
             .wrap(Wrap { trim: false })
             .block(blocc.title(path));

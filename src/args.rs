@@ -391,7 +391,7 @@ mod tests {
     fn do_not_ignore_multi_value_options() {
         let to_ignore = Args::pair_ignored(
             vec!["aaa".to_owned(), "b".to_owned(), "c".to_owned()],
-            &vec![
+            &[
                 (Some("aaa".to_owned()), Some("a".to_owned()), true),
                 (Some("bbb".to_owned()), Some("b".to_owned()), false),
                 (Some("ccc".to_owned()), Some("c".to_owned()), true),

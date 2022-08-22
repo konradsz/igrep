@@ -10,7 +10,7 @@ use std::{
 };
 use strum_macros::Display;
 
-#[derive(Display, PartialEq, Copy, Clone, Debug, ArgEnum)]
+#[derive(Display, PartialEq, Eq, Copy, Clone, Debug, ArgEnum)]
 #[strum(serialize_all = "lowercase")]
 pub enum Editor {
     Vim,

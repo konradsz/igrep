@@ -391,9 +391,11 @@ mod tests {
     fn do_not_ignore_multi_value_options() {
         let to_ignore = Args::pair_ignored(
             vec!["aaa".to_owned(), "b".to_owned(), "c".to_owned()],
-            &[(Some("aaa".to_owned()), Some("a".to_owned()), true),
+            &[
+                (Some("aaa".to_owned()), Some("a".to_owned()), true),
                 (Some("bbb".to_owned()), Some("b".to_owned()), false),
-                (Some("ccc".to_owned()), Some("c".to_owned()), true)],
+                (Some("ccc".to_owned()), Some("c".to_owned()), true),
+            ],
         );
 
         let extended: HashSet<String> = HashSet::from_iter(to_ignore.into_iter());

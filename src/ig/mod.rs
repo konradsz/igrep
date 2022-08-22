@@ -9,7 +9,7 @@ pub use search_config::SearchConfig;
 use searcher::{Event, Searcher};
 use std::sync::mpsc;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum State {
     Idle,
     Searching,

@@ -12,7 +12,7 @@ pub struct InputHandler {
     input_state: InputState,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum InputState {
     Valid,
     Incomplete(String),

@@ -1,9 +1,8 @@
 #[mockall_double::double]
 use super::result_list::ResultList;
 
-use super::result_list::HighlightedFile;
-
 use super::{
+    context_viewer::ContextViewer,
     editor::Editor,
     input_handler::{InputHandler, InputState},
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
@@ -20,13 +19,13 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::io;
+use std::{io, path::PathBuf};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::Style,
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame, Terminal,
 };
 
@@ -35,6 +34,7 @@ pub struct App {
     input_handler: InputHandler,
     result_list: ResultList,
     result_list_state: ListState,
+    context_viewer: ContextViewer,
     theme: Box<dyn Theme>,
 }
 
@@ -45,6 +45,7 @@ impl App {
             input_handler: InputHandler::default(),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
+            context_viewer: ContextViewer::default(),
             theme,
         }
     }
@@ -113,18 +114,18 @@ impl App {
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
             .split(f.size());
 
-        let (top, bottombar_area) = (chunks[0], chunks[1]);
+        let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
 
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(top);
+            .split(view_area);
 
         let (left, right) = (chunks[0], chunks[1]);
 
         self.draw_list(f, left);
-        self.draw_bottom_bar(f, bottombar_area);
         self.draw_context_viewer(f, right);
+        self.draw_bottom_bar(f, bottom_bar_area);
     }
 
     fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
@@ -173,7 +174,7 @@ impl App {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .border_type(tui::widgets::BorderType::Rounded),
+                    .border_type(BorderType::Rounded),
             )
             .style(self.theme.background_color())
             .highlight_style(self.theme.highlight_color())
@@ -184,61 +185,33 @@ impl App {
         f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
     }
 
-    fn make_styled<'a>(&'a self, highlighted: &'a HighlightedFile) -> Vec<Spans<'a>> {
-        let mut out = vec![];
-        let (_, line_nr) = self.result_list.get_selected_entry().unwrap();
-
-        for (idx, line) in highlighted.iter().enumerate() {
-            let spans: Vec<_> = line
-                .iter()
-                .map(|(hl, s)| {
-                    let fg = hl.foreground;
-                    let mut style = Style::default().fg(Color::Rgb(fg.r, fg.g, fg.b));
-
-                    if idx + 1 == line_nr as usize {
-                        let bg = Color::Rgb(23, 30, 102);
-                        style = style.bg(bg);
-                    }
-                    Span::styled(s, style)
-                })
-                .collect();
-
-            out.push(Spans::from(spans));
-        }
-
-        out
-    }
-
     fn draw_context_viewer(
         &mut self,
         f: &mut Frame<CrosstermBackend<std::io::Stdout>>,
         area: Rect,
     ) {
-        let selected_file = &self.result_list.current_file();
-
-        // let height = codeblock.inner(codechunk).height as u64;
-
-        let blocc = Block::default()
+        let block_widget = Block::default()
             .borders(Borders::ALL)
-            .border_type(tui::widgets::BorderType::Rounded);
+            .border_type(BorderType::Rounded);
 
-        if let Some((_, h)) = selected_file {
-            let (path, line_nr) = self.result_list.get_selected_entry().unwrap();
+        if let Some((file_name, line_number)) = self.result_list.get_selected_entry() {
+            self.context_viewer
+                .highlight_file_if_needed(&PathBuf::from(file_name));
+
             let height = area.height as u64;
+            let first_line_index = line_number.saturating_sub(height / 2);
 
-            let line_lower = line_nr.saturating_sub(height / 2);
+            let paragraph_widget = Paragraph::new(self.context_viewer.get_styled_spans(
+                first_line_index as usize,
+                height as usize,
+                area.width as usize,
+                line_number as usize,
+            ))
+            .block(block_widget);
 
-            let line_upper = std::cmp::min(line_lower + height, h.len() as u64);
-
-            let p = Paragraph::new::<Vec<_>>(
-                self.make_styled(h)[(line_lower as usize)..(line_upper as usize)].to_vec(),
-            )
-            .wrap(Wrap { trim: false })
-            .block(blocc.title(path));
-
-            f.render_widget(p, area);
+            f.render_widget(paragraph_widget, area);
         } else {
-            f.render_widget(blocc, area);
+            f.render_widget(block_widget, area);
         }
     }
 

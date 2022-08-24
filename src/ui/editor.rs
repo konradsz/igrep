@@ -101,9 +101,7 @@ impl EditorCommand {
             Editor::Emacs | Editor::Emacsclient => {
                 Box::new(["-nw".into(), format!("+{line_number}"), file_name.into()].into_iter())
             }
-            Editor::Hx => {
-                Box::new([format!("{file_name}:{line_number}")].into_iter())
-            }
+            Editor::Hx => Box::new([format!("{file_name}:{line_number}")].into_iter()),
         }
     }
 

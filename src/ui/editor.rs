@@ -22,6 +22,7 @@ pub enum Editor {
     CodeInsiders,
     Emacs,
     Emacsclient,
+    Hx,
 }
 
 impl Default for Editor {
@@ -85,6 +86,7 @@ impl EditorCommand {
             Editor::CodeInsiders => "code-insiders".into(),
             Editor::Emacs => "emacs".into(),
             Editor::Emacsclient => "emacsclient".into(),
+            Editor::Hx => "hx".into(),
         }
     }
 
@@ -99,6 +101,7 @@ impl EditorCommand {
             Editor::Emacs | Editor::Emacsclient => {
                 Box::new(["-nw".into(), format!("+{line_number}"), file_name.into()].into_iter())
             }
+            Editor::Hx => Box::new([format!("{file_name}:{line_number}")].into_iter()),
         }
     }
 
@@ -175,6 +178,7 @@ mod tests {
     #[test_case(Editor::CodeInsiders => format!("code-insiders -g {FILE_NAME}:{LINE_NUMBER}"); "code-insiders command")]
     #[test_case(Editor::Emacs => format!("emacs -nw +{LINE_NUMBER} {FILE_NAME}"); "emacs command")]
     #[test_case(Editor::Emacsclient => format!("emacsclient -nw +{LINE_NUMBER} {FILE_NAME}"); "emacsclient command")]
+    #[test_case(Editor::Hx => format!("hx {FILE_NAME}:{LINE_NUMBER}"); "hx command")]
     fn editor_command(editor: Editor) -> String {
         EditorCommand::new(editor, FILE_NAME, LINE_NUMBER).to_string()
     }

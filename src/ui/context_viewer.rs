@@ -20,7 +20,7 @@ pub struct ContextViewer {
 
 impl ContextViewer {
     pub fn highlight_file_if_needed(&mut self, file_path: impl AsRef<Path>) {
-        if &self.file_path != file_path.as_ref() {
+        if self.file_path != file_path.as_ref() {
             self.file_path = file_path.as_ref().into();
             self.file_highlighted.clear();
 
@@ -51,17 +51,15 @@ impl ContextViewer {
     pub fn get_styled_spans(
         &self,
         first_line_index: usize,
-        total: usize,
+        height: usize,
         width: usize,
         match_index: usize,
     ) -> Vec<Spans<'_>> {
-        let match_offset = match_index - max(first_line_index, 1);
-
         let mut styled_spans = self
             .file_highlighted
             .iter()
             .skip(first_line_index.saturating_sub(1))
-            .take(total)
+            .take(height)
             .map(|line| {
                 line.iter()
                     .map(|(highlight_style, substring)| {
@@ -73,18 +71,16 @@ impl ContextViewer {
             .map(Spans::from)
             .collect_vec();
 
+        let match_offset = match_index - max(first_line_index, 1);
         let styled_line = &mut styled_spans[match_offset];
         let line_width = styled_line.width();
         let span_vec = &mut styled_line.0;
 
         if line_width < width {
-            span_vec.push(Span::raw(
-                std::iter::repeat(' ')
-                    .take(width - line_width)
-                    .collect::<String>(),
-            ));
+            span_vec.push(Span::raw(" ".repeat(width - line_width)));
         }
-        for span in span_vec.into_iter() {
+
+        for span in span_vec.iter_mut() {
             let current_style = span.style;
             span.borrow_mut().style = current_style.bg(Color::Rgb(23, 30, 102));
         }

@@ -20,7 +20,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 -., --hidden                  Search hidden files and directories. By default, hidden files and
                               directories are skipped.
     --editor <EDITOR>         Text editor used to open selected match [possible values: vim,
-                              neovim, nvim, nano, code, vscode, emacs, emacsclient]
+                              neovim, nvim, nano, code, vscode, emacs, emacsclient, hx]
 -g, --glob <GLOB>             Include files and directories for searching that match the given glob.
                               Multiple globs may be provided.
 -h, --help                    Print help information

@@ -39,6 +39,8 @@ pub trait Theme {
     // Context viewer styles
     fn context_highlight_color(&self) -> Color;
 
+    fn context_highlight_theme(&self) -> &str;
+
     // Bottom bar styles
     fn bottom_bar_color(&self) -> Color {
         Color::Reset

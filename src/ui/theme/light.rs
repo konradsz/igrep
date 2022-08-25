@@ -11,4 +11,8 @@ impl Theme for Light {
     fn context_highlight_color(&self) -> Color {
         Color::Rgb(23, 30, 102)
     }
+
+    fn context_highlight_theme(&self) -> &str {
+        "base16-ocean.light"
+    }
 }

@@ -94,7 +94,10 @@ impl App {
 
                 if let Some((file_name, _)) = self.result_list.get_selected_entry() {
                     if let Some(context_viewer) = &mut self.context_viewer_state.0 {
-                        context_viewer.highlight_file_if_needed(&PathBuf::from(file_name));
+                        context_viewer.highlight_file_if_needed(
+                            &PathBuf::from(file_name),
+                            self.theme.as_ref(),
+                        );
                     }
                 }
 

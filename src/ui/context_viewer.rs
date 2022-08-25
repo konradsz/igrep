@@ -33,7 +33,7 @@ pub struct ContextViewer {
 }
 
 impl ContextViewer {
-    pub fn highlight_file_if_needed(&mut self, file_path: impl AsRef<Path>) {
+    pub fn highlight_file_if_needed(&mut self, file_path: impl AsRef<Path>, theme: &dyn Theme) {
         if self.file_path != file_path.as_ref() {
             self.file_path = file_path.as_ref().into();
             self.file_highlighted.clear();
@@ -42,7 +42,8 @@ impl ContextViewer {
             let ts = highlighting::ThemeSet::load_defaults();
 
             let mut highlighter =
-                HighlightFile::new(file_path, &ss, &ts.themes["base16-ocean.dark"]).unwrap();
+                HighlightFile::new(file_path, &ss, &ts.themes[theme.context_highlight_theme()])
+                    .unwrap();
             let mut line = String::new();
 
             while highlighter.reader.read_line(&mut line).unwrap() > 0 {

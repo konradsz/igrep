@@ -8,6 +8,10 @@ impl Theme for Dark {
         Style::default().bg(Color::Rgb(58, 58, 58))
     }
 
+    fn context_highlight_color(&self) -> Color {
+        Color::Rgb(23, 30, 102)
+    }
+
     fn bottom_bar_color(&self) -> Color {
         Color::Rgb(58, 58, 58)
     }

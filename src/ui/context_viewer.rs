@@ -12,6 +12,20 @@ use tui::{
     text::{Span, Spans},
 };
 
+use super::theme::Theme;
+
+#[derive(Default)]
+pub struct ContextViewerState(pub Option<ContextViewer>);
+
+impl ContextViewerState {
+    pub fn toggle(&mut self) {
+        match self.0 {
+            Some(_) => self.0 = None,
+            None => self.0 = Some(ContextViewer::default()),
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct ContextViewer {
     file_path: PathBuf,
@@ -54,6 +68,7 @@ impl ContextViewer {
         height: usize,
         width: usize,
         match_index: usize,
+        theme: &dyn Theme,
     ) -> Vec<Spans<'_>> {
         let mut styled_spans = self
             .file_highlighted
@@ -82,7 +97,7 @@ impl ContextViewer {
 
         for span in span_vec.iter_mut() {
             let current_style = span.style;
-            span.borrow_mut().style = current_style.bg(Color::Rgb(23, 30, 102));
+            span.borrow_mut().style = current_style.bg(theme.context_highlight_color());
         }
 
         styled_spans

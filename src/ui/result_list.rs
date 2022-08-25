@@ -337,7 +337,6 @@ mockall::mock! {
         pub fn get_total_number_of_file_entries(&self) -> usize;
         pub fn get_filtered_matches_count(&self) -> usize;
     }
-
 }
 
 #[cfg(test)]

@@ -50,6 +50,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `Enter`                  | Open current file                      |
 | `dd`, `Delete`           | Filter out selected match              |
 | `dw`                     | Filter out all matches in current file |
+| `v`                      | Toggle context viewer                  |
 | `F5`                     | Re-run search                          |
 
 ## Specifying text editor

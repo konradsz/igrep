@@ -27,6 +27,7 @@ anyhow = "1.0.38"
 strum = { version = "0.24", features = ["derive"] }
 strum_macros = "0.24.0"
 mockall_double = "0.2.1"
+syntect = "5.0.0"
 
 [dev-dependencies]
 lazy_static = "1.4.0"

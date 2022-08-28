@@ -1,11 +1,14 @@
 #[mockall_double::double]
-use super::result_list::ResultList;
+use super::{context_viewer::ContextViewerState, result_list::ResultList};
+
 use super::{
+    context_viewer::ContextViewer,
     editor::Editor,
     input_handler::{InputHandler, InputState},
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
     theme::Theme,
 };
+
 #[mockall_double::double]
 use crate::ig::Ig;
 use crate::{file_entry::EntryType, ig::SearchConfig};
@@ -15,12 +18,14 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+
+use std::path::PathBuf;
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame, Terminal,
 };
 
@@ -29,6 +34,7 @@ pub struct App {
     input_handler: InputHandler,
     result_list: ResultList,
     result_list_state: ListState,
+    context_viewer_state: ContextViewerState,
     theme: Box<dyn Theme>,
 }
 
@@ -39,6 +45,7 @@ impl App {
             input_handler: InputHandler::default(),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
+            context_viewer_state: ContextViewerState::default(),
             theme,
         }
     }
@@ -68,8 +75,20 @@ impl App {
                 if let Some(entry) = self.ig.handle_searcher_event() {
                     self.result_list.add_entry(entry);
                 }
-                self.input_handler
-                    .handle_input(&mut self.result_list, &mut self.ig)?;
+                self.input_handler.handle_input(
+                    &mut self.result_list,
+                    &mut self.ig,
+                    &mut self.context_viewer_state,
+                )?;
+
+                if let Some((file_name, _)) = self.result_list.get_selected_entry() {
+                    if let Some(context_viewer) = self.context_viewer_state.viewer() {
+                        context_viewer.highlight_file_if_needed(
+                            &PathBuf::from(file_name),
+                            self.theme.as_ref(),
+                        );
+                    }
+                }
             }
 
             self.ig
@@ -85,39 +104,84 @@ impl App {
         Ok(())
     }
 
-    fn draw(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
-            .split(f.size());
+            .split(frame.size());
 
-        self.draw_list(f, chunks[0]);
-        self.draw_bottom_bar(f, chunks[1]);
+        let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
+
+        match self.context_viewer_state.viewer() {
+            Some(context_viewer) => {
+                let chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+                    .split(view_area);
+
+                let (left, right) = (chunks[0], chunks[1]);
+
+                Self::draw_list(
+                    frame,
+                    left,
+                    &self.result_list,
+                    &mut self.result_list_state,
+                    self.theme.as_ref(),
+                );
+                Self::draw_context_viewer(
+                    frame,
+                    right,
+                    &self.result_list,
+                    context_viewer,
+                    self.theme.as_ref(),
+                );
+            }
+            None => {
+                Self::draw_list(
+                    frame,
+                    view_area,
+                    &self.result_list,
+                    &mut self.result_list_state,
+                    self.theme.as_ref(),
+                );
+            }
+        };
+
+        Self::draw_bottom_bar(
+            frame,
+            bottom_bar_area,
+            &self.result_list,
+            &self.ig,
+            &self.input_handler,
+            self.theme.as_ref(),
+        );
     }
 
-    fn draw_list(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
-        let files_list: Vec<ListItem> = self
-            .result_list
+    fn draw_list(
+        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        area: Rect,
+        result_list: &ResultList,
+        result_list_state: &mut ListState,
+        theme: &dyn Theme,
+    ) {
+        let files_list: Vec<ListItem> = result_list
             .iter()
             .map(|e| match e {
                 EntryType::Header(h) => {
                     let h = h.trim_start_matches("./");
-                    ListItem::new(Span::styled(h, self.theme.file_path_color()))
+                    ListItem::new(Span::styled(h, theme.file_path_color()))
                 }
                 EntryType::Match(n, t, offsets) => {
-                    let line_number =
-                        Span::styled(format!(" {}: ", n), self.theme.line_number_color());
+                    let line_number = Span::styled(format!(" {}: ", n), theme.line_number_color());
 
                     let mut spans = vec![line_number];
 
                     let mut current_position = 0;
                     for offset in offsets {
-                        let before_match = Span::styled(
-                            &t[current_position..offset.0],
-                            self.theme.list_font_color(),
-                        );
+                        let before_match =
+                            Span::styled(&t[current_position..offset.0], theme.list_font_color());
                         let actual_match =
-                            Span::styled(&t[offset.0..offset.1], self.theme.match_color());
+                            Span::styled(&t[offset.0..offset.1], theme.match_color());
 
                         // set current position to the end of current match
                         current_position = offset.1;
@@ -129,7 +193,7 @@ impl App {
                     // push remaining text of a line
                     spans.push(Span::styled(
                         &t[current_position..],
-                        self.theme.list_font_color(),
+                        theme.list_font_color(),
                     ));
 
                     ListItem::new(Spans::from(spans))
@@ -141,35 +205,71 @@ impl App {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .border_type(tui::widgets::BorderType::Rounded),
+                    .border_type(BorderType::Rounded),
             )
-            .style(self.theme.background_color())
-            .highlight_style(self.theme.highlight_color())
+            .style(theme.background_color())
+            .highlight_style(Style::default().bg(theme.highlight_color()))
             .scroll_offset(ScrollOffset::default().top(1).bottom(0));
 
-        self.result_list_state
-            .select(self.result_list.get_state().selected());
-        f.render_stateful_widget(list_widget, area, &mut self.result_list_state);
+        result_list_state.select(result_list.get_state().selected());
+        frame.render_stateful_widget(list_widget, area, result_list_state);
     }
 
-    fn draw_bottom_bar(&mut self, f: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
-        let current_match_index = self.result_list.get_current_match_index();
+    fn draw_context_viewer(
+        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        area: Rect,
+        result_list: &ResultList,
+        context_viewer: &ContextViewer,
+        theme: &dyn Theme,
+    ) {
+        let block_widget = Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded);
 
-        let (app_status_text, app_status_style) = if self.ig.is_searching() {
-            ("SEARCHING", self.theme.searching_state_style())
+        if let Some((_, line_number)) = result_list.get_selected_entry() {
+            let height = area.height as u64;
+            let first_line_index = line_number.saturating_sub(height / 2);
+
+            let paragraph_widget = Paragraph::new(context_viewer.get_styled_spans(
+                first_line_index as usize,
+                height as usize,
+                area.width as usize,
+                line_number as usize,
+                theme,
+            ))
+            .block(block_widget);
+
+            frame.render_widget(paragraph_widget, area);
         } else {
-            ("FINISHED", self.theme.finished_state_style())
+            frame.render_widget(block_widget, area);
+        }
+    }
+
+    fn draw_bottom_bar(
+        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        area: Rect,
+        result_list: &ResultList,
+        ig: &Ig,
+        input_handler: &InputHandler,
+        theme: &dyn Theme,
+    ) {
+        let current_match_index = result_list.get_current_match_index();
+
+        let (app_status_text, app_status_style) = if ig.is_searching() {
+            ("SEARCHING", theme.searching_state_style())
+        } else {
+            ("FINISHED", theme.finished_state_style())
         };
         let app_status = Span::styled(app_status_text, app_status_style);
 
-        let search_result = Span::raw(if self.ig.is_searching() {
+        let search_result = Span::raw(if ig.is_searching() {
             "".into()
         } else {
-            let total_no_of_matches = self.result_list.get_total_number_of_matches();
+            let total_no_of_matches = result_list.get_total_number_of_matches();
             if total_no_of_matches == 0 {
                 " No matches found.".into()
             } else {
-                let no_of_files = self.result_list.get_total_number_of_file_entries();
+                let no_of_files = result_list.get_total_number_of_file_entries();
 
                 let matches_str = if total_no_of_matches == 1 {
                     "match"
@@ -178,7 +278,7 @@ impl App {
                 };
                 let files_str = if no_of_files == 1 { "file" } else { "files" };
 
-                let filtered_count = self.result_list.get_filtered_matches_count();
+                let filtered_count = result_list.get_filtered_matches_count();
                 let filtered_str = if filtered_count != 0 {
                     format!(" ({} filtered out)", filtered_count)
                 } else {
@@ -192,19 +292,19 @@ impl App {
             }
         });
 
-        let (current_input_content, current_input_color) = match self.input_handler.get_state() {
-            InputState::Valid => (String::default(), self.theme.bottom_bar_font_color()),
-            InputState::Incomplete(input) => (input.to_owned(), self.theme.bottom_bar_font_color()),
-            InputState::Invalid(input) => (input.to_owned(), self.theme.invalid_input_color()),
+        let (current_input_content, current_input_color) = match input_handler.get_state() {
+            InputState::Valid => (String::default(), theme.bottom_bar_font_color()),
+            InputState::Incomplete(input) => (input.to_owned(), theme.bottom_bar_font_color()),
+            InputState::Invalid(input) => (input.to_owned(), theme.invalid_input_color()),
         };
         let current_input = Span::styled(
             current_input_content,
             Style::default()
-                .bg(self.theme.bottom_bar_color())
+                .bg(theme.bottom_bar_color())
                 .fg(current_input_color),
         );
 
-        let current_no_of_matches = self.result_list.get_current_number_of_matches();
+        let current_no_of_matches = result_list.get_current_number_of_matches();
         let selected_info_text = {
             let width = current_no_of_matches.to_string().len();
             format!(
@@ -213,7 +313,7 @@ impl App {
             )
         };
         let selected_info_length = selected_info_text.len();
-        let selected_info = Span::styled(selected_info_text, self.theme.bottom_bar_style());
+        let selected_info = Span::styled(selected_info_text, theme.bottom_bar_style());
 
         let hsplit = Layout::default()
             .direction(Direction::Horizontal)
@@ -228,30 +328,30 @@ impl App {
             )
             .split(area);
 
-        f.render_widget(
+        frame.render_widget(
             Paragraph::new(app_status)
                 .style(Style::default().bg(app_status_style.bg.expect("Background not set")))
                 .alignment(Alignment::Center),
             hsplit[0],
         );
 
-        f.render_widget(
+        frame.render_widget(
             Paragraph::new(search_result)
-                .style(self.theme.bottom_bar_style())
+                .style(theme.bottom_bar_style())
                 .alignment(Alignment::Left),
             hsplit[1],
         );
 
-        f.render_widget(
+        frame.render_widget(
             Paragraph::new(current_input)
-                .style(self.theme.bottom_bar_style())
+                .style(theme.bottom_bar_style())
                 .alignment(Alignment::Right),
             hsplit[2],
         );
 
-        f.render_widget(
+        frame.render_widget(
             Paragraph::new(selected_info)
-                .style(self.theme.bottom_bar_style())
+                .style(theme.bottom_bar_style())
                 .alignment(Alignment::Right),
             hsplit[3],
         );

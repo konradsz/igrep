@@ -64,7 +64,7 @@ impl Ig {
 
     pub fn search(&mut self, result_list: &mut ResultList) {
         if self.state == State::Idle {
-            result_list.clear();
+            *result_list = ResultList::default();
             self.state = State::Searching;
             self.searcher.search();
         }

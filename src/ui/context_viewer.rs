@@ -42,7 +42,7 @@ impl ContextViewer {
             let ts = highlighting::ThemeSet::load_defaults();
 
             let mut highlighter =
-                HighlightFile::new(file_path, &ss, &ts.themes[theme.context_highlight_theme()])
+                HighlightFile::new(file_path, &ss, &ts.themes[theme.context_viewer_theme()])
                     .unwrap();
             let mut line = String::new();
 
@@ -98,7 +98,7 @@ impl ContextViewer {
 
         for span in span_vec.iter_mut() {
             let current_style = span.style;
-            span.borrow_mut().style = current_style.bg(theme.context_highlight_color());
+            span.borrow_mut().style = current_style.bg(theme.highlight_color());
         }
 
         styled_spans

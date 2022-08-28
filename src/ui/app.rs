@@ -224,7 +224,7 @@ impl App {
                     .border_type(BorderType::Rounded),
             )
             .style(theme.background_color())
-            .highlight_style(theme.highlight_color())
+            .highlight_style(Style::default().bg(theme.highlight_color()))
             .scroll_offset(ScrollOffset::default().top(1).bottom(0));
 
         result_list_state.select(result_list.get_state().selected());

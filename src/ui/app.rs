@@ -19,9 +19,9 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::{io, path::PathBuf};
+use std::path::PathBuf;
 use tui::{
-    backend::{Backend, CrosstermBackend},
+    backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Span, Spans},
@@ -48,17 +48,6 @@ impl App {
             context_viewer_state: ContextViewerState::default(),
             theme,
         }
-    }
-
-    fn open_file<B: Backend>(&mut self, term: &mut Terminal<B>) {
-        term.clear().unwrap();
-
-        self.ig
-            .open_file_if_requested(self.result_list.get_selected_entry());
-
-        let mut stdout = io::stdout();
-        execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
-        term.clear().unwrap();
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -100,18 +89,13 @@ impl App {
                         );
                     }
                 }
-
-                if self.ig.file_open_requested() {
-                    self.open_file(&mut terminal);
-                }
             }
 
+            self.ig
+                .open_file_if_requested(self.result_list.get_selected_entry());
+
             if self.ig.exit_requested() {
-                execute!(
-                    terminal.backend_mut(),
-                    LeaveAlternateScreen,
-                    DisableMouseCapture
-                )?;
+                execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
                 disable_raw_mode()?;
                 break;
             }

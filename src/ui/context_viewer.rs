@@ -17,7 +17,14 @@ use super::theme::Theme;
 #[derive(Default)]
 pub struct ContextViewerState(pub Option<ContextViewer>);
 
+#[cfg_attr(test, mockall::automock, allow(dead_code))]
 impl ContextViewerState {
+    // Explicit lifetime added for mockall, this requires some refactoring ;)
+    #[allow(clippy::needless_lifetimes)]
+    pub fn viewer<'a>(&'a mut self) -> Option<&'a mut ContextViewer> {
+        self.0.as_mut()
+    }
+
     pub fn toggle(&mut self) {
         match self.0 {
             Some(_) => self.0 = None,

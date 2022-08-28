@@ -1,8 +1,8 @@
 #[mockall_double::double]
-use super::result_list::ResultList;
+use super::{context_viewer::ContextViewerState, result_list::ResultList};
 
 use super::{
-    context_viewer::{ContextViewer, ContextViewerState},
+    context_viewer::ContextViewer,
     editor::Editor,
     input_handler::{InputHandler, InputState},
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
@@ -93,7 +93,7 @@ impl App {
                 )?;
 
                 if let Some((file_name, _)) = self.result_list.get_selected_entry() {
-                    if let Some(context_viewer) = &mut self.context_viewer_state.0 {
+                    if let Some(context_viewer) = self.context_viewer_state.viewer() {
                         context_viewer.highlight_file_if_needed(
                             &PathBuf::from(file_name),
                             self.theme.as_ref(),
@@ -128,7 +128,7 @@ impl App {
 
         let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
 
-        match &self.context_viewer_state.0 {
+        match self.context_viewer_state.viewer() {
             Some(context_viewer) => {
                 let chunks = Layout::default()
                     .direction(Direction::Horizontal)

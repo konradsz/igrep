@@ -1,18 +1,16 @@
-use super::context_viewer::ContextViewerState;
-#[mockall_double::double]
-use super::result_list::ResultList;
-
 use super::{
-    context_viewer::ContextViewer,
+    context_viewer::{ContextViewer, ContextViewerState},
     editor::Editor,
     input_handler::{InputHandler, InputState},
+    result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
     theme::Theme,
 };
 
-#[mockall_double::double]
-use crate::ig::Ig;
-use crate::{file_entry::EntryType, ig::SearchConfig};
+use crate::{
+    file_entry::EntryType,
+    ig::{Ig, SearchConfig},
+};
 use anyhow::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
@@ -32,7 +30,6 @@ use tui::{
 
 pub struct App {
     ig: Ig,
-    input_handler: InputHandler,
     result_list: ResultList,
     result_list_state: ListState,
     context_viewer_state: ContextViewerState,
@@ -43,7 +40,6 @@ impl App {
     pub fn new(config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
         Self {
             ig: Ig::new(config, editor),
-            input_handler: InputHandler::default(),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
             context_viewer_state: ContextViewerState::default(),
@@ -52,6 +48,7 @@ impl App {
     }
 
     pub fn run(&mut self) -> Result<()> {
+        let mut input_handler = InputHandler::default();
         self.ig.search(&mut self.result_list);
 
         loop {
@@ -71,16 +68,12 @@ impl App {
             )?;
 
             while self.ig.is_searching() || self.ig.is_idle() {
-                terminal.draw(|f| self.draw(f))?;
+                terminal.draw(|f| self.draw(f, &input_handler))?;
 
                 if let Some(entry) = self.ig.handle_searcher_event() {
                     self.result_list.add_entry(entry);
                 }
-                self.input_handler.handle_input(
-                    &mut self.result_list,
-                    &mut self.ig,
-                    &mut self.context_viewer_state,
-                )?;
+                input_handler.handle_input(self)?;
 
                 if let Some((file_name, _)) = self.result_list.get_selected_entry() {
                     if let Some(context_viewer) = self.context_viewer_state.viewer() {
@@ -105,7 +98,11 @@ impl App {
         Ok(())
     }
 
-    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+    fn draw(
+        &mut self,
+        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        input_handler: &InputHandler,
+    ) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
@@ -176,7 +173,7 @@ impl App {
             bottom_bar_area,
             &self.result_list,
             &self.ig,
-            &self.input_handler,
+            input_handler,
             self.theme.as_ref(),
         );
     }
@@ -380,4 +377,80 @@ impl App {
             hsplit[3],
         );
     }
+}
+
+impl Application for App {
+    fn is_searching(&self) -> bool {
+        self.ig.is_searching()
+    }
+
+    fn on_next_match(&mut self) {
+        self.result_list.next_match();
+    }
+
+    fn on_previous_match(&mut self) {
+        self.result_list.previous_match();
+    }
+
+    fn on_next_file(&mut self) {
+        self.result_list.next_file();
+    }
+
+    fn on_previous_file(&mut self) {
+        self.result_list.previous_file();
+    }
+
+    fn on_top(&mut self) {
+        self.result_list.top();
+    }
+
+    fn on_bottom(&mut self) {
+        self.result_list.bottom();
+    }
+
+    fn on_remove_current_entry(&mut self) {
+        self.result_list.remove_current_entry();
+    }
+
+    fn on_remove_current_file(&mut self) {
+        self.result_list.remove_current_file();
+    }
+
+    fn on_toggle_context_viewer_vertical(&mut self) {
+        self.context_viewer_state.toggle_vertical();
+    }
+
+    fn on_toggle_context_viewer_horizontal(&mut self) {
+        self.context_viewer_state.toggle_horizontal();
+    }
+
+    fn on_open_file(&mut self) {
+        self.ig.open_file();
+    }
+
+    fn on_search(&mut self) {
+        self.ig.search(&mut self.result_list);
+    }
+
+    fn on_exit(&mut self) {
+        self.ig.exit();
+    }
+}
+
+#[cfg_attr(test, mockall::automock)]
+pub trait Application {
+    fn is_searching(&self) -> bool;
+    fn on_next_match(&mut self);
+    fn on_previous_match(&mut self);
+    fn on_next_file(&mut self);
+    fn on_previous_file(&mut self);
+    fn on_top(&mut self);
+    fn on_bottom(&mut self);
+    fn on_remove_current_entry(&mut self);
+    fn on_remove_current_file(&mut self);
+    fn on_toggle_context_viewer_vertical(&mut self);
+    fn on_toggle_context_viewer_horizontal(&mut self);
+    fn on_open_file(&mut self);
+    fn on_search(&mut self);
+    fn on_exit(&mut self);
 }

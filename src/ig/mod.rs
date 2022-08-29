@@ -2,9 +2,10 @@ mod search_config;
 mod searcher;
 mod sink;
 
-#[mockall_double::double]
-use crate::ui::result_list::ResultList;
-use crate::{file_entry::FileEntry, ui::editor::Editor};
+use crate::{
+    file_entry::FileEntry,
+    ui::{editor::Editor, result_list::ResultList},
+};
 pub use search_config::SearchConfig;
 use searcher::{Event, Searcher};
 use std::sync::mpsc;
@@ -24,7 +25,6 @@ pub struct Ig {
     editor: Editor,
 }
 
-#[cfg_attr(test, mockall::automock)]
 impl Ig {
     pub fn new(config: SearchConfig, editor: Editor) -> Self {
         let (tx, rx) = mpsc::channel();

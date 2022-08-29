@@ -414,7 +414,6 @@ dependencies = [
  "itertools",
  "lazy_static",
  "mockall",
- "mockall_double",
  "strum",
  "strum_macros",
  "syntect",
@@ -575,18 +574,6 @@ name = "mockall_derive"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79ef208208a0dea3f72221e26e904cdc6db2e481d9ade89081ddd494f1dbaa6b"
-dependencies = [
- "cfg-if 1.0.0",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "mockall_double"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dffc15b97456ecc84d2bde8c1df79145e154f45225828c4361f676e1b82acd6"
 dependencies = [
  "cfg-if 1.0.0",
  "proc-macro2",

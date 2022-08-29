@@ -1,10 +1,4 @@
-// #[mockall_double::double]
-use super::context_viewer::ContextViewer;
-use super::context_viewer::ContextViewerState;
-#[mockall_double::double]
-use super::result_list::ResultList;
-#[mockall_double::double]
-use crate::ig::Ig;
+use super::app::Application;
 use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use std::time::Duration;
@@ -15,31 +9,22 @@ pub struct InputHandler {
     input_state: InputState,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum InputState {
+    #[default]
     Valid,
     Incomplete(String),
     Invalid(String),
 }
 
-impl Default for InputState {
-    fn default() -> Self {
-        Self::Valid
-    }
-}
-
 impl InputHandler {
-    pub fn handle_input(
-        &mut self,
-        result_list: &mut ResultList,
-        ig: &mut Ig,
-        context_viewer_state: &mut ContextViewerState,
-    ) -> Result<()> {
-        let poll_timeout = if ig.is_searching() {
+    pub fn handle_input<A: Application>(&mut self, app: &mut A) -> Result<()> {
+        let poll_timeout = if app.is_searching() {
             Duration::from_millis(1)
         } else {
             Duration::from_millis(100)
         };
+
         if poll(poll_timeout)? {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {
@@ -47,8 +32,8 @@ impl InputHandler {
                     KeyEvent {
                         code: KeyCode::Char(character),
                         ..
-                    } => self.handle_char_input(character, result_list, ig, context_viewer_state),
-                    _ => self.handle_non_char_input(key_event.code, result_list, ig),
+                    } => self.handle_char_input(character, app),
+                    _ => self.handle_non_char_input(key_event.code, app),
                 }
             }
         }
@@ -56,13 +41,7 @@ impl InputHandler {
         Ok(())
     }
 
-    fn handle_char_input(
-        &mut self,
-        character: char,
-        result_list: &mut ResultList,
-        ig: &mut Ig,
-        context_viewer_state: &mut ContextViewerState,
-    ) {
+    fn handle_char_input<A: Application>(&mut self, character: char, app: &mut A) {
         self.input_buffer.push(character);
         self.input_state = InputState::Valid;
 
@@ -72,33 +51,29 @@ impl InputHandler {
         };
 
         match self.input_buffer.as_str() {
-            "j" => {
-                consume_buffer_and_execute(&mut self.input_buffer, &mut || result_list.next_match())
+            "j" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_next_match()),
+            "k" => {
+                consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_previous_match())
             }
-            "k" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                result_list.previous_match()
-            }),
-            "l" => {
-                consume_buffer_and_execute(&mut self.input_buffer, &mut || result_list.next_file())
+            "l" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_next_file()),
+            "h" => {
+                consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_previous_file())
             }
-            "h" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                result_list.previous_file()
-            }),
-            "gg" => consume_buffer_and_execute(&mut self.input_buffer, &mut || result_list.top()),
-            "G" => consume_buffer_and_execute(&mut self.input_buffer, &mut || result_list.bottom()),
+            "gg" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_top()),
+            "G" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_bottom()),
             "dd" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                result_list.remove_current_entry()
+                app.on_remove_current_entry()
             }),
             "dw" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                result_list.remove_current_file()
+                app.on_remove_current_file()
             }),
             "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                context_viewer_state.toggle_vertical()
+                app.on_toggle_context_viewer_vertical()
             }),
-            "b" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
-                context_viewer_state.toggle_horizontal()
+            "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                app.on_toggle_context_viewer_horizontal()
             }),
-            "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || ig.exit()),
+            "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
             "g" => self.input_state = InputState::Incomplete("g…".into()),
             "d" => self.input_state = InputState::Incomplete("d…".into()),
             buf => {
@@ -108,29 +83,24 @@ impl InputHandler {
         }
     }
 
-    fn handle_non_char_input(
-        &mut self,
-        key_code: KeyCode,
-        result_list: &mut ResultList,
-        ig: &mut Ig,
-    ) {
+    fn handle_non_char_input<A: Application>(&mut self, key_code: KeyCode, app: &mut A) {
         self.input_buffer.clear();
 
         match key_code {
-            KeyCode::Down => result_list.next_match(),
-            KeyCode::Up => result_list.previous_match(),
-            KeyCode::Right | KeyCode::PageDown => result_list.next_file(),
-            KeyCode::Left | KeyCode::PageUp => result_list.previous_file(),
-            KeyCode::Home => result_list.top(),
-            KeyCode::End => result_list.bottom(),
-            KeyCode::Delete => result_list.remove_current_entry(),
-            KeyCode::Enter => ig.open_file(),
-            KeyCode::F(5) => ig.search(result_list),
+            KeyCode::Down => app.on_next_match(),
+            KeyCode::Up => app.on_previous_match(),
+            KeyCode::Right | KeyCode::PageDown => app.on_next_file(),
+            KeyCode::Left | KeyCode::PageUp => app.on_previous_file(),
+            KeyCode::Home => app.on_top(),
+            KeyCode::End => app.on_bottom(),
+            KeyCode::Delete => app.on_remove_current_entry(),
+            KeyCode::Enter => app.on_open_file(),
+            KeyCode::F(5) => app.on_search(),
             KeyCode::Esc => {
                 if matches!(self.input_state, InputState::Valid)
                     || matches!(self.input_state, InputState::Invalid(_))
                 {
-                    ig.exit();
+                    app.on_exit();
                 }
             }
             _ => (),
@@ -147,252 +117,143 @@ impl InputHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        ig::MockIg,
-        // ui::{context_viewer::MockContextViewerState, result_list::MockResultList},
-        ui::result_list::MockResultList,
-    };
-    // use crate::
+    use crate::ui::app::MockApplication;
     use crossterm::event::KeyCode::{Char, Esc};
     use test_case::test_case;
 
-    fn handle_key(
-        key_code: KeyCode,
-        result_list: &mut MockResultList,
-        ig: &mut MockIg,
-        context_viewer: &mut ContextViewerState,
-    ) {
+    fn handle_key<A: Application>(key_code: KeyCode, app: &mut A) {
         let mut input_handler = InputHandler::default();
-        handle(
-            &mut input_handler,
-            key_code,
-            result_list,
-            ig,
-            context_viewer,
-        );
+        handle(&mut input_handler, key_code, app);
     }
 
-    fn handle_key_series(
-        key_codes: &[KeyCode],
-        result_list: &mut MockResultList,
-        ig: &mut MockIg,
-        context_viewer: &mut ContextViewerState,
-    ) {
+    fn handle_key_series<A: Application>(key_codes: &[KeyCode], app: &mut A) {
         let mut input_handler = InputHandler::default();
         for key_code in key_codes {
-            handle(
-                &mut input_handler,
-                *key_code,
-                result_list,
-                ig,
-                context_viewer,
-            );
+            handle(&mut input_handler, *key_code, app);
         }
     }
 
-    fn handle(
-        input_handler: &mut InputHandler,
-        key_code: KeyCode,
-        result_list: &mut MockResultList,
-        ig: &mut MockIg,
-        context_viewer: &mut ContextViewerState,
-    ) {
+    fn handle<A: Application>(input_handler: &mut InputHandler, key_code: KeyCode, app: &mut A) {
         match key_code {
-            Char(character) => {
-                input_handler.handle_char_input(character, result_list, ig, context_viewer)
-            }
-            _ => input_handler.handle_non_char_input(key_code, result_list, ig),
+            Char(character) => input_handler.handle_char_input(character, app),
+            _ => input_handler.handle_non_char_input(key_code, app),
         }
     }
 
-    // #[test_case(KeyCode::Down; "down")]
-    // #[test_case(Char('j'); "j")]
-    // fn next_match(key_code: KeyCode) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock
-    //         .expect_next_match()
-    //         .times(1)
-    //         .return_const(());
-    //     handle_key(
-    //         key_code,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(KeyCode::Down; "down")]
+    #[test_case(Char('j'); "j")]
+    fn next_match(key_code: KeyCode) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_next_match().once().return_const(());
+        handle_key(key_code, &mut app_mock);
+    }
 
-    // #[test_case(KeyCode::Up; "up")]
-    // #[test_case(Char('k'); "k")]
-    // fn previous_match(key_code: KeyCode) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock
-    //         .expect_previous_match()
-    //         .times(1)
-    //         .return_const(());
-    //     handle_key(
-    //         key_code,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(KeyCode::Up; "up")]
+    #[test_case(Char('k'); "k")]
+    fn previous_match(key_code: KeyCode) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_previous_match().once().return_const(());
+        handle_key(key_code, &mut app_mock);
+    }
 
-    // #[test_case(KeyCode::Right; "right")]
-    // #[test_case(KeyCode::PageDown; "page down")]
-    // #[test_case(Char('l'); "l")]
-    // fn next_file(key_code: KeyCode) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock
-    //         .expect_next_file()
-    //         .times(1)
-    //         .return_const(());
-    //     handle_key(
-    //         key_code,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(KeyCode::Right; "right")]
+    #[test_case(KeyCode::PageDown; "page down")]
+    #[test_case(Char('l'); "l")]
+    fn next_file(key_code: KeyCode) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_next_file().once().return_const(());
+        handle_key(key_code, &mut app_mock);
+    }
 
-    // #[test_case(KeyCode::Left; "left")]
-    // #[test_case(KeyCode::PageUp; "page up")]
-    // #[test_case(Char('h'); "h")]
-    // fn previous_file(key_code: KeyCode) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock
-    //         .expect_previous_file()
-    //         .times(1)
-    //         .return_const(());
-    //     handle_key(
-    //         key_code,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(KeyCode::Left; "left")]
+    #[test_case(KeyCode::PageUp; "page up")]
+    #[test_case(Char('h'); "h")]
+    fn previous_file(key_code: KeyCode) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_previous_file().once().return_const(());
+        handle_key(key_code, &mut app_mock);
+    }
 
-    // #[test_case(&[KeyCode::Home]; "home")]
-    // #[test_case(&[Char('g'), Char('g')]; "gg")]
-    // fn top(key_codes: &[KeyCode]) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock.expect_top().times(1).return_const(());
-    //     handle_key_series(
-    //         key_codes,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(&[KeyCode::Home]; "home")]
+    #[test_case(&[Char('g'), Char('g')]; "gg")]
+    fn top(key_codes: &[KeyCode]) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_top().once().return_const(());
+        handle_key_series(key_codes, &mut app_mock);
+    }
 
-    // #[test_case(KeyCode::End; "end")]
-    // #[test_case(Char('G'); "G")]
-    // fn bottom(key_code: KeyCode) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock.expect_bottom().times(1).return_const(());
-    //     handle_key(
-    //         key_code,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(KeyCode::End; "end")]
+    #[test_case(Char('G'); "G")]
+    fn bottom(key_code: KeyCode) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_bottom().once().return_const(());
+        handle_key(key_code, &mut app_mock);
+    }
 
-    // #[test_case(&[KeyCode::Delete]; "delete")]
-    // #[test_case(&[Char('d'), Char('d')]; "dd")]
-    // #[test_case(&[Char('g'), Char('d'), Char('w'), Char('d'), Char('d')]; "gdwdd")]
-    // fn remove_current_entry(key_codes: &[KeyCode]) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock
-    //         .expect_remove_current_entry()
-    //         .times(1)
-    //         .return_const(());
-    //     handle_key_series(
-    //         key_codes,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(&[KeyCode::Delete]; "delete")]
+    #[test_case(&[Char('d'), Char('d')]; "dd")]
+    #[test_case(&[Char('g'), Char('d'), Char('w'), Char('d'), Char('d')]; "gdwdd")]
+    fn remove_current_entry(key_codes: &[KeyCode]) {
+        let mut app_mock = MockApplication::default();
+        app_mock
+            .expect_on_remove_current_entry()
+            .once()
+            .return_const(());
+        handle_key_series(key_codes, &mut app_mock);
+    }
 
-    // #[test_case(&[Char('d'), Char('w')]; "dw")]
-    // #[test_case(&[Char('w'), Char('d'), Char('w')]; "wdw")]
-    // fn remove_current_file(key_codes: &[KeyCode]) {
-    //     let mut result_list_mock = MockResultList::default();
-    //     result_list_mock
-    //         .expect_remove_current_file()
-    //         .times(1)
-    //         .return_const(());
-    //     handle_key_series(
-    //         key_codes,
-    //         &mut result_list_mock,
-    //         &mut MockIg::default(),
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test_case(&[Char('d'), Char('w')]; "dw")]
+    #[test_case(&[Char('w'), Char('d'), Char('w')]; "wdw")]
+    fn remove_current_file(key_codes: &[KeyCode]) {
+        let mut app_mock = MockApplication::default();
+        app_mock
+            .expect_on_remove_current_file()
+            .once()
+            .return_const(());
+        handle_key_series(key_codes, &mut app_mock);
+    }
 
-    // #[test]
-    // fn open_file() {
-    //     let mut ig_mock = MockIg::default();
-    //     ig_mock.expect_open_file().times(1).return_const(());
-    //     handle_key(
-    //         KeyCode::Enter,
-    //         &mut MockResultList::default(),
-    //         &mut ig_mock,
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
-
-    // #[test]
-    // fn search() {
-    //     let mut ig_mock = MockIg::default();
-    //     ig_mock.expect_search().times(1).return_const(());
-    //     handle_key(
-    //         KeyCode::F(5),
-    //         &mut MockResultList::default(),
-    //         &mut ig_mock,
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
-
-    #[test_case(ContextViewerState::None => matches ContextViewerState::Vertical(_))]
-    #[test_case(ContextViewerState::Vertical(ContextViewer::default()) => matches ContextViewerState::None)]
-    #[test_case(ContextViewerState::Horizontal(ContextViewer::default()) => matches ContextViewerState::Vertical(_))]
-    fn toggle_vertical_context_viewer(
-        mut context_viewer: ContextViewerState,
-    ) -> ContextViewerState {
-        handle_key(
-            KeyCode::Char('v'),
-            &mut MockResultList::default(),
-            &mut MockIg::default(),
-            &mut context_viewer,
-        );
-        context_viewer
+    #[test]
+    fn toggle_vertical_context_viewer() {
+        let mut app_mock = MockApplication::default();
+        app_mock
+            .expect_on_toggle_context_viewer_vertical()
+            .once()
+            .return_const(());
+        handle_key(KeyCode::Char('v'), &mut app_mock);
     }
 
     #[test]
     fn toggle_horizontal_context_viewer() {
-        let mut context_viewer = ContextViewerState::default();
-        handle_key(
-            KeyCode::Char('b'),
-            &mut MockResultList::default(),
-            &mut MockIg::default(),
-            &mut context_viewer,
-        );
-        assert!(matches!(context_viewer, ContextViewerState::Horizontal(_)));
+        let mut app_mock = MockApplication::default();
+        app_mock
+            .expect_on_toggle_context_viewer_horizontal()
+            .once()
+            .return_const(());
+        handle_key(KeyCode::Char('s'), &mut app_mock);
     }
 
-    // #[test_case(&[Char('q')]; "q")]
-    // #[test_case(&[Esc]; "empty input state")]
-    // #[test_case(&[Char('a'), Char('b'), Esc]; "invalid input state")]
-    // #[test_case(&[Char('d'), Esc, Esc]; "clear incomplete state first")]
-    // fn exit(key_codes: &[KeyCode]) {
-    //     let mut ig_mock = MockIg::default();
-    //     ig_mock.expect_exit().times(1).return_const(());
-    //     handle_key_series(
-    //         key_codes,
-    //         &mut MockResultList::default(),
-    //         &mut ig_mock,
-    //         &mut MockContextViewerState::default(),
-    //     );
-    // }
+    #[test]
+    fn open_file() {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_open_file().once().return_const(());
+        handle_key(KeyCode::Enter, &mut app_mock);
+    }
+
+    #[test]
+    fn search() {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_search().once().return_const(());
+        handle_key(KeyCode::F(5), &mut app_mock);
+    }
+
+    #[test_case(&[Char('q')]; "q")]
+    #[test_case(&[Esc]; "empty input state")]
+    #[test_case(&[Char('a'), Char('b'), Esc]; "invalid input state")]
+    #[test_case(&[Char('d'), Esc, Esc]; "clear incomplete state first")]
+    fn exit(key_codes: &[KeyCode]) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_exit().once().return_const(());
+        handle_key_series(key_codes, &mut app_mock);
+    }
 }

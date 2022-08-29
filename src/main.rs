@@ -4,8 +4,9 @@ use std::io::Write;
 use ui::{
     editor::Editor,
     theme::{dark::Dark, light::Light, Theme, ThemeVariant},
-    App,
 };
+
+use ui::App;
 
 mod args;
 mod file_entry;

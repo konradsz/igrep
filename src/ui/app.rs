@@ -1,5 +1,6 @@
+use super::context_viewer::ContextViewerState;
 #[mockall_double::double]
-use super::{context_viewer::ContextViewerState, result_list::ResultList};
+use super::result_list::ResultList;
 
 use super::{
     context_viewer::ContextViewer,
@@ -112,8 +113,17 @@ impl App {
 
         let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
 
-        match self.context_viewer_state.viewer() {
-            Some(context_viewer) => {
+        match &self.context_viewer_state {
+            ContextViewerState::None => {
+                Self::draw_list(
+                    frame,
+                    view_area,
+                    &self.result_list,
+                    &mut self.result_list_state,
+                    self.theme.as_ref(),
+                );
+            }
+            ContextViewerState::Vertical(context_viewer) => {
                 let chunks = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
@@ -136,16 +146,30 @@ impl App {
                     self.theme.as_ref(),
                 );
             }
-            None => {
+            ContextViewerState::Horizontal(context_viewer) => {
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
+                    .split(view_area);
+
+                let (top, bottom) = (chunks[0], chunks[1]);
+
                 Self::draw_list(
                     frame,
-                    view_area,
+                    top,
                     &self.result_list,
                     &mut self.result_list_state,
                     self.theme.as_ref(),
                 );
+                Self::draw_context_viewer(
+                    frame,
+                    bottom,
+                    &self.result_list,
+                    context_viewer,
+                    self.theme.as_ref(),
+                );
             }
-        };
+        }
 
         Self::draw_bottom_bar(
             frame,

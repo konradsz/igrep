@@ -2,6 +2,7 @@ use std::{
     borrow::BorrowMut,
     cmp::max,
     io::BufRead,
+    mem,
     path::{Path, PathBuf},
 };
 
@@ -14,26 +15,53 @@ use tui::{
 
 use super::theme::Theme;
 
-#[derive(Default)]
-pub struct ContextViewerState(pub Option<ContextViewer>);
+#[derive(Default, Debug, PartialEq)]
+pub enum ContextViewerState {
+    #[default]
+    None,
+    Vertical(ContextViewer),
+    Horizontal(ContextViewer),
+}
 
-#[cfg_attr(test, mockall::automock, allow(dead_code))]
 impl ContextViewerState {
-    // Explicit lifetime added for mockall, this requires some refactoring ;)
-    #[allow(clippy::needless_lifetimes)]
-    pub fn viewer<'a>(&'a mut self) -> Option<&'a mut ContextViewer> {
-        self.0.as_mut()
+    pub fn viewer(&mut self) -> Option<&mut ContextViewer> {
+        match self {
+            ContextViewerState::None => None,
+            ContextViewerState::Vertical(cv) => Some(cv),
+            ContextViewerState::Horizontal(cv) => Some(cv),
+        }
     }
 
-    pub fn toggle(&mut self) {
-        match self.0 {
-            Some(_) => self.0 = None,
-            None => self.0 = Some(ContextViewer::default()),
+    pub fn toggle_vertical(&mut self) {
+        match self {
+            ContextViewerState::None => {
+                *self = ContextViewerState::Vertical(ContextViewer::default());
+            }
+            ContextViewerState::Vertical(_) => {
+                *self = ContextViewerState::None;
+            }
+            ContextViewerState::Horizontal(cv) => {
+                *self = ContextViewerState::Vertical(mem::take(cv))
+            }
+        }
+    }
+
+    pub fn toggle_horizontal(&mut self) {
+        match self {
+            ContextViewerState::None => {
+                *self = ContextViewerState::Horizontal(ContextViewer::default());
+            }
+            ContextViewerState::Vertical(cv) => {
+                *self = ContextViewerState::Horizontal(mem::take(cv))
+            }
+            ContextViewerState::Horizontal(_) => {
+                *self = ContextViewerState::None;
+            }
         }
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq)]
 pub struct ContextViewer {
     file_path: PathBuf,
     file_highlighted: Vec<Vec<(highlighting::Style, String)>>,
@@ -109,5 +137,41 @@ impl ContextViewer {
         }
 
         styled_spans
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    fn create_cv() -> ContextViewer {
+        ContextViewer {
+            file_path: "path".into(),
+            file_highlighted: vec![vec![(
+                highlighting::Style {
+                    foreground: highlighting::Color::BLACK,
+                    background: highlighting::Color::WHITE,
+                    font_style: highlighting::FontStyle::BOLD,
+                },
+                String::from("line"),
+            )]],
+        }
+    }
+
+    #[test_case(ContextViewerState::None => ContextViewerState::Vertical(ContextViewer::default()))]
+    #[test_case(ContextViewerState::Vertical(ContextViewer::default()) => ContextViewerState::None)]
+    #[test_case(ContextViewerState::Horizontal(create_cv()) => ContextViewerState::Vertical(create_cv()))]
+    fn toggle_vertical(mut context_viewer: ContextViewerState) -> ContextViewerState {
+        context_viewer.toggle_vertical();
+        context_viewer
+    }
+
+    #[test_case(ContextViewerState::None => ContextViewerState::Horizontal(ContextViewer::default()))]
+    #[test_case(ContextViewerState::Vertical(create_cv()) => ContextViewerState::Horizontal(create_cv()))]
+    #[test_case(ContextViewerState::Horizontal(ContextViewer::default()) => ContextViewerState::None)]
+    fn toggle_horizontal(mut context_viewer: ContextViewerState) -> ContextViewerState {
+        context_viewer.toggle_horizontal();
+        context_viewer
     }
 }

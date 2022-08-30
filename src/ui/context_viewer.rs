@@ -15,7 +15,7 @@ use tui::{
 
 use super::theme::Theme;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub enum ContextViewerState {
     #[default]
     None,
@@ -61,7 +61,7 @@ impl ContextViewerState {
     }
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct ContextViewer {
     file_path: PathBuf,
     file_highlighted: Vec<Vec<(highlighting::Style, String)>>,

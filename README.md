@@ -50,12 +50,13 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `Enter`                  | Open current file                      |
 | `dd`, `Delete`           | Filter out selected match              |
 | `dw`                     | Filter out all matches in current file |
-| `v`                      | Toggle context viewer                  |
+| `v`                      | Toggle vertical context viewer         |
+| `s`                      | Toggle horizontal context viewer       |
 | `F5`                     | Re-run search                          |
 
 ## Specifying text editor
 `igrep` supports Vim, Neovim, nano, VS Code (stable and insiders), Emacs and EmacsClient.
-To specify the editor, use one of the following (listed in order of their precedence): 
+To specify the editor, use one of the following (listed in order of their precedence):
 - `--editor` option,
 - `$IGREP_EDITOR` variable,
 - `$EDITOR` variable.

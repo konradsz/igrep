@@ -68,7 +68,17 @@ impl App {
             )?;
 
             while self.ig.is_searching() || self.ig.is_idle() {
-                terminal.draw(|f| self.draw(f, &input_handler))?;
+                terminal.draw(|f| {
+                    Self::draw(
+                        f,
+                        &self.result_list,
+                        &mut self.result_list_state,
+                        &mut self.ig,
+                        &input_handler,
+                        &self.context_viewer_state,
+                        self.theme.as_ref(),
+                    )
+                })?;
 
                 if let Some(entry) = self.ig.handle_searcher_event() {
                     self.result_list.add_entry(entry);
@@ -99,9 +109,13 @@ impl App {
     }
 
     fn draw(
-        &mut self,
         frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        result_list: &ResultList,
+        result_list_state: &mut ListState,
+        ig: &Ig,
         input_handler: &InputHandler,
+        context_viewer_state: &ContextViewerState,
+        theme: &dyn Theme,
     ) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -110,15 +124,9 @@ impl App {
 
         let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
 
-        match &self.context_viewer_state {
+        match &context_viewer_state {
             ContextViewerState::None => {
-                Self::draw_list(
-                    frame,
-                    view_area,
-                    &self.result_list,
-                    &mut self.result_list_state,
-                    self.theme.as_ref(),
-                );
+                Self::draw_list(frame, view_area, result_list, result_list_state, theme);
             }
             ContextViewerState::Vertical(context_viewer) => {
                 let chunks = Layout::default()
@@ -128,20 +136,8 @@ impl App {
 
                 let (left, right) = (chunks[0], chunks[1]);
 
-                Self::draw_list(
-                    frame,
-                    left,
-                    &self.result_list,
-                    &mut self.result_list_state,
-                    self.theme.as_ref(),
-                );
-                Self::draw_context_viewer(
-                    frame,
-                    right,
-                    &self.result_list,
-                    context_viewer,
-                    self.theme.as_ref(),
-                );
+                Self::draw_list(frame, left, result_list, result_list_state, theme);
+                Self::draw_context_viewer(frame, right, result_list, context_viewer, theme);
             }
             ContextViewerState::Horizontal(context_viewer) => {
                 let chunks = Layout::default()
@@ -151,30 +147,18 @@ impl App {
 
                 let (top, bottom) = (chunks[0], chunks[1]);
 
-                Self::draw_list(
-                    frame,
-                    top,
-                    &self.result_list,
-                    &mut self.result_list_state,
-                    self.theme.as_ref(),
-                );
-                Self::draw_context_viewer(
-                    frame,
-                    bottom,
-                    &self.result_list,
-                    context_viewer,
-                    self.theme.as_ref(),
-                );
+                Self::draw_list(frame, top, result_list, result_list_state, theme);
+                Self::draw_context_viewer(frame, bottom, result_list, context_viewer, theme);
             }
         }
 
         Self::draw_bottom_bar(
             frame,
             bottom_bar_area,
-            &self.result_list,
-            &self.ig,
+            result_list,
+            ig,
             input_handler,
-            self.theme.as_ref(),
+            theme,
         );
     }
 

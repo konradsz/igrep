@@ -10,9 +10,10 @@ use std::{
 };
 use strum_macros::Display;
 
-#[derive(Display, PartialEq, Eq, Copy, Clone, Debug, ArgEnum)]
+#[derive(Display, Default, PartialEq, Eq, Copy, Clone, Debug, ArgEnum)]
 #[strum(serialize_all = "lowercase")]
 pub enum Editor {
+    #[default]
     Vim,
     Neovim,
     Nvim,
@@ -23,12 +24,6 @@ pub enum Editor {
     Emacs,
     Emacsclient,
     Hx,
-}
-
-impl Default for Editor {
-    fn default() -> Self {
-        Self::Vim
-    }
 }
 
 impl Editor {
@@ -47,9 +42,11 @@ impl Editor {
         if let Some(editor_cli) = editor_cli {
             Ok(editor_cli)
         } else if let Ok(value) = std::env::var(IGREP_EDITOR_ENV) {
+            let value = Editor::extract_editor_name(&value);
             Editor::from_str(&value, false)
                 .map_err(|error| add_error_context(error, value, IGREP_EDITOR_ENV))
         } else if let Ok(value) = std::env::var(EDITOR_ENV) {
+            let value = Editor::extract_editor_name(&value);
             Editor::from_str(&value, false)
                 .map_err(|error| add_error_context(error, value, EDITOR_ENV))
         } else {
@@ -65,6 +62,11 @@ impl Editor {
                 command
             );
         })
+    }
+
+    fn extract_editor_name(input: &str) -> String {
+        let mut split = input.rsplit('/');
+        split.next().unwrap().into()
     }
 }
 
@@ -140,6 +142,8 @@ mod tests {
     #[test_case(None, Some("unsupported-editor"), None => matches Err(_); "unsupported igrep env")]
     #[test_case(None, None, Some("unsupported-editor") => matches Err(_); "unsupported editor env")]
     #[test_case(None, None, None => matches Ok(Editor::Vim); "default editor")]
+    #[test_case(None, Some("/usr/bin/nano"), None => matches Ok(Editor::Nano); "igrep env path")]
+    #[test_case(None, None, Some("/usr/bin/nano") => matches Ok(Editor::Nano); "editor env path")]
     fn editor_options_precedence(
         cli_option: Option<&str>,
         igrep_editor_env: Option<&str>,

@@ -115,7 +115,7 @@ impl ContextViewer {
                 line.iter()
                     .map(|(highlight_style, substring)| {
                         let fg = highlight_style.foreground;
-                        let substring_without_tab = substring.replace("\t", "    ");
+                        let substring_without_tab = substring.replace('\t', "    ");
                         Span::styled(
                             substring_without_tab,
                             Style::default().fg(Color::Rgb(fg.r, fg.g, fg.b)),

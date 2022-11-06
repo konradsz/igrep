@@ -157,9 +157,9 @@ mod tests {
         std::env::remove_var(EDITOR_ENV);
 
         let opt = if let Some(cli_option) = cli_option {
-            EditorOpt::try_parse_from(&["test", "--editor", cli_option])
+            EditorOpt::try_parse_from(["test", "--editor", cli_option])
         } else {
-            EditorOpt::try_parse_from(&["test"])
+            EditorOpt::try_parse_from(["test"])
         };
 
         if let Some(igrep_editor_env) = igrep_editor_env {

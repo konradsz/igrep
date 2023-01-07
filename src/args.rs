@@ -87,7 +87,7 @@ impl Args {
     fn parse_config_file(to_ignore: Vec<String>) -> Vec<OsString> {
         match std::env::var_os(RIPGREP_CONFIG_PATH_ENV) {
             None => Vec::default(),
-            Some(config_path) => match File::open(&config_path) {
+            Some(config_path) => match File::open(config_path) {
                 Ok(file) => {
                     let supported_arguments = Self::collect_supported_arguments();
                     let to_ignore = Self::pair_ignored(to_ignore, &supported_arguments);

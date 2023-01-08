@@ -400,7 +400,7 @@ dependencies = [
 
 [[package]]
 name = "igrep"
-version = "0.5.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",

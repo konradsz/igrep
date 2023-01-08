@@ -3,7 +3,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 
 `igrep` supports macOS and Linux. Reportedly it works on Windows as well.
 
-<img src="./assets/demo.gif"/>
+<img src="./assets/v1_0_0.gif"/>
 
 ## Usage
 `ig [OPTIONS] <PATTERN|--type-list> [PATH]`

@@ -1,3 +1,8 @@
+## v1.0.0 (2023-01-08)
+***
+- add context viewer
+- add support for opening files in Helix
+
 ## v0.5.1 (2022-08-01)
 ***
 - add support for opening files in VS Code Insiders

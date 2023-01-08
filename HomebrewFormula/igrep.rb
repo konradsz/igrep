@@ -1,9 +1,9 @@
 class Igrep < Formula
-  version "0.5.1"
+  version "1.0.0"
   desc "Interactive Grep"
   homepage "https://github.com/konradsz/igrep"
   url "https://github.com/konradsz/igrep/releases/download/v#{version}/igrep-v#{version}-x86_64-apple-darwin.tar.gz"
-  sha256 "359c90fe0a53dc7416cd838b32279ad48811926e78000a7aa541c8a396dd87ea"
+  sha256 "9affe2ee1357c42ed2b295ed1b3dbfa9a5b2cc9797d1df85954d15d9e461c166"
 
   def install
     bin.install "ig"

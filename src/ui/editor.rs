@@ -25,6 +25,8 @@ pub enum Editor {
     Emacsclient,
     Hx,
     Helix,
+    St,
+    SublimeText,
 }
 
 impl Editor {
@@ -90,6 +92,7 @@ impl EditorCommand {
             Editor::Emacs => "emacs".into(),
             Editor::Emacsclient => "emacsclient".into(),
             Editor::Hx | Editor::Helix => "hx".into(),
+            Editor::St | Editor::SublimeText => "sublime_text".into(),
         }
     }
 
@@ -105,6 +108,9 @@ impl EditorCommand {
                 Box::new(["-nw".into(), format!("+{line_number}"), file_name.into()].into_iter())
             }
             Editor::Hx | Editor::Helix => {
+                Box::new([format!("{file_name}:{line_number}")].into_iter())
+            }
+            Editor::St | Editor::SublimeText => {
                 Box::new([format!("{file_name}:{line_number}")].into_iter())
             }
         }

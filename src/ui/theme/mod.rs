@@ -61,6 +61,13 @@ pub trait Theme {
             .fg(Color::Black)
     }
 
+    fn error_state_style(&self) -> Style {
+        Style::default()
+            .add_modifier(Modifier::BOLD)
+            .bg(Color::Red)
+            .fg(Color::Black)
+    }
+
     fn finished_state_style(&self) -> Style {
         Style::default()
             .add_modifier(Modifier::BOLD)

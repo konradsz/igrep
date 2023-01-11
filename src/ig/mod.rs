@@ -8,6 +8,8 @@ use crate::{
 };
 pub use search_config::SearchConfig;
 use searcher::{Event, Searcher};
+use std::io;
+use std::process::ExitStatus;
 use std::sync::mpsc;
 
 #[derive(PartialEq, Eq)]
@@ -15,6 +17,7 @@ pub enum State {
     Idle,
     Searching,
     OpenFile(bool),
+    Error(String),
     Exit,
 }
 
@@ -37,16 +40,24 @@ impl Ig {
         }
     }
 
+    fn try_spawn_editor(&self, file_name: &str, line_number: u64) -> io::Result<ExitStatus> {
+        let mut editor_process = self.editor.spawn(&file_name, line_number)?;
+        editor_process.wait()
+    }
+
     pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>) {
         if let State::OpenFile(idle) = self.state {
             if let Some((ref file_name, line_number)) = selected_entry {
-                let mut editor_process = self.editor.spawn(file_name, line_number);
-                editor_process
-                    .wait()
-                    .expect("Error: Editor failed to exit.");
+                match self.try_spawn_editor(file_name, line_number) {
+                    Ok(_) => self.state = if idle { State::Idle } else { State::Searching },
+                    Err(_) => {
+                        self.state = State::Error(format!(
+                            "Failed to open editor '{}'. Is it installed?",
+                            self.editor,
+                        ))
+                    }
+                }
             }
-
-            self.state = if idle { State::Idle } else { State::Searching };
         }
     }
 
@@ -74,6 +85,10 @@ impl Ig {
         self.state = State::OpenFile(self.state == State::Idle);
     }
 
+    pub fn error(&mut self, err: String) {
+        self.state = State::Error(err);
+    }
+
     pub fn exit(&mut self) {
         self.state = State::Exit;
     }
@@ -84,6 +99,14 @@ impl Ig {
 
     pub fn is_searching(&self) -> bool {
         self.state == State::Searching
+    }
+
+    pub fn last_error(&self) -> Option<&str> {
+        if let State::Error(err) = &self.state {
+            Some(err)
+        } else {
+            None
+        }
     }
 
     pub fn exit_requested(&self) -> bool {

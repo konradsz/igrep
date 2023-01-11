@@ -41,7 +41,7 @@ impl Ig {
     }
 
     fn try_spawn_editor(&self, file_name: &str, line_number: u64) -> io::Result<ExitStatus> {
-        let mut editor_process = self.editor.spawn(&file_name, line_number)?;
+        let mut editor_process = self.editor.spawn(file_name, line_number)?;
         editor_process.wait()
     }
 

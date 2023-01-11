@@ -92,7 +92,7 @@ impl EditorCommand {
             Editor::Emacs => "emacs".into(),
             Editor::Emacsclient => "emacsclient".into(),
             Editor::Hx | Editor::Helix => "hx".into(),
-            Editor::St | Editor::SublimeText => "sublime_text".into(),
+            Editor::St | Editor::SublimeText => "subl".into(),
         }
     }
 

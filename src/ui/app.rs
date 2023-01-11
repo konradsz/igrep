@@ -67,7 +67,7 @@ impl App {
                 DisableMouseCapture
             )?;
 
-            while self.ig.is_searching() || self.ig.is_idle() {
+            while self.ig.is_searching() || self.ig.last_error().is_some() || self.ig.is_idle() {
                 terminal.draw(|f| Self::draw(f, self, &input_handler))?;
 
                 if let Some(entry) = self.ig.handle_searcher_event() {
@@ -236,6 +236,8 @@ impl App {
 
         let (app_status_text, app_status_style) = if app.ig.is_searching() {
             ("SEARCHING", app.theme.searching_state_style())
+        } else if app.ig.last_error().is_some() {
+            ("ERROR", app.theme.error_state_style())
         } else {
             ("FINISHED", app.theme.finished_state_style())
         };
@@ -243,6 +245,8 @@ impl App {
 
         let search_result = Span::raw(if app.ig.is_searching() {
             "".into()
+        } else if let Some(err) = app.ig.last_error() {
+            format!(" {}", err)
         } else {
             let total_no_of_matches = app.result_list.get_total_number_of_matches();
             if total_no_of_matches == 0 {

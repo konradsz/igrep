@@ -55,14 +55,10 @@ impl Editor {
         }
     }
 
-    pub fn spawn(self, file_name: &str, line_number: u64) -> Child {
+    pub fn spawn(self, file_name: &str, line_number: u64) -> io::Result<Child> {
         let mut command = EditorCommand::new(self, file_name, line_number);
-        command.spawn().unwrap_or_else(|_| {
-            panic!(
-                "Error: Failed to run editor with a command: \"{}\"",
-                command
-            );
-        })
+
+        command.spawn()
     }
 
     fn extract_editor_name(input: &str) -> String {

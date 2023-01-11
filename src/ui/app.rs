@@ -70,7 +70,7 @@ impl App {
             while self.ig.is_searching() || self.ig.last_error().is_some() || self.ig.is_idle() {
                 terminal.draw(|f| Self::draw(f, self, &input_handler))?;
 
-                if let Some(entry) = self.ig.handle_searcher_event() {
+                while let Some(entry) = self.ig.handle_searcher_event() {
                     self.result_list.add_entry(entry);
                 }
                 input_handler.handle_input(self)?;

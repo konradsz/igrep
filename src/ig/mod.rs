@@ -85,10 +85,6 @@ impl Ig {
         self.state = State::OpenFile(self.state == State::Idle);
     }
 
-    pub fn error(&mut self, err: String) {
-        self.state = State::Error(err);
-    }
-
     pub fn exit(&mut self) {
         self.state = State::Exit;
     }

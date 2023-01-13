@@ -1,4 +1,4 @@
-use crate::args::{EDITOR_ENV, IGREP_EDITOR_ENV};
+use crate::args::{EDITOR_ENV, IGREP_EDITOR_ENV, VISUAL_ENV};
 use anyhow::{anyhow, Result};
 use clap::ArgEnum;
 use itertools::Itertools;
@@ -48,6 +48,10 @@ impl Editor {
             let value = Editor::extract_editor_name(&value);
             Editor::from_str(&value, false)
                 .map_err(|error| add_error_context(error, value, IGREP_EDITOR_ENV))
+        } else if let Ok(value) = std::env::var(VISUAL_ENV) {
+            let value = Editor::extract_editor_name(&value);
+            Editor::from_str(&value, false)
+                .map_err(|error| add_error_context(error, value, VISUAL_ENV))
         } else if let Ok(value) = std::env::var(EDITOR_ENV) {
             let value = Editor::extract_editor_name(&value);
             Editor::from_str(&value, false)
@@ -156,6 +160,7 @@ mod tests {
     ) -> Result<Editor> {
         let _guard = SERIAL_TEST.lock().unwrap();
         std::env::remove_var(IGREP_EDITOR_ENV);
+        std::env::remove_var(VISUAL_ENV);
         std::env::remove_var(EDITOR_ENV);
 
         let opt = if let Some(cli_option) = cli_option {

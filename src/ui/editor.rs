@@ -87,7 +87,8 @@ impl EditorCommand {
             Editor::CodeInsiders => "code-insiders".into(),
             Editor::Emacs => "emacs".into(),
             Editor::Emacsclient => "emacsclient".into(),
-            Editor::Hx | Editor::Helix => "hx".into(),
+            Editor::Hx => "hx".into(),
+            Editor::Helix => "helix".into(),
             Editor::Subl | Editor::SublimeText => "subl".into(),
         }
     }

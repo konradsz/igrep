@@ -21,7 +21,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
                               directories are skipped.
     --editor <EDITOR>         Text editor used to open selected match [possible values: vim,
                               neovim, nvim, nano, code, vscode, code-insiders, emacs,
-                              emacsclient, hx, helix, st, sublime_text, micro]
+                              emacsclient, hx, helix, subl, sublime_text, micro]
 -g, --glob <GLOB>             Include files and directories for searching that match the given glob.
                               Multiple globs may be provided.
 -h, --help                    Print help information

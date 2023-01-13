@@ -42,23 +42,19 @@ impl Editor {
             ))
         };
 
-        if let Some(editor_cli) = editor_cli {
-            Ok(editor_cli)
-        } else if let Ok(value) = std::env::var(IGREP_EDITOR_ENV) {
-            let value = Editor::extract_editor_name(&value);
-            Editor::from_str(&value, false)
-                .map_err(|error| add_error_context(error, value, IGREP_EDITOR_ENV))
-        } else if let Ok(value) = std::env::var(VISUAL_ENV) {
-            let value = Editor::extract_editor_name(&value);
-            Editor::from_str(&value, false)
-                .map_err(|error| add_error_context(error, value, VISUAL_ENV))
-        } else if let Ok(value) = std::env::var(EDITOR_ENV) {
-            let value = Editor::extract_editor_name(&value);
-            Editor::from_str(&value, false)
-                .map_err(|error| add_error_context(error, value, EDITOR_ENV))
-        } else {
-            Ok(Editor::default())
-        }
+        let read_from_env = |name| {
+            std::env::var(name).ok().map(|value| {
+                Editor::from_str(&Editor::extract_editor_name(&value), false)
+                    .map_err(|error| add_error_context(error, value, name))
+            })
+        };
+
+        editor_cli
+            .map(|editor_cli| Ok(editor_cli))
+            .or_else(|| read_from_env(IGREP_EDITOR_ENV))
+            .or_else(|| read_from_env(VISUAL_ENV))
+            .or_else(|| read_from_env(EDITOR_ENV))
+            .unwrap_or(Ok(Editor::default()))
     }
 
     pub fn spawn(self, file_name: &str, line_number: u64) -> io::Result<Child> {

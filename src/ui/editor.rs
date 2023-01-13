@@ -27,6 +27,7 @@ pub enum Editor {
     Helix,
     Subl,
     SublimeText,
+    Micro,
 }
 
 impl Editor {
@@ -90,12 +91,13 @@ impl EditorCommand {
             Editor::Hx => "hx".into(),
             Editor::Helix => "helix".into(),
             Editor::Subl | Editor::SublimeText => "subl".into(),
+            Editor::Micro => "micro".into(),
         }
     }
 
     fn args(editor: Editor, file_name: &str, line_number: u64) -> Box<dyn Iterator<Item = String>> {
         match editor {
-            Editor::Vim | Editor::Neovim | Editor::Nvim | Editor::Nano => {
+            Editor::Vim | Editor::Neovim | Editor::Nvim | Editor::Nano | Editor::Micro => {
                 Box::new([format!("+{line_number}"), file_name.into()].into_iter())
             }
             Editor::Code | Editor::Vscode | Editor::CodeInsiders => {
@@ -190,6 +192,7 @@ mod tests {
     #[test_case(Editor::Emacsclient => format!("emacsclient -nw +{LINE_NUMBER} {FILE_NAME}"); "emacsclient command")]
     #[test_case(Editor::Hx => format!("hx {FILE_NAME}:{LINE_NUMBER}"); "hx command")]
     #[test_case(Editor::Helix => format!("helix {FILE_NAME}:{LINE_NUMBER}"); "helix command")]
+    #[test_case(Editor::Micro => format!("micro +{LINE_NUMBER} {FILE_NAME}"); "micro command")]
     fn editor_command(editor: Editor) -> String {
         EditorCommand::new(editor, FILE_NAME, LINE_NUMBER).to_string()
     }

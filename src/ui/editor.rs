@@ -50,7 +50,7 @@ impl Editor {
         };
 
         editor_cli
-            .map(|editor_cli| Ok(editor_cli))
+            .map(Ok)
             .or_else(|| read_from_env(IGREP_EDITOR_ENV))
             .or_else(|| read_from_env(VISUAL_ENV))
             .or_else(|| read_from_env(EDITOR_ENV))

@@ -140,18 +140,20 @@ mod tests {
         static ref SERIAL_TEST: std::sync::Mutex<()> = Default::default();
     }
 
-    #[test_case(Some("nano"), Some("vim"), Some("neovim") => matches Ok(Editor::Nano); "cli")]
-    #[test_case(None, Some("nano"), Some("neovim") => matches Ok(Editor::Nano); "igrep env")]
-    #[test_case(None, None, Some("nano") => matches Ok(Editor::Nano); "editor env")]
-    #[test_case(Some("unsupported-editor"), None, None => matches Err(_); "unsupported cli")]
-    #[test_case(None, Some("unsupported-editor"), None => matches Err(_); "unsupported igrep env")]
-    #[test_case(None, None, Some("unsupported-editor") => matches Err(_); "unsupported editor env")]
-    #[test_case(None, None, None => matches Ok(Editor::Vim); "default editor")]
-    #[test_case(None, Some("/usr/bin/nano"), None => matches Ok(Editor::Nano); "igrep env path")]
-    #[test_case(None, None, Some("/usr/bin/nano") => matches Ok(Editor::Nano); "editor env path")]
+    #[test_case(Some("nano"), Some("vim"), None, Some("neovim") => matches Ok(Editor::Nano); "cli")]
+    #[test_case(None, Some("nano"), None, Some("neovim") => matches Ok(Editor::Nano); "igrep env")]
+    #[test_case(None, None, Some("nano"), Some("helix") => matches Ok(Editor::Nano); "visual env")]
+    #[test_case(None, None, None, Some("nano") => matches Ok(Editor::Nano); "editor env")]
+    #[test_case(Some("unsupported-editor"), None, None, None => matches Err(_); "unsupported cli")]
+    #[test_case(None, Some("unsupported-editor"), None, None => matches Err(_); "unsupported igrep env")]
+    #[test_case(None, None, None, Some("unsupported-editor") => matches Err(_); "unsupported editor env")]
+    #[test_case(None, None, None, None => matches Ok(Editor::Vim); "default editor")]
+    #[test_case(None, Some("/usr/bin/nano"), None, None => matches Ok(Editor::Nano); "igrep env path")]
+    #[test_case(None, None, None, Some("/usr/bin/nano") => matches Ok(Editor::Nano); "editor env path")]
     fn editor_options_precedence(
         cli_option: Option<&str>,
         igrep_editor_env: Option<&str>,
+        visual_env: Option<&str>,
         editor_env: Option<&str>,
     ) -> Result<Editor> {
         let _guard = SERIAL_TEST.lock().unwrap();
@@ -167,6 +169,10 @@ mod tests {
 
         if let Some(igrep_editor_env) = igrep_editor_env {
             std::env::set_var(IGREP_EDITOR_ENV, igrep_editor_env);
+        }
+
+        if let Some(visual_env) = visual_env {
+            std::env::set_var(VISUAL_ENV, visual_env);
         }
 
         if let Some(editor_env) = editor_env {

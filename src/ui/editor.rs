@@ -28,6 +28,9 @@ pub enum Editor {
     Subl,
     SublimeText,
     Micro,
+    Intellij,
+    Goland,
+    Pycharm,
 }
 
 impl Editor {
@@ -92,6 +95,9 @@ impl EditorCommand {
             Editor::Helix => "helix".into(),
             Editor::Subl | Editor::SublimeText => "subl".into(),
             Editor::Micro => "micro".into(),
+            Editor::Intellij => "idea".into(),
+            Editor::Goland => "goland".into(),
+            Editor::Pycharm => "pycharm".into(),
         }
     }
 
@@ -111,6 +117,9 @@ impl EditorCommand {
             }
             Editor::Subl | Editor::SublimeText => {
                 Box::new([format!("{file_name}:{line_number}")].into_iter())
+            }
+            Editor::Intellij | Editor::Goland | Editor::Pycharm => {
+                Box::new(["--line".into(), format!("{line_number}"), file_name.into()].into_iter())
             }
         }
     }
@@ -193,6 +202,7 @@ mod tests {
     #[test_case(Editor::Hx => format!("hx {FILE_NAME}:{LINE_NUMBER}"); "hx command")]
     #[test_case(Editor::Helix => format!("helix {FILE_NAME}:{LINE_NUMBER}"); "helix command")]
     #[test_case(Editor::Micro => format!("micro +{LINE_NUMBER} {FILE_NAME}"); "micro command")]
+    #[test_case(Editor::Intellj => format!("idea --line {LINE_NUMBER} {FILE_NAME}"); "idea command")]
     fn editor_command(editor: Editor) -> String {
         EditorCommand::new(editor, FILE_NAME, LINE_NUMBER).to_string()
     }

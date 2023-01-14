@@ -202,7 +202,7 @@ mod tests {
     #[test_case(Editor::Hx => format!("hx {FILE_NAME}:{LINE_NUMBER}"); "hx command")]
     #[test_case(Editor::Helix => format!("helix {FILE_NAME}:{LINE_NUMBER}"); "helix command")]
     #[test_case(Editor::Micro => format!("micro +{LINE_NUMBER} {FILE_NAME}"); "micro command")]
-    #[test_case(Editor::Intellj => format!("idea --line {LINE_NUMBER} {FILE_NAME}"); "idea command")]
+    #[test_case(Editor::Intellij => format!("idea --line {LINE_NUMBER} {FILE_NAME}"); "idea command")]
     fn editor_command(editor: Editor) -> String {
         EditorCommand::new(editor, FILE_NAME, LINE_NUMBER).to_string()
     }

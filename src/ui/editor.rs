@@ -207,11 +207,13 @@ mod tests {
     #[test_case(Editor::Emacs => format!("emacs -nw +{LINE_NUMBER} {FILE_NAME}"); "emacs command")]
     #[test_case(Editor::Emacsclient => format!("emacsclient -nw +{LINE_NUMBER} {FILE_NAME}"); "emacsclient command")]
     #[test_case(Editor::Hx => format!("hx {FILE_NAME}:{LINE_NUMBER}"); "hx command")]
-    #[test_case(Editor::Helix => format!("hx {FILE_NAME}:{LINE_NUMBER}"); "helix command")]
-    #[test_case(Editor::Micro => format!("micro +{LINE_NUMBER} {FILE_NAME}"); "micro command")]
-    #[test_case(Editor::Intellij => format!("idea --line {LINE_NUMBER} {FILE_NAME}"); "idea command")]
+    #[test_case(Editor::Helix => format!("helix {FILE_NAME}:{LINE_NUMBER}"); "helix command")]
     #[test_case(Editor::Subl => format!("subl {FILE_NAME}:{LINE_NUMBER}"); "subl command")]
     #[test_case(Editor::SublimeText => format!("subl {FILE_NAME}:{LINE_NUMBER}"); "sublime text command")]
+    #[test_case(Editor::Micro => format!("micro +{LINE_NUMBER} {FILE_NAME}"); "micro command")]
+    #[test_case(Editor::Intellij => format!("idea --line {LINE_NUMBER} {FILE_NAME}"); "intellij command")]
+    #[test_case(Editor::Goland => format!("goland --line {LINE_NUMBER} {FILE_NAME}"); "goland command")]
+    #[test_case(Editor::Pycharm => format!("pycharm --line {LINE_NUMBER} {FILE_NAME}"); "pycharm command")]
     fn editor_command(editor: Editor) -> String {
         EditorCommand::new(editor, FILE_NAME, LINE_NUMBER).to_string()
     }

@@ -19,9 +19,8 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 ```
 -., --hidden                  Search hidden files and directories. By default, hidden files and
                               directories are skipped.
-    --editor <EDITOR>         Text editor used to open selected match [possible values: vim,
-                              neovim, nvim, nano, code, vscode, code-insiders, emacs,
-                              emacsclient, hx, helix, subl, sublime_text, micro]
+--editor <EDITOR>             Text editor used to open selected match.
+                              [possible values: check supported text editors section]
 -g, --glob <GLOB>             Include files and directories for searching that match the given glob.
                               Multiple globs may be provided.
 -h, --help                    Print help information
@@ -55,11 +54,14 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `s`                      | Toggle horizontal context viewer       |
 | `F5`                     | Re-run search                          |
 
+## Supported text editors
+`igrep` supports Vim, Neovim, nano, VS Code (stable and insiders), Emacs, EmacsClient, Helix, SublimeText, Micro, Intellij, Goland and Pycharm. If your beloved editor is missing on this list and you still want to use `igrep` please file an issue.
+
 ## Specifying text editor
-`igrep` supports Vim, Neovim, Helix, nano, VS Code (stable and insiders), Emacs, EmacsClient, Intellij, Goland and Pycharm.
 To specify the editor, use one of the following (listed in order of their precedence):
 - `--editor` option,
 - `$IGREP_EDITOR` variable,
+- `$VISUAL` variable,
 - `$EDITOR` variable.
 
 Higher priority option overrides lower one. If neither of these options is set, vim is used as a default.

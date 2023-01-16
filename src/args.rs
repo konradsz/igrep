@@ -11,6 +11,7 @@ use std::{
 pub const IGREP_EDITOR_ENV: &str = "IGREP_EDITOR";
 pub const EDITOR_ENV: &str = "EDITOR";
 pub const RIPGREP_CONFIG_PATH_ENV: &str = "RIPGREP_CONFIG_PATH";
+pub const VISUAL_ENV: &str = "VISUAL";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]

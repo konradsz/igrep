@@ -1,3 +1,11 @@
+## v1.1.0 (2023-01-29)
+***
+- add error handling in case of editor process spawning failure
+- improve performance by handling multiple file entries every redraw
+- add support for Sublime Text, Micro, Intellij, Goland, Pycharm
+- use `helix` as a binary name when `helix` is set as an editor of choice
+- prefer $VISUAL variable over $EDITOR when determining text editor to use
+
 ## v1.0.0 (2023-01-08)
 ***
 - add context viewer

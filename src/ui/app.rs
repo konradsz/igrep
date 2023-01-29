@@ -151,7 +151,7 @@ impl App {
                 }
                 EntryType::Match(n, t, offsets) => {
                     let line_number =
-                        Span::styled(format!(" {}: ", n), app.theme.line_number_color());
+                        Span::styled(format!(" {n}: "), app.theme.line_number_color());
 
                     let mut spans = vec![line_number];
 
@@ -246,7 +246,7 @@ impl App {
         let search_result = Span::raw(if app.ig.is_searching() {
             "".into()
         } else if let Some(err) = app.ig.last_error() {
-            format!(" {}", err)
+            format!(" {err}")
         } else {
             let total_no_of_matches = app.result_list.get_total_number_of_matches();
             if total_no_of_matches == 0 {
@@ -263,15 +263,12 @@ impl App {
 
                 let filtered_count = app.result_list.get_filtered_matches_count();
                 let filtered_str = if filtered_count != 0 {
-                    format!(" ({} filtered out)", filtered_count)
+                    format!(" ({filtered_count} filtered out)")
                 } else {
                     String::default()
                 };
 
-                format!(
-                    " Found {} {} in {} {}{}.",
-                    total_no_of_matches, matches_str, no_of_files, files_str, filtered_str
-                )
+                format!(" Found {total_no_of_matches} {matches_str} in {no_of_files} {files_str}{filtered_str}.")
             }
         });
 
@@ -290,10 +287,7 @@ impl App {
         let current_no_of_matches = app.result_list.get_current_number_of_matches();
         let selected_info_text = {
             let width = current_no_of_matches.to_string().len();
-            format!(
-                " | {: >width$}/{} ",
-                current_match_index, current_no_of_matches
-            )
+            format!(" | {current_match_index: >width$}/{current_no_of_matches} ")
         };
         let selected_info_length = selected_info_text.len();
         let selected_info = Span::styled(selected_info_text, app.theme.bottom_bar_style());

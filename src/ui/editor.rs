@@ -41,8 +41,7 @@ impl Editor {
                 .map(Editor::to_string)
                 .join(", ");
             anyhow!(e).context(format!(
-                "\"{}\" read from ${}, possible variants: [{}]",
-                env_value, env_name, possible_variants
+                "\"{env_value}\" read from ${env_name}, possible variants: [{possible_variants}]",
             ))
         };
 

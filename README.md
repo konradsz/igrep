@@ -79,9 +79,9 @@ brew install igrep
 scoop bucket add igrep https://github.com/konradsz/igrep.git
 scoop install igrep
 ```
-### AUR
+### Arch Linux
 ```
-paru -S igrep
+pacman -S igrep
 ```
 ### Build from source
 Build and install from source using Rust toolchain by running: `cargo install igrep`.

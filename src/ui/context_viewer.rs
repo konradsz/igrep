@@ -7,7 +7,11 @@ use std::{
 };
 
 use itertools::Itertools;
-use syntect::{easy::HighlightFile, highlighting, parsing::SyntaxSet};
+use syntect::{
+    easy::HighlightFile,
+    highlighting::{self, ThemeSet},
+    parsing::SyntaxSet,
+};
 use tui::{
     style::{Color, Style},
     text::{Span, Spans},
@@ -15,7 +19,8 @@ use tui::{
 
 use super::theme::Theme;
 
-#[derive(Default, Debug, PartialEq, Eq)]
+#[derive(Default, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub enum ContextViewerState {
     #[default]
     None,
@@ -61,10 +66,23 @@ impl ContextViewerState {
     }
 }
 
-#[derive(Default, Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct ContextViewer {
     file_path: PathBuf,
     file_highlighted: Vec<Vec<(highlighting::Style, String)>>,
+    syntax_set: SyntaxSet,
+    theme_set: ThemeSet,
+}
+
+impl Default for ContextViewer {
+    fn default() -> Self {
+        Self {
+            file_path: Default::default(),
+            file_highlighted: Default::default(),
+            syntax_set: SyntaxSet::load_defaults_newlines(),
+            theme_set: highlighting::ThemeSet::load_defaults(),
+        }
+    }
 }
 
 impl ContextViewer {
@@ -73,19 +91,24 @@ impl ContextViewer {
             self.file_path = file_path.as_ref().into();
             self.file_highlighted.clear();
 
-            let ss = SyntaxSet::load_defaults_newlines();
-            let ts = highlighting::ThemeSet::load_defaults();
-
-            let mut highlighter =
-                HighlightFile::new(file_path, &ss, &ts.themes[theme.context_viewer_theme()])
-                    .unwrap();
+            let mut highlighter = HighlightFile::new(
+                file_path,
+                &self.syntax_set,
+                &self.theme_set.themes[theme.context_viewer_theme()],
+            )
+            .expect("Failed to create line highlighter");
             let mut line = String::new();
 
-            while highlighter.reader.read_line(&mut line).unwrap() > 0 {
+            while highlighter
+                .reader
+                .read_line(&mut line)
+                .expect("Not valid UTF-8")
+                > 0
+            {
                 let regions: Vec<(highlighting::Style, &str)> = highlighter
                     .highlight_lines
-                    .highlight_line(&line, &ss)
-                    .unwrap();
+                    .highlight_line(&line, &self.syntax_set)
+                    .expect("Failed to highlight line");
 
                 let span_vec = regions
                     .into_iter()
@@ -149,6 +172,12 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
+    impl PartialEq for ContextViewer {
+        fn eq(&self, other: &Self) -> bool {
+            self.file_path == other.file_path && self.file_highlighted == other.file_highlighted
+        }
+    }
+
     fn create_cv() -> ContextViewer {
         ContextViewer {
             file_path: "path".into(),
@@ -160,6 +189,8 @@ mod tests {
                 },
                 String::from("line"),
             )]],
+            syntax_set: Default::default(),
+            theme_set: Default::default(),
         }
     }
 

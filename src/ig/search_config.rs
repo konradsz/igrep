@@ -5,6 +5,7 @@ use ignore::{
 };
 use std::path::PathBuf;
 
+#[derive(Clone)]
 pub struct SearchConfig {
     pub pattern: String,
     pub path: PathBuf,

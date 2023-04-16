@@ -11,7 +11,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 ### Args
 ```
 <PATTERN>    Regular expression used for searching.
-<PATH>       File or directory to search. Directories are searched recursively.
+<PATH>       Files or directories to search. Directories are searched recursively.
              If not specified, searching starts from current directory.
 ```
 

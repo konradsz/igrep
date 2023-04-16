@@ -1,6 +1,3 @@
-use anyhow::Result;
-use std::sync::mpsc;
-
 use super::{sink::MatchesSink, SearchConfig};
 use crate::file_entry::FileEntry;
 use grep::{
@@ -9,6 +6,7 @@ use grep::{
     searcher::{BinaryDetection, SearcherBuilder},
 };
 use ignore::WalkBuilder;
+use std::{path::Path, sync::mpsc};
 
 pub enum Event {
     NewEntry(FileEntry),
@@ -29,16 +27,29 @@ impl Searcher {
     pub fn search(&self) {
         let tx = self.tx.clone();
         let config = self.config.clone();
-        let _ = std::thread::spawn(move || {
-            if Self::run(config.clone(), tx.clone()).is_err() {
-                tx.send(Event::Error).ok();
+        let paths = self.config.paths.clone();
+        std::thread::spawn(move || {
+            let path_searchers = paths
+                .into_iter()
+                .map(|path| {
+                    let config = config.clone();
+                    let tx = tx.clone();
+                    std::thread::spawn(move || Self::run(&path, config, tx))
+                })
+                .collect::<Vec<_>>();
+
+            for searcher in path_searchers {
+                if searcher.join().is_err() {
+                    tx.send(Event::Error).ok();
+                    return;
+                }
             }
 
             tx.send(Event::SearchingFinished).ok();
         });
     }
 
-    fn run(config: SearchConfig, tx: mpsc::Sender<Event>) -> Result<()> {
+    fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         let grep_searcher = SearcherBuilder::new()
             .binary_detection(BinaryDetection::quit(b'\x00'))
             .line_terminator(LineTerminator::byte(b'\n'))
@@ -50,8 +61,9 @@ impl Searcher {
             .line_terminator(Some(b'\n'))
             .case_insensitive(config.case_insensitive)
             .case_smart(config.case_smart)
-            .build(&config.pattern)?;
-        let mut builder = WalkBuilder::new(&config.path);
+            .build(&config.pattern)
+            .expect("Cannot build RegexMatcher");
+        let mut builder = WalkBuilder::new(path);
 
         let walk_parallel = builder
             .overrides(config.overrides.clone())
@@ -90,7 +102,5 @@ impl Searcher {
                 ignore::WalkState::Continue
             })
         });
-
-        Ok(())
     }
 }

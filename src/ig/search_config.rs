@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[derive(Clone)]
 pub struct SearchConfig {
     pub pattern: String,
-    pub path: PathBuf,
+    pub paths: Vec<PathBuf>,
     pub case_insensitive: bool,
     pub case_smart: bool,
     pub overrides: Override,
@@ -17,14 +17,14 @@ pub struct SearchConfig {
 }
 
 impl SearchConfig {
-    pub fn from(pattern: String, path: PathBuf) -> Result<Self> {
+    pub fn from(pattern: String, paths: Vec<PathBuf>) -> Result<Self> {
         let mut builder = TypesBuilder::new();
         builder.add_defaults();
         let types = builder.build()?;
 
         Ok(Self {
             pattern,
-            path,
+            paths,
             case_insensitive: false,
             case_smart: false,
             overrides: Override::empty(),

@@ -23,9 +23,9 @@ pub const VISUAL_ENV: &str = "VISUAL";
 pub struct Args {
     /// Regular expression used for searching.
     pub pattern: Option<String>,
-    /// File or directory to search. Directories are searched recursively.
+    /// Files or directories to search. Directories are searched recursively.
     /// If not specified, searching starts from current directory.
-    pub path: Option<PathBuf>,
+    pub paths: Vec<PathBuf>,
     #[clap(flatten)]
     pub editor: EditorOpt,
     /// UI color theme.

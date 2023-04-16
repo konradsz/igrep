@@ -31,9 +31,13 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let path = args.path.unwrap_or_else(|| "./".into());
+    let paths = if args.paths.is_empty() {
+        vec!["./".into()]
+    } else {
+        args.paths
+    };
 
-    let search_config = ig::SearchConfig::from(args.pattern.unwrap(), path)?
+    let search_config = ig::SearchConfig::from(args.pattern.unwrap(), paths)?
         .case_insensitive(args.ignore_case)
         .case_smart(args.smart_case)
         .search_hidden(args.search_hidden)

@@ -6,12 +6,12 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 <img src="./assets/v1_0_0.gif"/>
 
 ## Usage
-`ig [OPTIONS] <PATTERN|--type-list> [PATH]`
+`ig [OPTIONS] <PATTERN|--type-list> [PATHS]...`
 
 ### Args
 ```
 <PATTERN>    Regular expression used for searching.
-<PATH>       Files or directories to search. Directories are searched recursively.
+<PATHS>...   Files or directories to search. Directories are searched recursively.
              If not specified, searching starts from current directory.
 ```
 

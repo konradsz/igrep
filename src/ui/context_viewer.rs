@@ -7,14 +7,14 @@ use std::{
 };
 
 use itertools::Itertools;
+use ratatui::{
+    style::{Color, Style},
+    text::{Line, Span},
+};
 use syntect::{
     easy::HighlightFile,
     highlighting::{self, ThemeSet},
     parsing::SyntaxSet,
-};
-use tui::{
-    style::{Color, Style},
-    text::{Span, Spans},
 };
 
 use super::theme::Theme;
@@ -128,7 +128,7 @@ impl ContextViewer {
         width: usize,
         match_index: usize,
         theme: &dyn Theme,
-    ) -> Vec<Spans<'_>> {
+    ) -> Vec<Line<'_>> {
         let mut styled_spans = self
             .file_highlighted
             .iter()
@@ -146,13 +146,13 @@ impl ContextViewer {
                     })
                     .collect_vec()
             })
-            .map(Spans::from)
+            .map(Line::from)
             .collect_vec();
 
         let match_offset = match_index - max(first_line_index, 1);
         let styled_line = &mut styled_spans[match_offset];
         let line_width = styled_line.width();
-        let span_vec = &mut styled_line.0;
+        let span_vec = &mut styled_line.spans;
 
         if line_width < width {
             span_vec.push(Span::raw(" ".repeat(width - line_width)));

@@ -1,5 +1,5 @@
 use super::Theme;
-use tui::style::Color;
+use ratatui::style::Color;
 
 pub struct Light;
 

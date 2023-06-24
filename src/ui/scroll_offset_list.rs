@@ -1,11 +1,11 @@
-use std::iter::Iterator;
-use tui::{
+use ratatui::{
     buffer::Buffer,
     layout::{Corner, Rect},
     style::Style,
     text::Text,
     widgets::{Block, StatefulWidget, Widget},
 };
+use std::iter::Iterator;
 use unicode_width::UnicodeWidthStr;
 
 #[derive(Default, Debug, Clone)]
@@ -63,20 +63,6 @@ impl ScrollOffset {
     }
 }
 
-/// A widget to display several items among which one can be selected (optional)
-///
-/// # Examples
-///
-/// ```
-/// # use tui::widgets::{Block, Borders, List, ListItem};
-/// # use tui::style::{Style, Color, Modifier};
-/// let items = [ListItem::new("Item 1"), ListItem::new("Item 2"), ListItem::new("Item 3")];
-/// List::new(items)
-///     .block(Block::default().title("List").borders(Borders::ALL))
-///     .style(Style::default().fg(Color::White))
-///     .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
-///     .highlight_symbol(">>");
-/// ```
 #[derive(Debug, Clone)]
 pub struct List<'a> {
     block: Option<Block<'a>>,
@@ -237,7 +223,7 @@ impl<'a> StatefulWidget for List<'a> {
             };
             let max_element_width = (list_area.width - (elem_x - x)) as usize;
             for (j, line) in item.content.lines.iter().enumerate() {
-                buf.set_spans(elem_x, y + j as u16, line, max_element_width as u16);
+                buf.set_line(elem_x, y + j as u16, line, max_element_width as u16);
             }
             if is_selected {
                 buf.set_style(area, self.highlight_style);

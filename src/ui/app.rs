@@ -18,15 +18,15 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use std::path::PathBuf;
-use tui::{
+use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, BorderType, Borders, Paragraph},
     Frame, Terminal,
 };
+use std::path::PathBuf;
 
 pub struct App {
     ig: Ig,
@@ -177,7 +177,7 @@ impl App {
                         app.theme.list_font_color(),
                     ));
 
-                    ListItem::new(Spans::from(spans))
+                    ListItem::new(Line::from(spans))
                 }
             })
             .collect();

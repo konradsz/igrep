@@ -2,8 +2,8 @@ pub mod dark;
 pub mod light;
 
 use clap::ArgEnum;
+use ratatui::style::{Color, Modifier, Style};
 use strum_macros::Display;
-use tui::style::{Color, Modifier, Style};
 
 #[derive(Display, Copy, Clone, Debug, ArgEnum)]
 #[strum(serialize_all = "lowercase")]

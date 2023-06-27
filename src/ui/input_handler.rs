@@ -7,6 +7,7 @@ use std::time::Duration;
 pub struct InputHandler {
     input_buffer: String,
     input_state: InputState,
+    text_insertion: bool,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -28,21 +29,50 @@ impl InputHandler {
         if poll(poll_timeout)? {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {
-                match key_event {
-                    KeyEvent {
-                        code: KeyCode::Char('c'),
-                        modifiers: KeyModifiers::CONTROL,
-                    } => app.on_exit(),
-                    KeyEvent {
-                        code: KeyCode::Char(character),
-                        ..
-                    } => self.handle_char_input(character, app),
-                    _ => self.handle_non_char_input(key_event.code, app),
+                if !self.text_insertion {
+                    self.handle_key_in_normal_mode(key_event, app);
+                } else {
+                    self.handle_key_in_text_insertion_mode(key_event, app);
                 }
             }
         }
 
         Ok(())
+    }
+
+    fn handle_key_in_normal_mode<A: Application>(&mut self, key_event: KeyEvent, app: &mut A) {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+            } => app.on_exit(),
+            KeyEvent {
+                code: KeyCode::Char(character),
+                ..
+            } => self.handle_char_input(character, app),
+            _ => self.handle_non_char_input(key_event.code, app),
+        }
+    }
+
+    fn handle_key_in_text_insertion_mode<A: Application>(
+        &mut self,
+        key_event: KeyEvent,
+        app: &mut A,
+    ) {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Esc, ..
+            } => self.text_insertion = false,
+            KeyEvent {
+                code: KeyCode::Char(c),
+                modifiers: KeyModifiers::NONE,
+            } => app.on_char_inserted(c),
+            KeyEvent {
+                code: KeyCode::Backspace,
+                ..
+            } => app.on_char_removed(),
+            _ => (),
+        }
     }
 
     fn handle_char_input<A: Application>(&mut self, character: char, app: &mut A) {
@@ -100,7 +130,10 @@ impl InputHandler {
             KeyCode::Delete => app.on_remove_current_entry(),
             KeyCode::Enter => app.on_open_file(),
             KeyCode::F(5) => app.on_search(),
-            KeyCode::F(6) => app.on_popup(),
+            KeyCode::F(6) => {
+                self.text_insertion = true;
+                app.on_popup();
+            }
             KeyCode::Esc => {
                 if matches!(self.input_state, InputState::Valid)
                     || matches!(self.input_state, InputState::Invalid(_))

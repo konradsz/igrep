@@ -402,6 +402,14 @@ impl Application for App {
     fn on_popup(&mut self) {
         self.search_popup.toggle();
     }
+
+    fn on_char_inserted(&mut self, c: char) {
+        self.search_popup.insert_char(c);
+    }
+
+    fn on_char_removed(&mut self) {
+        self.search_popup.remove_char();
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -419,6 +427,8 @@ pub trait Application {
     fn on_toggle_context_viewer_horizontal(&mut self);
     fn on_open_file(&mut self);
     fn on_search(&mut self);
-    fn on_popup(&mut self);
     fn on_exit(&mut self);
+    fn on_popup(&mut self);
+    fn on_char_inserted(&mut self, c: char);
+    fn on_char_removed(&mut self);
 }

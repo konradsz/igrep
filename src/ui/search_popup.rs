@@ -12,6 +12,16 @@ pub struct SearchPopup {
     pattern: String,
 }
 
+/* TODO:
+- allow for input
+- allow for backspace
+- allow for a delete key
+- handle arrow keys
+- ENTER to search new pattern
+- ESC to cancel search, old pattern should stay
+- handle long input
+*/
+
 impl SearchPopup {
     pub fn new(pattern: String) -> Self {
         Self {
@@ -24,7 +34,16 @@ impl SearchPopup {
         self.visible = !self.visible;
     }
 
-    pub fn draw(&self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+    pub fn insert_char(&mut self, c: char) {
+        self.pattern.push(c);
+    }
+
+    pub fn remove_char(&mut self) {
+        self.pattern.pop();
+    }
+
+    // TODO: remove mut
+    pub fn draw(&mut self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
         if !self.visible {
             return;
         }
@@ -33,16 +52,32 @@ impl SearchPopup {
             .title("Pattern")
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::Blue));
-        let area = Self::get_popup_area(frame.size(), 50);
-        frame.render_widget(Clear, area);
-        frame.render_widget(block, area);
+        let popup_area = Self::get_popup_area(frame.size(), 10);
+        frame.render_widget(Clear, popup_area);
+        frame.render_widget(block, popup_area);
 
-        let text = Text::from(Line::from(self.pattern.as_str()));
-        let pattern_text = Paragraph::new(text);
-        let mut text_area = area.clone();
+        let mut text_area = popup_area.clone();
         text_area.y += 1; // one line below the border
         text_area.x += 2; // two chars to the right
+
+        let max_text_width = text_area.width as usize - 2 - '…'.len_utf8();
+        let pattern = if self.pattern.len() > max_text_width {
+            format!("…{}", &self.pattern[self.pattern.len() - max_text_width..])
+            // format!(".{}", &self.pattern[self.pattern.len() - max_text_width..])
+        } else {
+            self.pattern.clone()
+        };
+
+        let text = Text::from(Line::from(pattern.as_str()));
+        let pattern_text = Paragraph::new(text);
         frame.render_widget(pattern_text, text_area);
+        frame.set_cursor(
+            std::cmp::min(
+                text_area.x + pattern.len() as u16,
+                text_area.x + text_area.width - 4,
+            ),
+            text_area.y,
+        );
     }
 
     fn get_popup_area(frame_size: Rect, width_percent: u16) -> Rect {

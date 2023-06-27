@@ -4,6 +4,7 @@ use super::{
     input_handler::{InputHandler, InputState},
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+    search_popup::SearchPopup,
     theme::Theme,
 };
 
@@ -34,16 +35,19 @@ pub struct App {
     result_list_state: ListState,
     context_viewer_state: ContextViewerState,
     theme: Box<dyn Theme>,
+    search_popup: SearchPopup,
 }
 
 impl App {
     pub fn new(config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
+        let pattern = config.pattern.clone();
         Self {
             ig: Ig::new(config, editor),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
             context_viewer_state: ContextViewerState::default(),
             theme,
+            search_popup: SearchPopup::new(pattern),
         }
     }
 
@@ -133,11 +137,14 @@ impl App {
         };
 
         Self::draw_list(frame, list_area, app);
+
         if let Some(cv_area) = cv_area {
             Self::draw_context_viewer(frame, cv_area, app);
         }
 
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
+
+        app.search_popup.draw(frame);
     }
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
@@ -391,6 +398,10 @@ impl Application for App {
     fn on_exit(&mut self) {
         self.ig.exit();
     }
+
+    fn on_popup(&mut self) {
+        self.search_popup.toggle();
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -408,5 +419,6 @@ pub trait Application {
     fn on_toggle_context_viewer_horizontal(&mut self);
     fn on_open_file(&mut self);
     fn on_search(&mut self);
+    fn on_popup(&mut self);
     fn on_exit(&mut self);
 }

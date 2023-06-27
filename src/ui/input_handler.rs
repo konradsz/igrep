@@ -100,6 +100,7 @@ impl InputHandler {
             KeyCode::Delete => app.on_remove_current_entry(),
             KeyCode::Enter => app.on_open_file(),
             KeyCode::F(5) => app.on_search(),
+            KeyCode::F(6) => app.on_popup(),
             KeyCode::Esc => {
                 if matches!(self.input_state, InputState::Valid)
                     || matches!(self.input_state, InputState::Invalid(_))

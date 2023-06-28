@@ -62,11 +62,28 @@ impl InputHandler {
         match key_event {
             KeyEvent {
                 code: KeyCode::Esc, ..
-            } => self.text_insertion = false,
+            }
+            | KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+            }
+            | KeyEvent {
+                code: KeyCode::F(6), // TODO: change to F5
+                ..
+            } => {
+                self.text_insertion = false;
+                app.on_toggle_popup();
+            }
             KeyEvent {
                 code: KeyCode::Char(c),
-                modifiers: KeyModifiers::NONE,
-            } => app.on_char_inserted(c),
+                modifiers: modifier,
+            } => {
+                if modifier == KeyModifiers::SHIFT {
+                    app.on_char_inserted(c.to_ascii_uppercase());
+                } else if modifier == KeyModifiers::NONE {
+                    app.on_char_inserted(c);
+                }
+            }
             KeyEvent {
                 code: KeyCode::Backspace,
                 ..
@@ -132,7 +149,7 @@ impl InputHandler {
             KeyCode::F(5) => app.on_search(),
             KeyCode::F(6) => {
                 self.text_insertion = true;
-                app.on_popup();
+                app.on_toggle_popup();
             }
             KeyCode::Esc => {
                 if matches!(self.input_state, InputState::Valid)

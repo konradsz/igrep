@@ -392,6 +392,7 @@ impl Application for App {
     }
 
     fn on_search(&mut self) {
+        // self.search_popup.set_pattern()
         self.ig.search(&mut self.result_list);
     }
 
@@ -399,7 +400,8 @@ impl Application for App {
         self.ig.exit();
     }
 
-    fn on_popup(&mut self) {
+    fn on_toggle_popup(&mut self) {
+        self.search_popup.reset_edited_pattern();
         self.search_popup.toggle();
     }
 
@@ -428,7 +430,7 @@ pub trait Application {
     fn on_open_file(&mut self);
     fn on_search(&mut self);
     fn on_exit(&mut self);
-    fn on_popup(&mut self);
+    fn on_toggle_popup(&mut self);
     fn on_char_inserted(&mut self, c: char);
     fn on_char_removed(&mut self);
 }

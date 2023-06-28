@@ -10,6 +10,7 @@ use ratatui::{
 pub struct SearchPopup {
     visible: bool,
     pattern: String,
+    edited_pattern: String,
 }
 
 /* TODO:
@@ -26,7 +27,8 @@ impl SearchPopup {
     pub fn new(pattern: String) -> Self {
         Self {
             visible: false,
-            pattern,
+            pattern: pattern.clone(),
+            edited_pattern: pattern,
         }
     }
 
@@ -34,16 +36,24 @@ impl SearchPopup {
         self.visible = !self.visible;
     }
 
+    pub fn set_pattern(&mut self, pattern: String) {
+        self.pattern = pattern.clone();
+        self.edited_pattern = pattern;
+    }
+
+    pub fn reset_edited_pattern(&mut self) {
+        self.edited_pattern = self.pattern.clone();
+    }
+
     pub fn insert_char(&mut self, c: char) {
-        self.pattern.push(c);
+        self.edited_pattern.push(c);
     }
 
     pub fn remove_char(&mut self) {
-        self.pattern.pop();
+        self.edited_pattern.pop();
     }
 
-    // TODO: remove mut
-    pub fn draw(&mut self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+    pub fn draw(&self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
         if !self.visible {
             return;
         }
@@ -61,11 +71,13 @@ impl SearchPopup {
         text_area.x += 2; // two chars to the right
 
         let max_text_width = text_area.width as usize - 2 - '…'.len_utf8();
-        let pattern = if self.pattern.len() > max_text_width {
-            format!("…{}", &self.pattern[self.pattern.len() - max_text_width..])
-            // format!(".{}", &self.pattern[self.pattern.len() - max_text_width..])
+        let pattern = if self.edited_pattern.len() > max_text_width {
+            format!(
+                "…{}",
+                &self.edited_pattern[self.edited_pattern.len() - max_text_width..]
+            )
         } else {
-            self.pattern.clone()
+            self.edited_pattern.clone()
         };
 
         let text = Text::from(Line::from(pattern.as_str()));

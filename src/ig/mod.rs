@@ -7,7 +7,7 @@ use crate::{
     ui::{editor::Editor, result_list::ResultList},
 };
 pub use search_config::SearchConfig;
-use searcher::{Event, Searcher};
+use searcher::Event;
 use std::io;
 use std::process::ExitStatus;
 use std::sync::mpsc;
@@ -22,20 +22,22 @@ pub enum State {
 }
 
 pub struct Ig {
+    tx: mpsc::Sender<Event>,
     rx: mpsc::Receiver<Event>,
     state: State,
-    searcher: Searcher,
+    search_config: SearchConfig,
     editor: Editor,
 }
 
 impl Ig {
-    pub fn new(config: SearchConfig, editor: Editor) -> Self {
+    pub fn new(search_config: SearchConfig, editor: Editor) -> Self {
         let (tx, rx) = mpsc::channel();
 
         Self {
+            tx,
             rx,
             state: State::Idle,
-            searcher: Searcher::new(config, tx),
+            search_config,
             editor,
         }
     }
@@ -77,7 +79,7 @@ impl Ig {
         if self.state == State::Idle {
             *result_list = ResultList::default();
             self.state = State::Searching;
-            self.searcher.search();
+            searcher::search(self.search_config.clone(), self.tx.clone());
         }
     }
 

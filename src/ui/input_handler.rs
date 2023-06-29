@@ -68,7 +68,7 @@ impl InputHandler {
                 modifiers: KeyModifiers::CONTROL,
             }
             | KeyEvent {
-                code: KeyCode::F(6), // TODO: change to F5
+                code: KeyCode::F(5),
                 ..
             } => {
                 self.text_insertion = false;
@@ -88,6 +88,14 @@ impl InputHandler {
                 code: KeyCode::Backspace,
                 ..
             } => app.on_char_removed(),
+            KeyEvent {
+                code: KeyCode::Enter,
+                ..
+            } => {
+                self.text_insertion = false;
+                app.on_search();
+                app.on_toggle_popup();
+            }
             _ => (),
         }
     }
@@ -146,8 +154,8 @@ impl InputHandler {
             KeyCode::End => app.on_bottom(),
             KeyCode::Delete => app.on_remove_current_entry(),
             KeyCode::Enter => app.on_open_file(),
-            KeyCode::F(5) => app.on_search(),
-            KeyCode::F(6) => {
+            // KeyCode::F(5) => app.on_search(),
+            KeyCode::F(5) => {
                 self.text_insertion = true;
                 app.on_toggle_popup();
             }

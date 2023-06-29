@@ -392,7 +392,7 @@ impl Application for App {
     }
 
     fn on_search(&mut self) {
-        // self.search_popup.set_pattern()
+        self.search_popup.align_pattern();
         self.ig.search(&mut self.result_list);
     }
 

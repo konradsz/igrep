@@ -36,9 +36,8 @@ impl SearchPopup {
         self.visible = !self.visible;
     }
 
-    pub fn set_pattern(&mut self, pattern: String) {
-        self.pattern = pattern.clone();
-        self.edited_pattern = pattern;
+    pub fn align_pattern(&mut self) {
+        self.pattern = self.edited_pattern.clone();
     }
 
     pub fn reset_edited_pattern(&mut self) {
@@ -59,11 +58,14 @@ impl SearchPopup {
         }
 
         let block = Block::default()
-            .title("Pattern")
+            .title("<ENTER> - search, <ESC> - cancel")
+            .title_on_bottom()
+            .title_alignment(ratatui::layout::Alignment::Center)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::Blue));
-        let popup_area = Self::get_popup_area(frame.size(), 10);
+        let popup_area = Self::get_popup_area(frame.size(), 30);
         frame.render_widget(Clear, popup_area);
+
         frame.render_widget(block, popup_area);
 
         let mut text_area = popup_area.clone();

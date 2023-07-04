@@ -25,19 +25,17 @@ pub struct Ig {
     tx: mpsc::Sender<Event>,
     rx: mpsc::Receiver<Event>,
     state: State,
-    search_config: SearchConfig,
     editor: Editor,
 }
 
 impl Ig {
-    pub fn new(search_config: SearchConfig, editor: Editor) -> Self {
+    pub fn new(editor: Editor) -> Self {
         let (tx, rx) = mpsc::channel();
 
         Self {
             tx,
             rx,
             state: State::Idle,
-            search_config,
             editor,
         }
     }
@@ -75,11 +73,11 @@ impl Ig {
         None
     }
 
-    pub fn search(&mut self, result_list: &mut ResultList) {
+    pub fn search(&mut self, search_config: SearchConfig, result_list: &mut ResultList) {
         if self.state == State::Idle {
             *result_list = ResultList::default();
             self.state = State::Searching;
-            searcher::search(self.search_config.clone(), self.tx.clone());
+            searcher::search(search_config, self.tx.clone());
         }
     }
 

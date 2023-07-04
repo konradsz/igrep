@@ -30,6 +30,7 @@ use ratatui::{
 use std::path::PathBuf;
 
 pub struct App {
+    search_config: SearchConfig,
     ig: Ig,
     result_list: ResultList,
     result_list_state: ListState,
@@ -39,21 +40,22 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
-        let pattern = config.pattern.clone();
+    pub fn new(search_config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
         Self {
-            ig: Ig::new(config, editor),
+            search_config,
+            ig: Ig::new(editor),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
             context_viewer_state: ContextViewerState::default(),
             theme,
-            search_popup: SearchPopup::new(pattern),
+            search_popup: SearchPopup::default(),
         }
     }
 
     pub fn run(&mut self) -> Result<()> {
         let mut input_handler = InputHandler::default();
-        self.ig.search(&mut self.result_list);
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
 
         loop {
             let backend = CrosstermBackend::new(std::io::stdout());
@@ -392,8 +394,10 @@ impl Application for App {
     }
 
     fn on_search(&mut self) {
-        self.search_popup.align_pattern();
-        self.ig.search(&mut self.result_list);
+        let pattern = self.search_popup.get_pattern();
+        self.search_config.pattern = pattern;
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
     }
 
     fn on_exit(&mut self) {
@@ -401,7 +405,8 @@ impl Application for App {
     }
 
     fn on_toggle_popup(&mut self) {
-        self.search_popup.reset_edited_pattern();
+        self.search_popup
+            .set_pattern(self.search_config.pattern.clone());
         self.search_popup.toggle();
     }
 

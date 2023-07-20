@@ -1,6 +1,6 @@
 use super::app::Application;
 use anyhow::Result;
-use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
+use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers};
 use std::time::Duration;
 
 #[derive(Default)]
@@ -29,6 +29,10 @@ impl InputHandler {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {
                 match key_event {
+                    KeyEvent {
+                        code: KeyCode::Char('c'),
+                        modifiers: KeyModifiers::CONTROL,
+                    } => app.on_exit(),
                     KeyEvent {
                         code: KeyCode::Char(character),
                         ..

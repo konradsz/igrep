@@ -40,7 +40,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 ## Keybindings
 | Key                      | Action                                 |
 | ------------------------ | -------------------------------------- |
-| `q`, `Esc`               | Quit                                   |
+| `q`, `Esc`, `Ctrl+c`     | Quit                                   |
 | `Down`, `j`              | Select next match                      |
 | `Up`,`k`                 | Select previous match                  |
 | `Right`, `l`, `PageDown` | Select match in next file              |

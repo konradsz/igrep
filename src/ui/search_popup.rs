@@ -11,18 +11,7 @@ use ratatui::{
 pub struct SearchPopup {
     visible: bool,
     pattern: String,
-    // edited_pattern: String,
 }
-
-/* TODO:
-- allow for input
-- allow for backspace
-- allow for a delete key
-- handle arrow keys
-- ENTER to search new pattern
-- ESC to cancel search, old pattern should stay
-- handle long input
-*/
 
 impl SearchPopup {
     pub fn toggle(&mut self) {
@@ -51,9 +40,6 @@ impl SearchPopup {
         }
 
         let block = Block::default()
-            .title("<ENTER> - search, <ESC> - cancel")
-            .title_on_bottom()
-            .title_alignment(ratatui::layout::Alignment::Center)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::Blue));
         let popup_area = Self::get_popup_area(frame.size(), 30);

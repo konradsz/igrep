@@ -51,9 +51,12 @@ impl SearchPopup {
         text_area.y += 1; // one line below the border
         text_area.x += 2; // two chars to the right
 
-        let max_text_width = text_area.width as usize - 2 - '…'.len_utf8();
+        let max_text_width = text_area.width as usize - 4;
         let pattern = if self.pattern.len() > max_text_width {
-            format!("…{}", &self.pattern[self.pattern.len() - max_text_width..])
+            format!(
+                "…{}",
+                &self.pattern[self.pattern.len() - max_text_width + 1..]
+            )
         } else {
             self.pattern.clone()
         };

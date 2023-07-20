@@ -154,7 +154,6 @@ impl InputHandler {
             KeyCode::End => app.on_bottom(),
             KeyCode::Delete => app.on_remove_current_entry(),
             KeyCode::Enter => app.on_open_file(),
-            // KeyCode::F(5) => app.on_search(),
             KeyCode::F(5) => {
                 self.text_insertion = true;
                 app.on_toggle_popup();

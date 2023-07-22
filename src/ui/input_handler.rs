@@ -305,7 +305,7 @@ mod tests {
     #[test]
     fn search() {
         let mut app_mock = MockApplication::default();
-        app_mock.expect_on_search().once().return_const(());
+        app_mock.expect_on_toggle_popup().once().return_const(());
         handle_key(KeyCode::F(5), &mut app_mock);
     }
 

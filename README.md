@@ -52,7 +52,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `dw`                     | Filter out all matches in current file |
 | `v`                      | Toggle vertical context viewer         |
 | `s`                      | Toggle horizontal context viewer       |
-| `F5`                     | Re-run search                          |
+| `F5`                     | Open search pattern popup              |
 
 ## Supported text editors
 `igrep` supports Vim, Neovim, nano, VS Code (stable and insiders), Emacs, EmacsClient, Helix, SublimeText, Micro, Intellij, Goland and Pycharm. If your beloved editor is missing on this list and you still want to use `igrep` please file an issue.

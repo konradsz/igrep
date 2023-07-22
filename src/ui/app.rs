@@ -4,6 +4,7 @@ use super::{
     input_handler::{InputHandler, InputState},
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+    search_popup::SearchPopup,
     theme::Theme,
 };
 
@@ -29,27 +30,32 @@ use ratatui::{
 use std::path::PathBuf;
 
 pub struct App {
+    search_config: SearchConfig,
     ig: Ig,
     result_list: ResultList,
     result_list_state: ListState,
     context_viewer_state: ContextViewerState,
     theme: Box<dyn Theme>,
+    search_popup: SearchPopup,
 }
 
 impl App {
-    pub fn new(config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
+    pub fn new(search_config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
         Self {
-            ig: Ig::new(config, editor),
+            search_config,
+            ig: Ig::new(editor),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
             context_viewer_state: ContextViewerState::default(),
             theme,
+            search_popup: SearchPopup::default(),
         }
     }
 
     pub fn run(&mut self) -> Result<()> {
         let mut input_handler = InputHandler::default();
-        self.ig.search(&mut self.result_list);
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
 
         loop {
             let backend = CrosstermBackend::new(std::io::stdout());
@@ -133,11 +139,15 @@ impl App {
         };
 
         Self::draw_list(frame, list_area, app);
+
         if let Some(cv_area) = cv_area {
             Self::draw_context_viewer(frame, cv_area, app);
         }
 
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
+
+        app.search_popup
+            .draw(frame, app.theme.search_popup_border());
     }
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
@@ -385,11 +395,28 @@ impl Application for App {
     }
 
     fn on_search(&mut self) {
-        self.ig.search(&mut self.result_list);
+        let pattern = self.search_popup.get_pattern();
+        self.search_config.pattern = pattern;
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
     }
 
     fn on_exit(&mut self) {
         self.ig.exit();
+    }
+
+    fn on_toggle_popup(&mut self) {
+        self.search_popup
+            .set_pattern(self.search_config.pattern.clone());
+        self.search_popup.toggle();
+    }
+
+    fn on_char_inserted(&mut self, c: char) {
+        self.search_popup.insert_char(c);
+    }
+
+    fn on_char_removed(&mut self) {
+        self.search_popup.remove_char();
     }
 }
 
@@ -409,4 +436,7 @@ pub trait Application {
     fn on_open_file(&mut self);
     fn on_search(&mut self);
     fn on_exit(&mut self);
+    fn on_toggle_popup(&mut self);
+    fn on_char_inserted(&mut self, c: char);
+    fn on_char_removed(&mut self);
 }

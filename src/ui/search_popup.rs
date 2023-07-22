@@ -49,7 +49,7 @@ impl SearchPopup {
 
         frame.render_widget(block, popup_area);
 
-        let mut text_area = popup_area.clone();
+        let mut text_area = popup_area;
         text_area.y += 1; // one line below the border
         text_area.x += 2; // two chars to the right
 

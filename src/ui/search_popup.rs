@@ -1,7 +1,7 @@
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::Style,
     text::{Line, Text},
     widgets::{Block, Borders, Clear, Paragraph},
     Frame,
@@ -34,15 +34,17 @@ impl SearchPopup {
         self.pattern.pop();
     }
 
-    pub fn draw(&self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>) {
+    pub fn draw(&self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, style: Style) {
         if !self.visible {
             return;
         }
 
         let block = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::Blue));
-        let popup_area = Self::get_popup_area(frame.size(), 30);
+            .border_style(style)
+            .title("Regex Pattern")
+            .title_alignment(Alignment::Center);
+        let popup_area = Self::get_popup_area(frame.size(), 50);
         frame.render_widget(Clear, popup_area);
 
         frame.render_widget(block, popup_area);

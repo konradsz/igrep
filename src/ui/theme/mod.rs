@@ -78,4 +78,9 @@ pub trait Theme {
     fn invalid_input_color(&self) -> Color {
         Color::Red
     }
+
+    // Search popup style
+    fn search_popup_border(&self) -> Style {
+        Style::default().fg(Color::Green)
+    }
 }

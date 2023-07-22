@@ -146,7 +146,8 @@ impl App {
 
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
 
-        app.search_popup.draw(frame);
+        app.search_popup
+            .draw(frame, app.theme.search_popup_border());
     }
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {

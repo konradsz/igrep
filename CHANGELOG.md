@@ -1,3 +1,9 @@
+## v1.2.0 (2023-08-08)
+***
+- support multiple search paths
+- Ctrl+c closes an application
+- allow to change search pattern without closing an app
+
 ## v1.1.0 (2023-01-29)
 ***
 - add error handling in case of editor process spawning failure

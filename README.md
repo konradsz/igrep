@@ -83,5 +83,13 @@ scoop install igrep
 ```
 pacman -S igrep
 ```
+### Alpine Linux
+
+`igrep` is available for [Alpine Edge](https://pkgs.alpinelinux.org/packages?name=igrep&branch=edge). It can be installed via [apk](https://wiki.alpinelinux.org/wiki/Alpine_Package_Keeper) after enabling the [testing repository](https://wiki.alpinelinux.org/wiki/Repositories).
+
+```
+apk add igrep
+```
+
 ### Build from source
 Build and install from source using Rust toolchain by running: `cargo install igrep`.

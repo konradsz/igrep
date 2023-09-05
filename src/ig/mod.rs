@@ -48,7 +48,6 @@ impl Ig {
     pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>) {
         if let State::OpenFile(idle) = self.state {
             if let Some((ref file_name, line_number)) = selected_entry {
-                println!("{file_name} {line_number}");
                 match self.try_spawn_editor(file_name, line_number) {
                     Ok(_) => self.state = if idle { State::Idle } else { State::Searching },
                     Err(_) => {

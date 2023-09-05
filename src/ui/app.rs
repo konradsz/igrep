@@ -391,7 +391,9 @@ impl Application for App {
     }
 
     fn on_open_file(&mut self) {
-        self.ig.open_file();
+        if self.result_list.matches_count > 0 {
+            self.ig.open_file();
+        }
     }
 
     fn on_search(&mut self) {

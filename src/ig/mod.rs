@@ -57,6 +57,8 @@ impl Ig {
                         ))
                     }
                 }
+            } else {
+                self.state = if idle { State::Idle } else { State::Searching };
             }
         }
     }

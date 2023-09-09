@@ -16,10 +16,10 @@ impl ListState {
 
 #[derive(Default)]
 pub struct ResultList {
-    pub matches_count: usize,
     entries: Vec<EntryType>,
     state: ListState,
     file_entries_count: usize,
+    matches_count: usize,
     filtered_matches_count: usize,
 }
 

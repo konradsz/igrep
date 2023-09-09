@@ -375,7 +375,7 @@ mod tests {
             ],
         );
 
-        let extended: HashSet<String> = HashSet::from_iter(to_ignore.into_iter());
+        let extended: HashSet<String> = HashSet::from_iter(to_ignore);
         let expected: HashSet<String> = HashSet::from([
             "aaa".to_owned(),
             "a".to_owned(),
@@ -399,7 +399,7 @@ mod tests {
             ],
         );
 
-        let extended: HashSet<String> = HashSet::from_iter(to_ignore.into_iter());
+        let extended: HashSet<String> = HashSet::from_iter(to_ignore);
         let expected: HashSet<String> = HashSet::from(["bbb".to_owned(), "b".to_owned()]);
 
         assert_eq!(extended, expected);

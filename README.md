@@ -76,7 +76,6 @@ brew install igrep
 ```
 ### Scoop
 ```
-scoop bucket add igrep https://github.com/konradsz/igrep.git
 scoop install igrep
 ```
 ### Arch Linux

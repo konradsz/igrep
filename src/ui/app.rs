@@ -1,5 +1,5 @@
 use super::{
-    context_viewer::ContextViewerState,
+    context_viewer::ContextViewer,
     editor::Editor,
     input_handler::{InputHandler, InputState},
     result_list::ResultList,
@@ -34,19 +34,20 @@ pub struct App {
     ig: Ig,
     result_list: ResultList,
     result_list_state: ListState,
-    context_viewer_state: ContextViewerState,
+    context_viewer: ContextViewer,
     theme: Box<dyn Theme>,
     search_popup: SearchPopup,
 }
 
 impl App {
     pub fn new(search_config: SearchConfig, editor: Editor, theme: Box<dyn Theme>) -> Self {
+        let theme = theme;
         Self {
             search_config,
             ig: Ig::new(editor),
             result_list: ResultList::default(),
             result_list_state: ListState::default(),
-            context_viewer_state: ContextViewerState::default(),
+            context_viewer: ContextViewer::default(),
             theme,
             search_popup: SearchPopup::default(),
         }
@@ -79,15 +80,12 @@ impl App {
                 while let Some(entry) = self.ig.handle_searcher_event() {
                     self.result_list.add_entry(entry);
                 }
+
                 input_handler.handle_input(self)?;
 
                 if let Some((file_name, _)) = self.result_list.get_selected_entry() {
-                    if let Some(context_viewer) = self.context_viewer_state.viewer() {
-                        context_viewer.highlight_file_if_needed(
-                            &PathBuf::from(file_name),
-                            self.theme.as_ref(),
-                        );
-                    }
+                    self.context_viewer
+                        .update_if_needed(&PathBuf::from(file_name), self.theme.as_ref());
                 }
             }
 
@@ -115,33 +113,13 @@ impl App {
             .split(frame.size());
 
         let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
-
-        let (list_area, cv_area) = match &app.context_viewer_state {
-            ContextViewerState::None => (view_area, None),
-            ContextViewerState::Vertical(_) => {
-                let chunks = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-                    .split(view_area);
-
-                let (left, right) = (chunks[0], chunks[1]);
-                (left, Some(right))
-            }
-            ContextViewerState::Horizontal(_) => {
-                let chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
-                    .split(view_area);
-
-                let (top, bottom) = (chunks[0], chunks[1]);
-                (top, Some(bottom))
-            }
-        };
+        let (list_area, context_viewer_area) = app.context_viewer.split_view(view_area);
 
         Self::draw_list(frame, list_area, app);
 
-        if let Some(cv_area) = cv_area {
-            Self::draw_context_viewer(frame, cv_area, app);
+        if let Some(cv_area) = context_viewer_area {
+            app.context_viewer
+                .draw(frame, cv_area, &app.result_list, app.theme.as_ref());
         }
 
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
@@ -204,35 +182,6 @@ impl App {
         app.result_list_state
             .select(app.result_list.get_state().selected());
         frame.render_stateful_widget(list_widget, area, &mut app.result_list_state);
-    }
-
-    fn draw_context_viewer(
-        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-        area: Rect,
-        app: &mut App,
-    ) {
-        let block_widget = Block::default()
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded);
-
-        if let Some((_, line_number)) = app.result_list.get_selected_entry() {
-            let height = area.height as u64;
-            let first_line_index = line_number.saturating_sub(height / 2);
-
-            let paragraph_widget =
-                Paragraph::new(app.context_viewer_state.viewer().unwrap().get_styled_spans(
-                    first_line_index as usize,
-                    height as usize,
-                    area.width as usize,
-                    line_number as usize,
-                    app.theme.as_ref(),
-                ))
-                .block(block_widget);
-
-            frame.render_widget(paragraph_widget, area);
-        } else {
-            frame.render_widget(block_widget, area);
-        }
     }
 
     fn draw_bottom_bar(
@@ -382,11 +331,19 @@ impl Application for App {
     }
 
     fn on_toggle_context_viewer_vertical(&mut self) {
-        self.context_viewer_state.toggle_vertical();
+        self.context_viewer.toggle_vertical();
     }
 
     fn on_toggle_context_viewer_horizontal(&mut self) {
-        self.context_viewer_state.toggle_horizontal();
+        self.context_viewer.toggle_horizontal();
+    }
+
+    fn on_increase_context_viewer_size(&mut self) {
+        self.context_viewer.increase_size();
+    }
+
+    fn on_decrease_context_viewer_size(&mut self) {
+        self.context_viewer.decrease_size();
     }
 
     fn on_open_file(&mut self) {
@@ -432,6 +389,8 @@ pub trait Application {
     fn on_remove_current_file(&mut self);
     fn on_toggle_context_viewer_vertical(&mut self);
     fn on_toggle_context_viewer_horizontal(&mut self);
+    fn on_increase_context_viewer_size(&mut self);
+    fn on_decrease_context_viewer_size(&mut self);
     fn on_open_file(&mut self);
     fn on_search(&mut self);
     fn on_exit(&mut self);

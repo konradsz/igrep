@@ -2,14 +2,17 @@ use std::{
     borrow::BorrowMut,
     cmp::max,
     io::BufRead,
-    mem,
     path::{Path, PathBuf},
 };
 
 use itertools::Itertools;
 use ratatui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
+    widgets::{Block, BorderType, Borders, Paragraph},
+    Frame,
 };
 use syntect::{
     easy::HighlightFile,
@@ -17,53 +20,14 @@ use syntect::{
     parsing::SyntaxSet,
 };
 
-use super::theme::Theme;
+use super::{result_list::ResultList, theme::Theme};
 
-#[derive(Default, Debug)]
-#[cfg_attr(test, derive(PartialEq))]
-pub enum ContextViewerState {
+#[derive(Default, Debug, PartialEq, Eq)]
+pub enum ContextViewerPosition {
     #[default]
     None,
-    Vertical(ContextViewer),
-    Horizontal(ContextViewer),
-}
-
-impl ContextViewerState {
-    pub fn viewer(&mut self) -> Option<&mut ContextViewer> {
-        match self {
-            ContextViewerState::None => None,
-            ContextViewerState::Vertical(cv) => Some(cv),
-            ContextViewerState::Horizontal(cv) => Some(cv),
-        }
-    }
-
-    pub fn toggle_vertical(&mut self) {
-        match self {
-            ContextViewerState::None => {
-                *self = ContextViewerState::Vertical(ContextViewer::default());
-            }
-            ContextViewerState::Vertical(_) => {
-                *self = ContextViewerState::None;
-            }
-            ContextViewerState::Horizontal(cv) => {
-                *self = ContextViewerState::Vertical(mem::take(cv))
-            }
-        }
-    }
-
-    pub fn toggle_horizontal(&mut self) {
-        match self {
-            ContextViewerState::None => {
-                *self = ContextViewerState::Horizontal(ContextViewer::default());
-            }
-            ContextViewerState::Vertical(cv) => {
-                *self = ContextViewerState::Horizontal(mem::take(cv))
-            }
-            ContextViewerState::Horizontal(_) => {
-                *self = ContextViewerState::None;
-            }
-        }
-    }
+    Vertical,
+    Horizontal,
 }
 
 #[derive(Debug)]
@@ -72,6 +36,8 @@ pub struct ContextViewer {
     file_highlighted: Vec<Vec<(highlighting::Style, String)>>,
     syntax_set: SyntaxSet,
     theme_set: ThemeSet,
+    position: ContextViewerPosition,
+    size: u16,
 }
 
 impl Default for ContextViewer {
@@ -81,47 +47,139 @@ impl Default for ContextViewer {
             file_highlighted: Default::default(),
             syntax_set: SyntaxSet::load_defaults_newlines(),
             theme_set: highlighting::ThemeSet::load_defaults(),
+            position: Default::default(),
+            size: 50,
         }
     }
 }
 
 impl ContextViewer {
-    pub fn highlight_file_if_needed(&mut self, file_path: impl AsRef<Path>, theme: &dyn Theme) {
-        if self.file_path != file_path.as_ref() {
-            self.file_path = file_path.as_ref().into();
-            self.file_highlighted.clear();
+    const MIN_SIZE: u16 = 20;
+    const MAX_SIZE: u16 = 80;
+    const SIZE_CHANGE_DELTA: u16 = 5;
 
-            let mut highlighter = HighlightFile::new(
-                file_path,
-                &self.syntax_set,
-                &self.theme_set.themes[theme.context_viewer_theme()],
-            )
-            .expect("Failed to create line highlighter");
-            let mut line = String::new();
+    pub fn toggle_vertical(&mut self) {
+        match self.position {
+            ContextViewerPosition::None => self.position = ContextViewerPosition::Vertical,
+            ContextViewerPosition::Vertical => self.position = ContextViewerPosition::None,
+            ContextViewerPosition::Horizontal => self.position = ContextViewerPosition::Vertical,
+        }
+    }
 
-            while highlighter
-                .reader
-                .read_line(&mut line)
-                .expect("Not valid UTF-8")
-                > 0
-            {
-                let regions: Vec<(highlighting::Style, &str)> = highlighter
-                    .highlight_lines
-                    .highlight_line(&line, &self.syntax_set)
-                    .expect("Failed to highlight line");
+    pub fn toggle_horizontal(&mut self) {
+        match self.position {
+            ContextViewerPosition::None => self.position = ContextViewerPosition::Horizontal,
+            ContextViewerPosition::Vertical => self.position = ContextViewerPosition::Horizontal,
+            ContextViewerPosition::Horizontal => self.position = ContextViewerPosition::None,
+        }
+    }
 
-                let span_vec = regions
-                    .into_iter()
-                    .map(|(style, substring)| (style, substring.to_string()))
-                    .collect();
+    pub fn increase_size(&mut self) {
+        self.size = (self.size + Self::SIZE_CHANGE_DELTA).min(Self::MAX_SIZE);
+    }
 
-                self.file_highlighted.push(span_vec);
-                line.clear(); // read_line appends so we need to clear between lines
+    pub fn decrease_size(&mut self) {
+        self.size = (self.size - Self::SIZE_CHANGE_DELTA).max(Self::MIN_SIZE);
+    }
+
+    pub fn update_if_needed(&mut self, file_path: impl AsRef<Path>, theme: &dyn Theme) {
+        if self.position == ContextViewerPosition::None || self.file_path == file_path.as_ref() {
+            return;
+        }
+
+        self.file_path = file_path.as_ref().into();
+        self.file_highlighted.clear();
+
+        let mut highlighter = HighlightFile::new(
+            file_path,
+            &self.syntax_set,
+            &self.theme_set.themes[theme.context_viewer_theme()],
+        )
+        .expect("Failed to create line highlighter");
+        let mut line = String::new();
+
+        while highlighter
+            .reader
+            .read_line(&mut line)
+            .expect("Not valid UTF-8")
+            > 0
+        {
+            let regions: Vec<(highlighting::Style, &str)> = highlighter
+                .highlight_lines
+                .highlight_line(&line, &self.syntax_set)
+                .expect("Failed to highlight line");
+
+            let span_vec = regions
+                .into_iter()
+                .map(|(style, substring)| (style, substring.to_string()))
+                .collect();
+
+            self.file_highlighted.push(span_vec);
+            line.clear(); // read_line appends so we need to clear between lines
+        }
+    }
+
+    pub fn split_view(&self, view_area: Rect) -> (Rect, Option<Rect>) {
+        match self.position {
+            ContextViewerPosition::None => (view_area, None),
+            ContextViewerPosition::Vertical => {
+                let chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([
+                        Constraint::Percentage(100 - self.size),
+                        Constraint::Percentage(self.size),
+                    ])
+                    .split(view_area);
+
+                let (left, right) = (chunks[0], chunks[1]);
+                (left, Some(right))
+            }
+            ContextViewerPosition::Horizontal => {
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([
+                        Constraint::Percentage(100 - self.size),
+                        Constraint::Percentage(self.size),
+                    ])
+                    .split(view_area);
+
+                let (top, bottom) = (chunks[0], chunks[1]);
+                (top, Some(bottom))
             }
         }
     }
 
-    pub fn get_styled_spans(
+    pub fn draw(
+        &self,
+        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        area: Rect,
+        result_list: &ResultList,
+        theme: &dyn Theme,
+    ) {
+        let block_widget = Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded);
+
+        if let Some((_, line_number)) = result_list.get_selected_entry() {
+            let height = area.height as u64;
+            let first_line_index = line_number.saturating_sub(height / 2);
+
+            let paragraph_widget = Paragraph::new(self.get_styled_spans(
+                first_line_index as usize,
+                height as usize,
+                area.width as usize,
+                line_number as usize,
+                theme,
+            ))
+            .block(block_widget);
+
+            frame.render_widget(paragraph_widget, area);
+        } else {
+            frame.render_widget(block_widget, area);
+        }
+    }
+
+    fn get_styled_spans(
         &self,
         first_line_index: usize,
         height: usize,
@@ -172,41 +230,57 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    impl PartialEq for ContextViewer {
-        fn eq(&self, other: &Self) -> bool {
-            self.file_path == other.file_path && self.file_highlighted == other.file_highlighted
-        }
-    }
-
-    fn create_cv() -> ContextViewer {
-        ContextViewer {
-            file_path: "path".into(),
-            file_highlighted: vec![vec![(
-                highlighting::Style {
-                    foreground: highlighting::Color::BLACK,
-                    background: highlighting::Color::WHITE,
-                    font_style: highlighting::FontStyle::BOLD,
-                },
-                String::from("line"),
-            )]],
-            syntax_set: Default::default(),
-            theme_set: Default::default(),
-        }
-    }
-
-    #[test_case(ContextViewerState::None => ContextViewerState::Vertical(ContextViewer::default()))]
-    #[test_case(ContextViewerState::Vertical(ContextViewer::default()) => ContextViewerState::None)]
-    #[test_case(ContextViewerState::Horizontal(create_cv()) => ContextViewerState::Vertical(create_cv()))]
-    fn toggle_vertical(mut context_viewer: ContextViewerState) -> ContextViewerState {
+    #[test_case(ContextViewerPosition::None => ContextViewerPosition::Vertical)]
+    #[test_case(ContextViewerPosition::Vertical => ContextViewerPosition::None)]
+    #[test_case(ContextViewerPosition::Horizontal => ContextViewerPosition::Vertical)]
+    fn toggle_vertical(initial_position: ContextViewerPosition) -> ContextViewerPosition {
+        let mut context_viewer = ContextViewer {
+            position: initial_position,
+            ..Default::default()
+        };
         context_viewer.toggle_vertical();
-        context_viewer
+        context_viewer.position
     }
 
-    #[test_case(ContextViewerState::None => ContextViewerState::Horizontal(ContextViewer::default()))]
-    #[test_case(ContextViewerState::Vertical(create_cv()) => ContextViewerState::Horizontal(create_cv()))]
-    #[test_case(ContextViewerState::Horizontal(ContextViewer::default()) => ContextViewerState::None)]
-    fn toggle_horizontal(mut context_viewer: ContextViewerState) -> ContextViewerState {
+    #[test_case(ContextViewerPosition::None => ContextViewerPosition::Horizontal)]
+    #[test_case(ContextViewerPosition::Vertical => ContextViewerPosition::Horizontal)]
+    #[test_case(ContextViewerPosition::Horizontal => ContextViewerPosition::None)]
+    fn toggle_horizontal(initial_position: ContextViewerPosition) -> ContextViewerPosition {
+        let mut context_viewer = ContextViewer {
+            position: initial_position,
+            ..Default::default()
+        };
         context_viewer.toggle_horizontal();
-        context_viewer
+        context_viewer.position
+    }
+
+    #[test]
+    fn increase_size() {
+        let mut context_viewer = ContextViewer::default();
+        let default_size = context_viewer.size;
+        context_viewer.increase_size();
+        assert_eq!(
+            context_viewer.size,
+            default_size + ContextViewer::SIZE_CHANGE_DELTA
+        );
+
+        context_viewer.size = ContextViewer::MAX_SIZE;
+        context_viewer.increase_size();
+        assert_eq!(context_viewer.size, ContextViewer::MAX_SIZE);
+    }
+
+    #[test]
+    fn decrease_size() {
+        let mut context_viewer = ContextViewer::default();
+        let default_size = context_viewer.size;
+        context_viewer.decrease_size();
+        assert_eq!(
+            context_viewer.size,
+            default_size - ContextViewer::SIZE_CHANGE_DELTA
+        );
+
+        context_viewer.size = ContextViewer::MIN_SIZE;
+        context_viewer.decrease_size();
+        assert_eq!(context_viewer.size, ContextViewer::MIN_SIZE);
     }
 }

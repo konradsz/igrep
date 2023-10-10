@@ -132,6 +132,12 @@ impl InputHandler {
             "s" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                 app.on_toggle_context_viewer_horizontal()
             }),
+            "+" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                app.on_increase_context_viewer_size()
+            }),
+            "-" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                app.on_decrease_context_viewer_size()
+            }),
             "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
             "g" => self.input_state = InputState::Incomplete("g…".into()),
             "d" => self.input_state = InputState::Incomplete("d…".into()),

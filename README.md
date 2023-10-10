@@ -52,6 +52,8 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `dw`                     | Filter out all matches in current file |
 | `v`                      | Toggle vertical context viewer         |
 | `s`                      | Toggle horizontal context viewer       |
+| `+`                      | Increase context viewer size           |
+| `-`                      | Decrease context viewer size           |
 | `F5`                     | Open search pattern popup              |
 
 ## Supported text editors

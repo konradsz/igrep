@@ -32,7 +32,7 @@ pub enum ContextViewerPosition {
 
 #[derive(Debug)]
 pub struct ContextViewer {
-    file_path: PathBuf,
+    highlighted_file_path: PathBuf,
     file_highlighted: Vec<Vec<(highlighting::Style, String)>>,
     syntax_set: SyntaxSet,
     theme_set: ThemeSet,
@@ -43,7 +43,7 @@ pub struct ContextViewer {
 impl Default for ContextViewer {
     fn default() -> Self {
         Self {
-            file_path: Default::default(),
+            highlighted_file_path: Default::default(),
             file_highlighted: Default::default(),
             syntax_set: SyntaxSet::load_defaults_newlines(),
             theme_set: highlighting::ThemeSet::load_defaults(),
@@ -83,11 +83,13 @@ impl ContextViewer {
     }
 
     pub fn update_if_needed(&mut self, file_path: impl AsRef<Path>, theme: &dyn Theme) {
-        if self.position == ContextViewerPosition::None || self.file_path == file_path.as_ref() {
+        if self.position == ContextViewerPosition::None
+            || self.highlighted_file_path == file_path.as_ref()
+        {
             return;
         }
 
-        self.file_path = file_path.as_ref().into();
+        self.highlighted_file_path = file_path.as_ref().into();
         self.file_highlighted.clear();
 
         let mut highlighter = HighlightFile::new(

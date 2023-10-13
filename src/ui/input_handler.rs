@@ -7,7 +7,7 @@ use std::time::Duration;
 pub struct InputHandler {
     input_buffer: String,
     input_state: InputState,
-    text_insertion: bool,
+    input_mode: InputMode,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -16,6 +16,14 @@ pub enum InputState {
     Valid,
     Incomplete(String),
     Invalid(String),
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub enum InputMode {
+    #[default]
+    Normal,
+    TextInsertion,
+    Keymap,
 }
 
 impl InputHandler {
@@ -29,10 +37,12 @@ impl InputHandler {
         if poll(poll_timeout)? {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {
-                if !self.text_insertion {
-                    self.handle_key_in_normal_mode(key_event, app);
-                } else {
-                    self.handle_key_in_text_insertion_mode(key_event, app);
+                match self.input_mode {
+                    InputMode::Normal => self.handle_key_in_normal_mode(key_event, app),
+                    InputMode::TextInsertion => {
+                        self.handle_key_in_text_insertion_mode(key_event, app)
+                    }
+                    InputMode::Keymap => self.handle_key_in_keymap_mode(key_event, app),
                 }
             }
         }
@@ -71,7 +81,7 @@ impl InputHandler {
                 code: KeyCode::F(5),
                 ..
             } => {
-                self.text_insertion = false;
+                self.input_mode = InputMode::Normal;
                 app.on_toggle_popup();
             }
             KeyEvent {
@@ -92,10 +102,69 @@ impl InputHandler {
                 code: KeyCode::Enter,
                 ..
             } => {
-                self.text_insertion = false;
+                self.input_mode = InputMode::Normal;
                 app.on_search();
                 app.on_toggle_popup();
             }
+            _ => (),
+        }
+    }
+
+    fn handle_key_in_keymap_mode<A: Application>(&mut self, key_event: KeyEvent, app: &mut A) {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Esc, ..
+            }
+            | KeyEvent {
+                code: KeyCode::Enter,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::F(1),
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('?'),
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+            } => {
+                self.input_mode = InputMode::Normal;
+                app.on_toggle_keymap();
+            }
+            KeyEvent {
+                code: KeyCode::Up, ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('k'),
+                ..
+            } => app.on_keymap_up(),
+            KeyEvent {
+                code: KeyCode::Down,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('j'),
+                ..
+            } => app.on_keymap_down(),
+            KeyEvent {
+                code: KeyCode::Left,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('h'),
+                ..
+            } => app.on_keymap_left(),
+            KeyEvent {
+                code: KeyCode::Right,
+                ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('l'),
+                ..
+            } => app.on_keymap_right(),
             _ => (),
         }
     }
@@ -163,9 +232,12 @@ impl InputHandler {
             KeyCode::End => app.on_bottom(),
             KeyCode::Delete => app.on_remove_current_entry(),
             KeyCode::Enter => app.on_open_file(),
-            KeyCode::F(1) => app.on_toggle_keymap(),
+            KeyCode::F(1) => {
+                self.input_mode = InputMode::Keymap;
+                app.on_toggle_keymap();
+            }
             KeyCode::F(5) => {
-                self.text_insertion = true;
+                self.input_mode = InputMode::TextInsertion;
                 app.on_toggle_popup();
             }
             KeyCode::Esc => {
@@ -210,6 +282,12 @@ mod tests {
             Char(character) => input_handler.handle_char_input(character, app),
             _ => input_handler.handle_non_char_input(key_code, app),
         }
+    }
+
+    fn handle_key_keymap_mode<A: Application>(key_event: KeyEvent, app: &mut A) {
+        let mut input_handler = InputHandler::default();
+        input_handler.input_mode = InputMode::Keymap;
+        input_handler.handle_key_in_keymap_mode(key_event, app);
     }
 
     #[test_case(KeyCode::Down; "down")]
@@ -317,6 +395,57 @@ mod tests {
         let mut app_mock = MockApplication::default();
         app_mock.expect_on_toggle_popup().once().return_const(());
         handle_key(KeyCode::F(5), &mut app_mock);
+    }
+
+    #[test_case(KeyCode::F(1))]
+    #[test_case(KeyCode::Char('?'))]
+    fn keymap_open(key_code: KeyCode) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_toggle_keymap().once().return_const(());
+        handle_key(key_code, &mut app_mock);
+    }
+
+    #[test_case(KeyEvent::new(KeyCode::F(1), KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Char('?'), KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL))]
+    fn keymap_close(event: KeyEvent) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_toggle_keymap().once().return_const(());
+        handle_key_keymap_mode(event, &mut app_mock);
+    }
+
+    #[test_case(KeyEvent::new(KeyCode::Up, KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE))]
+    fn keymap_up(event: KeyEvent) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_keymap_up().once().return_const(());
+        handle_key_keymap_mode(event, &mut app_mock);
+    }
+
+    #[test_case(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE))]
+    fn keymap_down(event: KeyEvent) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_keymap_down().once().return_const(());
+        handle_key_keymap_mode(event, &mut app_mock);
+    }
+
+    #[test_case(KeyEvent::new(KeyCode::Left, KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Char('h'), KeyModifiers::NONE))]
+    fn keymap_left(event: KeyEvent) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_keymap_left().once().return_const(());
+        handle_key_keymap_mode(event, &mut app_mock);
+    }
+
+    #[test_case(KeyEvent::new(KeyCode::Right, KeyModifiers::NONE))]
+    #[test_case(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE))]
+    fn keymap_right(event: KeyEvent) {
+        let mut app_mock = MockApplication::default();
+        app_mock.expect_on_keymap_right().once().return_const(());
+        handle_key_keymap_mode(event, &mut app_mock);
     }
 
     #[test_case(&[Char('q')]; "q")]

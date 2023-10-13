@@ -304,22 +304,18 @@ impl Application for App {
 
     fn on_next_match(&mut self) {
         self.result_list.next_match();
-        self.keymap_popup.go_down();
     }
 
     fn on_previous_match(&mut self) {
         self.result_list.previous_match();
-        self.keymap_popup.go_up();
     }
 
     fn on_next_file(&mut self) {
         self.result_list.next_file();
-        self.keymap_popup.go_right();
     }
 
     fn on_previous_file(&mut self) {
         self.result_list.previous_file();
-        self.keymap_popup.go_left();
     }
 
     fn on_top(&mut self) {
@@ -386,6 +382,22 @@ impl Application for App {
     fn on_toggle_keymap(&mut self) {
         self.keymap_popup.toggle();
     }
+
+    fn on_keymap_up(&mut self) {
+        self.keymap_popup.go_up();
+    }
+
+    fn on_keymap_down(&mut self) {
+        self.keymap_popup.go_down();
+    }
+
+    fn on_keymap_left(&mut self) {
+        self.keymap_popup.go_left();
+    }
+
+    fn on_keymap_right(&mut self) {
+        self.keymap_popup.go_right();
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -410,4 +422,8 @@ pub trait Application {
     fn on_char_inserted(&mut self, c: char);
     fn on_char_removed(&mut self);
     fn on_toggle_keymap(&mut self);
+    fn on_keymap_up(&mut self);
+    fn on_keymap_down(&mut self);
+    fn on_keymap_left(&mut self);
+    fn on_keymap_right(&mut self);
 }

@@ -41,6 +41,13 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | Key                      | Action                                 |
 | ------------------------ | -------------------------------------- |
 | `q`, `Esc`, `Ctrl+c`     | Quit                                   |
+|                          |                                        |
+| `?`, `F1`                | Open/close the keymap popup            |
+| `Down`, `j`              | Scroll down in the keymap popup        |
+| `Up`, `k`                | Scroll up in the keymap popup          |
+| `Right`, `l`             | Scroll right in the keymap popup       |
+| `Left`, `h`              | Scroll left in the keymap popup        |
+|                          |                                        |
 | `Down`, `j`              | Select next match                      |
 | `Up`,`k`                 | Select previous match                  |
 | `Right`, `l`, `PageDown` | Select match in next file              |

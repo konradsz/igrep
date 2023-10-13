@@ -15,4 +15,4 @@ s                  | Toggle horizontal context viewer
 +                  | Increase context viewer size
 -                  | Decrease context viewer size
 F5                 | Open search pattern popup
-F1                 | Open this popup
+?, F1              | Open this popup

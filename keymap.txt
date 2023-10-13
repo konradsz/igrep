@@ -1,0 +1,18 @@
+Key                | Action(s)
+------------------ | ---------------------------------------------------------
+q, Esc, Ctrl+c     | Quit
+Down, j            | Select next match / Scroll down in this popup
+Up, k              | Select previous match / Scroll up in this popup
+Right, l, PageDown | Select match in next file / Scroll right in this popup
+Left, h, PageUp    | Select match in previous file / Scroll left in this popup
+gg, Home           | Jump to first match
+Shift-g, End       | Jump to last match
+Enter              | Open current file
+dd, Delete         | Filter out selected match
+dw                 | Filter out all matches in current file
+v                  | Toggle vertical context viewer
+s                  | Toggle horizontal context viewer
++                  | Increase context viewer size
+-                  | Decrease context viewer size
+F5                 | Open search pattern popup
+F1                 | Open this popup

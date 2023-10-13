@@ -285,8 +285,10 @@ mod tests {
     }
 
     fn handle_key_keymap_mode<A: Application>(key_event: KeyEvent, app: &mut A) {
-        let mut input_handler = InputHandler::default();
-        input_handler.input_mode = InputMode::Keymap;
+        let mut input_handler = InputHandler {
+            input_mode: InputMode::Keymap,
+            ..Default::default()
+        };
         input_handler.handle_key_in_keymap_mode(key_event, app);
     }
 

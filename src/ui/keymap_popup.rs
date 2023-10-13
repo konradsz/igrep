@@ -8,7 +8,7 @@ use ratatui::{
 
 use super::theme::Theme;
 
-const HELP_TEXT: &'static str = include_str!("../../keymap.txt");
+const HELP_TEXT: &str = include_str!("../../keymap.txt");
 
 pub struct KeymapPopup {
     visible: bool,
@@ -40,7 +40,7 @@ impl KeymapPopup {
     }
 
     pub fn go_up(&mut self) {
-        self.scroll_y = self.scroll_y.checked_sub(1).unwrap_or(0);
+        self.scroll_y = self.scroll_y.saturating_sub(1);
     }
 
     pub fn go_right(&mut self) {
@@ -48,7 +48,7 @@ impl KeymapPopup {
     }
 
     pub fn go_left(&mut self) {
-        self.scroll_x = self.scroll_x.checked_sub(1).unwrap_or(0);
+        self.scroll_x = self.scroll_x.saturating_sub(1);
     }
 
     pub fn draw(&self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, theme: &dyn Theme) {
@@ -60,7 +60,7 @@ impl KeymapPopup {
 
         let max_scroll = |size: usize, window: u16| {
             let size: u16 = size.try_into().unwrap_or(u16::MAX);
-            size.checked_sub(window).unwrap_or(0)
+            size.saturating_sub(window)
         };
         let scroll_y = self
             .scroll_y

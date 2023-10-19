@@ -32,3 +32,6 @@ syntect = "5.0.0"
 lazy_static = "1.4.0"
 test-case = "2.0.0"
 mockall = "0.11.0"
+
+[build-dependencies]
+anyhow = "1.0.38"

@@ -8,7 +8,7 @@ use ratatui::{
 
 use super::theme::Theme;
 
-const HELP_TEXT: &str = include_str!("../../keymap.txt");
+include!(concat!(env!("OUT_DIR"), "/keybindings.rs"));
 
 pub struct KeymapPopup {
     visible: bool,
@@ -23,7 +23,7 @@ impl KeymapPopup {
             visible: false,
             scroll_y: 0,
             scroll_x: 0,
-            content: Text::from(HELP_TEXT),
+            content: Text::from(KEYBINDINGS_TABLE),
         }
     }
 
@@ -35,15 +35,8 @@ impl KeymapPopup {
         }
     }
 
-    fn to_u16(value: usize) -> u16 {
-        value.try_into().unwrap_or(u16::MAX)
-    }
-
     pub fn go_down(&mut self) {
-        self.scroll_y = self
-            .scroll_y
-            .saturating_add(1)
-            .min(Self::to_u16(self.content.height()));
+        self.scroll_y = self.scroll_y.saturating_add(1).min(KEYBINDINGS_LEN);
     }
 
     pub fn go_up(&mut self) {
@@ -51,10 +44,7 @@ impl KeymapPopup {
     }
 
     pub fn go_right(&mut self) {
-        self.scroll_x = self
-            .scroll_x
-            .saturating_add(1)
-            .min(Self::to_u16(self.content.width()));
+        self.scroll_x = self.scroll_x.saturating_add(1).min(KEYBINDINGS_LINE_LEN);
     }
 
     pub fn go_left(&mut self) {
@@ -68,10 +58,9 @@ impl KeymapPopup {
 
         let popup_area = Self::get_popup_area(frame.size(), 80, 80);
 
-        let max_scroll = |size: usize, window: u16| Self::to_u16(size).saturating_sub(window);
-        let max_y = max_scroll(self.content.height(), popup_area.height - 2);
+        let max_y = KEYBINDINGS_LEN.saturating_sub(popup_area.height - 2);
         let scroll_y = self.scroll_y.min(max_y);
-        let max_x = max_scroll(self.content.width(), popup_area.width - 4);
+        let max_x = KEYBINDINGS_LINE_LEN.saturating_sub(popup_area.width - 4);
         let scroll_x = self.scroll_x.min(max_x);
 
         let paragraph = Paragraph::new(self.content.clone())

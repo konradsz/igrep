@@ -56,7 +56,7 @@ impl KeymapPopup {
             return;
         }
 
-        let popup_area = Self::get_popup_area(frame.size(), 80, 80);
+        let popup_area = Self::get_popup_area(frame.size());
 
         let max_y = KEYBINDINGS_LEN.saturating_sub(popup_area.height - 2);
         let scroll_y = self.scroll_y.min(max_y);
@@ -78,30 +78,19 @@ impl KeymapPopup {
         frame.render_widget(paragraph, popup_area);
     }
 
-    fn get_popup_area(frame_size: Rect, width_percent: u16, height_percent: u16) -> Rect {
-        let popup_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(
-                [
-                    Constraint::Percentage((100 - height_percent) / 2),
-                    Constraint::Percentage(height_percent),
-                    Constraint::Percentage((100 - height_percent) / 2),
-                ]
-                .as_ref(),
-            )
-            .split(frame_size);
+    fn get_popup_area(frame_size: Rect) -> Rect {
+        let height = (KEYBINDINGS_LEN + 2).min((frame_size.height as f64 * 0.8) as u16);
+        let y = (frame_size.height - height) / 2;
 
-        Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(
-                [
-                    Constraint::Percentage((100 - width_percent) / 2),
-                    Constraint::Percentage(width_percent),
-                    Constraint::Percentage((100 - width_percent) / 2),
-                ]
-                .as_ref(),
-            )
-            .split(popup_layout[1])[1]
+        let width = (KEYBINDINGS_LINE_LEN + 4).min((frame_size.width as f64 * 0.8) as u16);
+        let x = (frame_size.width - width) / 2;
+
+        Rect {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 }
 

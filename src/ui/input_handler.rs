@@ -113,28 +113,6 @@ impl InputHandler {
     fn handle_key_in_keymap_mode<A: Application>(&mut self, key_event: KeyEvent, app: &mut A) {
         match key_event {
             KeyEvent {
-                code: KeyCode::Esc, ..
-            }
-            | KeyEvent {
-                code: KeyCode::Enter,
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::F(1),
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('?'),
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('c'),
-                modifiers: KeyModifiers::CONTROL,
-            } => {
-                self.input_mode = InputMode::Normal;
-                app.on_toggle_keymap();
-            }
-            KeyEvent {
                 code: KeyCode::Up, ..
             }
             | KeyEvent {
@@ -165,7 +143,10 @@ impl InputHandler {
                 code: KeyCode::Char('l'),
                 ..
             } => app.on_keymap_right(),
-            _ => (),
+            _ => {
+                self.input_mode = InputMode::Normal;
+                app.on_toggle_keymap();
+            }
         }
     }
 

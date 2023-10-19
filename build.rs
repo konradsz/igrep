@@ -103,6 +103,8 @@ fn keybindings_table() -> Result<()> {
         )
         .context("failed to write table file: content")?;
     }
+    writeln!(table_file, "\nPress any key to close…")
+        .context("failed to write table file: close")?;
 
     let data_file =
         File::create(format!("{out_dir}/keybindings.rs")).context("failed to create data file")?;
@@ -112,7 +114,7 @@ fn keybindings_table() -> Result<()> {
         r#"const KEYBINDINGS_TABLE: &str = include_str!(concat!(env!("OUT_DIR"), "/keybindings.txt"));"#
     )
     .context("failed to write data file: table")?;
-    writeln!(data_file, "const KEYBINDINGS_LEN: u16 = {};", len + 2)
+    writeln!(data_file, "const KEYBINDINGS_LEN: u16 = {};", len + 4)
         .context("failed to write data file: length")?;
     writeln!(
         data_file,

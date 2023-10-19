@@ -1,6 +1,6 @@
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Rect},
     text::Text,
     widgets::{Block, Borders, Clear, Padding, Paragraph},
     Frame,

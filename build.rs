@@ -17,15 +17,9 @@ fn keybindings_table() -> Result<()> {
 
     let table: Vec<String> = readme
         .lines()
-        .skip_while(|line| match line {
-            Ok(line) if line == "<!-- keybindings start -->" => false,
-            _ => true,
-        })
+        .skip_while(|line| !matches!(line, Ok(line) if line == "<!-- keybindings start -->"))
         .skip(3) // begin marker, header, separator line
-        .take_while(|line| match line {
-            Ok(line) if line == "<!-- keybindings end -->" => false,
-            _ => true,
-        })
+        .take_while(|line| !matches!(line, Ok(line) if line == "<!-- keybindings end -->"))
         .collect::<std::result::Result<_, _>>()
         .context("failed to read table")?;
 
@@ -48,14 +42,7 @@ fn keybindings_table() -> Result<()> {
         .map(|line| {
             let (keys, description) = line.split_once('|').unwrap();
 
-            let keys = keys
-                .trim()
-                .chars()
-                .filter(|c| match c {
-                    '`' => false,
-                    _ => true,
-                })
-                .collect();
+            let keys = keys.trim().chars().filter(|c| c != &'`').collect();
 
             let description = description.trim().to_string();
 

@@ -36,7 +36,7 @@ impl KeymapPopup {
     }
 
     pub fn go_down(&mut self) {
-        self.scroll_y = self.scroll_y.saturating_add(1).min(KEYBINDINGS_LEN);
+        self.scroll_y = self.scroll_y.saturating_add(1);
     }
 
     pub fn go_up(&mut self) {
@@ -44,14 +44,18 @@ impl KeymapPopup {
     }
 
     pub fn go_right(&mut self) {
-        self.scroll_x = self.scroll_x.saturating_add(1).min(KEYBINDINGS_LINE_LEN);
+        self.scroll_x = self.scroll_x.saturating_add(1);
     }
 
     pub fn go_left(&mut self) {
         self.scroll_x = self.scroll_x.saturating_sub(1);
     }
 
-    pub fn draw(&self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, theme: &dyn Theme) {
+    pub fn draw(
+        &mut self,
+        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        theme: &dyn Theme,
+    ) {
         if !self.visible {
             return;
         }
@@ -59,9 +63,9 @@ impl KeymapPopup {
         let popup_area = Self::get_popup_area(frame.size());
 
         let max_y = KEYBINDINGS_LEN.saturating_sub(popup_area.height - 4);
-        let scroll_y = self.scroll_y.min(max_y);
+        self.scroll_y = self.scroll_y.min(max_y);
         let max_x = KEYBINDINGS_LINE_LEN.saturating_sub(popup_area.width - 4);
-        let scroll_x = self.scroll_x.min(max_x);
+        self.scroll_x = self.scroll_x.min(max_x);
 
         let paragraph = Paragraph::new(self.content.clone())
             .block(
@@ -78,7 +82,7 @@ impl KeymapPopup {
                     .title_alignment(Alignment::Center)
                     .padding(Padding::uniform(1)),
             )
-            .scroll((scroll_y, scroll_x));
+            .scroll((self.scroll_y, self.scroll_x));
 
         frame.render_widget(Clear, popup_area);
         frame.render_widget(paragraph, popup_area);

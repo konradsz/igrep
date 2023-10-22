@@ -71,21 +71,21 @@ fn keybindings_table() -> Result<()> {
     let mut table_file = BufWriter::new(table_file);
     writeln!(
         table_file,
-        "{0:<1$} | {2:<3$}",
+        "{0:<1$} │ {2:<3$}",
         "Key(s)", max_key, "Action", max_description
     )
     .context("failed to write table file: header")?;
     writeln!(
         table_file,
-        "{} | {}",
-        "-".repeat(max_key),
-        "-".repeat(max_description)
+        "{}┼{}",
+        "─".repeat(max_key + 1),
+        "─".repeat(max_description + 1)
     )
     .context("failed to write table file: separator")?;
     for (key, description) in content {
         writeln!(
             table_file,
-            "{key:<0$} | {description:<1$}",
+            "{key:<0$} │ {description:<1$}",
             max_key, max_description
         )
         .context("failed to write table file: content")?;

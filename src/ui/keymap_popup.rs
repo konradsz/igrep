@@ -69,10 +69,11 @@ impl KeymapPopup {
                     .borders(Borders::ALL)
                     .border_style(theme.search_popup_border())
                     .title(concat!(
-                        "Keybindings - ",
+                        " ",
                         env!("CARGO_PKG_NAME"),
                         " ",
                         env!("CARGO_PKG_VERSION"),
+                        " "
                     ))
                     .title_alignment(Alignment::Center)
                     .padding(Padding::uniform(1)),

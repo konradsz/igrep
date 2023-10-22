@@ -58,7 +58,7 @@ impl KeymapPopup {
 
         let popup_area = Self::get_popup_area(frame.size());
 
-        let max_y = KEYBINDINGS_LEN.saturating_sub(popup_area.height - 2);
+        let max_y = KEYBINDINGS_LEN.saturating_sub(popup_area.height - 4);
         let scroll_y = self.scroll_y.min(max_y);
         let max_x = KEYBINDINGS_LINE_LEN.saturating_sub(popup_area.width - 4);
         let scroll_x = self.scroll_x.min(max_x);
@@ -75,7 +75,7 @@ impl KeymapPopup {
                         env!("CARGO_PKG_VERSION"),
                     ))
                     .title_alignment(Alignment::Center)
-                    .padding(Padding::horizontal(1)),
+                    .padding(Padding::uniform(1)),
             )
             .scroll((scroll_y, scroll_x));
 
@@ -84,7 +84,7 @@ impl KeymapPopup {
     }
 
     fn get_popup_area(frame_size: Rect) -> Rect {
-        let height = (KEYBINDINGS_LEN + 2).min((frame_size.height as f64 * 0.8) as u16);
+        let height = (KEYBINDINGS_LEN + 4).min((frame_size.height as f64 * 0.8) as u16);
         let y = (frame_size.height - height) / 2;
 
         let width = (KEYBINDINGS_LINE_LEN + 4).min((frame_size.width as f64 * 0.8) as u16);

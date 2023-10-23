@@ -38,9 +38,18 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md#configuration-file) if `RIPGREP_CONFIG_PATH` environment variable is set and reads all supported options from it.
 
 ## Keybindings
+<!-- The markers above and below the table are required for build script -->
+<!-- keybindings start -->
 | Key                      | Action                                 |
 | ------------------------ | -------------------------------------- |
 | `q`, `Esc`, `Ctrl+c`     | Quit                                   |
+|                          |                                        |
+| `?`, `F1`                | Open/close the keymap popup            |
+| `Down`, `j`              | Scroll down in the keymap popup        |
+| `Up`, `k`                | Scroll up in the keymap popup          |
+| `Right`, `l`             | Scroll right in the keymap popup       |
+| `Left`, `h`              | Scroll left in the keymap popup        |
+|                          |                                        |
 | `Down`, `j`              | Select next match                      |
 | `Up`,`k`                 | Select previous match                  |
 | `Right`, `l`, `PageDown` | Select match in next file              |
@@ -55,6 +64,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `+`                      | Increase context viewer size           |
 | `-`                      | Decrease context viewer size           |
 | `F5`                     | Open search pattern popup              |
+<!-- keybindings end -->
 
 ## Supported text editors
 `igrep` supports Vim, Neovim, nano, VS Code (stable and insiders), Emacs, EmacsClient, Helix, SublimeText, Micro, Intellij, Goland and Pycharm. If your beloved editor is missing on this list and you still want to use `igrep` please file an issue.

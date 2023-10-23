@@ -2,6 +2,7 @@ use super::{
     context_viewer::ContextViewer,
     editor::Editor,
     input_handler::{InputHandler, InputState},
+    keymap_popup::KeymapPopup,
     result_list::ResultList,
     scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
     search_popup::SearchPopup,
@@ -37,6 +38,7 @@ pub struct App {
     context_viewer: ContextViewer,
     theme: Box<dyn Theme>,
     search_popup: SearchPopup,
+    keymap_popup: KeymapPopup,
 }
 
 impl App {
@@ -50,6 +52,7 @@ impl App {
             context_viewer: ContextViewer::default(),
             theme,
             search_popup: SearchPopup::default(),
+            keymap_popup: KeymapPopup::default(),
         }
     }
 
@@ -125,6 +128,7 @@ impl App {
         Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
 
         app.search_popup.draw(frame, app.theme.as_ref());
+        app.keymap_popup.draw(frame, app.theme.as_ref());
     }
 
     fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
@@ -374,6 +378,26 @@ impl Application for App {
     fn on_char_removed(&mut self) {
         self.search_popup.remove_char();
     }
+
+    fn on_toggle_keymap(&mut self) {
+        self.keymap_popup.toggle();
+    }
+
+    fn on_keymap_up(&mut self) {
+        self.keymap_popup.go_up();
+    }
+
+    fn on_keymap_down(&mut self) {
+        self.keymap_popup.go_down();
+    }
+
+    fn on_keymap_left(&mut self) {
+        self.keymap_popup.go_left();
+    }
+
+    fn on_keymap_right(&mut self) {
+        self.keymap_popup.go_right();
+    }
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -397,4 +421,9 @@ pub trait Application {
     fn on_toggle_popup(&mut self);
     fn on_char_inserted(&mut self, c: char);
     fn on_char_removed(&mut self);
+    fn on_toggle_keymap(&mut self);
+    fn on_keymap_up(&mut self);
+    fn on_keymap_down(&mut self);
+    fn on_keymap_left(&mut self);
+    fn on_keymap_right(&mut self);
 }

@@ -31,6 +31,7 @@ pub enum Editor {
     Intellij,
     Goland,
     Pycharm,
+    Less,
 }
 
 impl Editor {
@@ -97,24 +98,25 @@ impl EditorCommand {
             Editor::Intellij => "idea".into(),
             Editor::Goland => "goland".into(),
             Editor::Pycharm => "pycharm".into(),
+            Editor::Less => "less".into(),
         }
     }
 
     fn args(editor: Editor, file_name: &str, line_number: u64) -> Box<dyn Iterator<Item = String>> {
         match editor {
-            Editor::Vim | Editor::Neovim | Editor::Nvim | Editor::Nano | Editor::Micro => {
-                Box::new([format!("+{line_number}"), file_name.into()].into_iter())
-            }
+            Editor::Vim
+            | Editor::Neovim
+            | Editor::Nvim
+            | Editor::Nano
+            | Editor::Micro
+            | Editor::Less => Box::new([format!("+{line_number}"), file_name.into()].into_iter()),
             Editor::Code | Editor::Vscode | Editor::CodeInsiders => {
                 Box::new(["-g".into(), format!("{file_name}:{line_number}")].into_iter())
             }
             Editor::Emacs | Editor::Emacsclient => {
                 Box::new(["-nw".into(), format!("+{line_number}"), file_name.into()].into_iter())
             }
-            Editor::Hx | Editor::Helix => {
-                Box::new([format!("{file_name}:{line_number}")].into_iter())
-            }
-            Editor::Subl | Editor::SublimeText => {
+            Editor::Hx | Editor::Helix | Editor::Subl | Editor::SublimeText => {
                 Box::new([format!("{file_name}:{line_number}")].into_iter())
             }
             Editor::Intellij | Editor::Goland | Editor::Pycharm => {
@@ -213,6 +215,7 @@ mod tests {
     #[test_case(Editor::Intellij => format!("idea --line {LINE_NUMBER} {FILE_NAME}"); "intellij command")]
     #[test_case(Editor::Goland => format!("goland --line {LINE_NUMBER} {FILE_NAME}"); "goland command")]
     #[test_case(Editor::Pycharm => format!("pycharm --line {LINE_NUMBER} {FILE_NAME}"); "pycharm command")]
+    #[test_case(Editor::Less => format!("less +{LINE_NUMBER} {FILE_NAME}"); "less command")]
     fn editor_command(editor: Editor) -> String {
         EditorCommand::new(editor, FILE_NAME, LINE_NUMBER).to_string()
     }

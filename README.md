@@ -67,7 +67,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 <!-- keybindings end -->
 
 ## Supported text editors
-`igrep` supports Vim, Neovim, nano, VS Code (stable and insiders), Emacs, EmacsClient, Helix, SublimeText, Micro, Intellij, Goland and Pycharm. If your beloved editor is missing on this list and you still want to use `igrep` please file an issue.
+`igrep` supports Vim, Neovim, nano, VS Code (stable and insiders), Emacs, EmacsClient, Helix, SublimeText, Micro, Intellij, Goland, Pycharm and Less. If your beloved editor is missing on this list and you still want to use `igrep` please file an issue.
 
 ## Specifying text editor
 To specify the editor, use one of the following (listed in order of their precedence):

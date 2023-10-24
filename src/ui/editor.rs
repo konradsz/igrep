@@ -1,5 +1,5 @@
 use crate::args::{EDITOR_ENV, IGREP_EDITOR_ENV, VISUAL_ENV};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::ArgEnum;
 use itertools::Itertools;
 use std::{
@@ -9,6 +9,88 @@ use std::{
     process::{Child, Command},
 };
 use strum_macros::Display;
+
+pub fn determine(
+    custom_command: Option<String>,
+    editor_cli: Option<Editor>,
+) -> Result<EditorOrCommand> {
+    if let Some(custom_command) = custom_command {
+        let (program, args) = custom_command.split_once(' ').ok_or(
+            anyhow!("Expected program and its arguments")
+                .context(format!("Incorrect editor command: '{custom_command}'")),
+        )?;
+
+        // TODO: extract to fn verify(String) -> EditorOrCommand ?
+        if args.matches("{file_name}").count() != 1 {
+            return Err(anyhow!("Expected one occurence of '{{file_name}}'.")
+                .context(format!("Incorrect editor command: '{custom_command}'")));
+        }
+
+        if args.matches("{line_number}").count() != 1 {
+            return Err(anyhow!("Expected one occurence of '{{line_number}}'.")
+                .context(format!("Incorrect editor command: '{custom_command}'")));
+        }
+
+        return Ok(EditorOrCommand::CustomCommand(program.into(), args.into()));
+    }
+
+    let add_error_context = |e: String, env_value: String, env_name: &str| {
+        let possible_variants = Editor::value_variants()
+            .iter()
+            .map(Editor::to_string)
+            .join(", ");
+        anyhow!(e).context(format!(
+            "\"{env_value}\" read from ${env_name}, possible variants: [{possible_variants}]",
+        ))
+    };
+
+    let read_from_env = |name| {
+        std::env::var(name).ok().map(|value| {
+            Editor::from_str(&extract_editor_name(&value), false)
+                .map_err(|error| add_error_context(error, value, name))
+        })
+    };
+
+    Ok(EditorOrCommand::Editor(
+        editor_cli
+            // TODO: simplify
+            .map(Ok)
+            .or_else(|| read_from_env(IGREP_EDITOR_ENV))
+            .or_else(|| read_from_env(VISUAL_ENV))
+            .or_else(|| read_from_env(EDITOR_ENV))
+            .unwrap_or(Ok(Editor::default()))?,
+    ))
+}
+
+fn extract_editor_name(input: &str) -> String {
+    let mut split = input.rsplit('/');
+    split.next().unwrap().into()
+}
+
+pub enum EditorOrCommand {
+    Editor(Editor),
+    CustomCommand(String, String),
+}
+
+impl EditorOrCommand {
+    pub fn spawn(&self, file_name: &str, line_number: u64) -> io::Result<Child> {
+        match self {
+            EditorOrCommand::Editor(editor) => {
+                let mut command = EditorCommand::new(*editor, file_name, line_number);
+
+                command.spawn()
+            }
+            EditorOrCommand::CustomCommand(program, args) => {
+                let mut command = Command::new(program);
+                let args = args.replace("{file_name}", file_name);
+                let args = args.replace("{line_number}", &line_number.to_string());
+                command.args(args.split_whitespace());
+
+                command.spawn()
+            }
+        }
+    }
+}
 
 #[derive(Display, Default, PartialEq, Eq, Copy, Clone, Debug, ArgEnum)]
 #[strum(serialize_all = "lowercase")]
@@ -34,50 +116,11 @@ pub enum Editor {
     Less,
 }
 
-impl Editor {
-    pub fn determine(editor_cli: Option<Editor>) -> Result<Editor> {
-        let add_error_context = |e: String, env_value: String, env_name: &str| {
-            let possible_variants = Editor::value_variants()
-                .iter()
-                .map(Editor::to_string)
-                .join(", ");
-            anyhow!(e).context(format!(
-                "\"{env_value}\" read from ${env_name}, possible variants: [{possible_variants}]",
-            ))
-        };
-
-        let read_from_env = |name| {
-            std::env::var(name).ok().map(|value| {
-                Editor::from_str(&Editor::extract_editor_name(&value), false)
-                    .map_err(|error| add_error_context(error, value, name))
-            })
-        };
-
-        editor_cli
-            .map(Ok)
-            .or_else(|| read_from_env(IGREP_EDITOR_ENV))
-            .or_else(|| read_from_env(VISUAL_ENV))
-            .or_else(|| read_from_env(EDITOR_ENV))
-            .unwrap_or(Ok(Editor::default()))
-    }
-
-    pub fn spawn(self, file_name: &str, line_number: u64) -> io::Result<Child> {
-        let mut command = EditorCommand::new(self, file_name, line_number);
-
-        command.spawn()
-    }
-
-    fn extract_editor_name(input: &str) -> String {
-        let mut split = input.rsplit('/');
-        split.next().unwrap().into()
-    }
-}
-
 struct EditorCommand(Command);
 
 impl EditorCommand {
     fn new(editor: Editor, file_name: &str, line_number: u64) -> Self {
-        let mut command = Command::new(Self::program(editor));
+        let mut command = Command::new(Self::program(editor.clone()));
         command.args(Self::args(editor, file_name, line_number));
         Self(command)
     }

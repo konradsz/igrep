@@ -2,7 +2,7 @@ use anyhow::Result;
 use args::Args;
 use std::io::Write;
 use ui::{
-    editor::Editor,
+    editor::{self},
     theme::{dark::Dark, light::Light, Theme, ThemeVariant},
     App,
 };
@@ -48,7 +48,11 @@ fn main() -> Result<()> {
         ThemeVariant::Light => Box::new(Light),
         ThemeVariant::Dark => Box::new(Dark),
     };
-    let mut app = App::new(search_config, Editor::determine(args.editor.editor)?, theme);
+    let mut app = App::new(
+        search_config,
+        editor::determine(args.editor.custom_command, args.editor.editor)?,
+        theme,
+    );
     app.run()?;
 
     Ok(())

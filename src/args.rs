@@ -58,10 +58,17 @@ pub struct Args {
 }
 
 #[derive(Parser, Debug)]
+#[clap(group(
+            ArgGroup::new("excl2")
+                .args(&["editor", "custom"])
+))]
 pub struct EditorOpt {
     /// Text editor used to open selected match.
     #[clap(long, arg_enum)]
     pub editor: Option<Editor>,
+
+    #[clap(long)]
+    pub custom_command: Option<String>,
 }
 
 impl Args {

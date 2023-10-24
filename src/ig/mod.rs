@@ -4,7 +4,10 @@ mod sink;
 
 use crate::{
     file_entry::FileEntry,
-    ui::{editor::Editor, result_list::ResultList},
+    ui::{
+        editor::{Editor, EditorOrCommand},
+        result_list::ResultList,
+    },
 };
 pub use search_config::SearchConfig;
 use searcher::Event;
@@ -25,11 +28,11 @@ pub struct Ig {
     tx: mpsc::Sender<Event>,
     rx: mpsc::Receiver<Event>,
     state: State,
-    editor: Editor,
+    editor: EditorOrCommand,
 }
 
 impl Ig {
-    pub fn new(editor: Editor) -> Self {
+    pub fn new(editor: EditorOrCommand) -> Self {
         let (tx, rx) = mpsc::channel();
 
         Self {
@@ -53,7 +56,8 @@ impl Ig {
                     Err(_) => {
                         self.state = State::Error(format!(
                             "Failed to open editor '{}'. Is it installed?",
-                            self.editor,
+                            // self.editor,
+                            "asd" // TODO: match here
                         ))
                     }
                 }

@@ -1,5 +1,5 @@
 use crate::args::{EDITOR_ENV, IGREP_EDITOR_ENV, VISUAL_ENV};
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use clap::ArgEnum;
 use itertools::Itertools;
 use std::{
@@ -10,10 +10,11 @@ use std::{
 };
 use strum_macros::Display;
 
+// TODO: construtor of EditorOrCommand
 pub fn determine(
     custom_command: Option<String>,
     editor_cli: Option<Editor>,
-) -> Result<EditorOrCommand> {
+) -> Result<EditorCommand> {
     if let Some(custom_command) = custom_command {
         let (program, args) = custom_command.split_once(' ').ok_or(
             anyhow!("Expected program and its arguments")
@@ -31,7 +32,7 @@ pub fn determine(
                 .context(format!("Incorrect editor command: '{custom_command}'")));
         }
 
-        return Ok(EditorOrCommand::CustomCommand(program.into(), args.into()));
+        return Ok(EditorCommand::Custom(program.into(), args.into()));
     }
 
     let add_error_context = |e: String, env_value: String, env_name: &str| {
@@ -51,9 +52,8 @@ pub fn determine(
         })
     };
 
-    Ok(EditorOrCommand::Editor(
+    Ok(EditorCommand::Builtin(
         editor_cli
-            // TODO: simplify
             .map(Ok)
             .or_else(|| read_from_env(IGREP_EDITOR_ENV))
             .or_else(|| read_from_env(VISUAL_ENV))
@@ -67,26 +67,86 @@ fn extract_editor_name(input: &str) -> String {
     split.next().unwrap().into()
 }
 
-pub enum EditorOrCommand {
-    Editor(Editor),
-    CustomCommand(String, String),
+pub enum EditorCommand {
+    Builtin(Editor),
+    Custom(String, String),
 }
 
-impl EditorOrCommand {
+impl EditorCommand {
     pub fn spawn(&self, file_name: &str, line_number: u64) -> io::Result<Child> {
-        match self {
-            EditorOrCommand::Editor(editor) => {
-                let mut command = EditorCommand::new(*editor, file_name, line_number);
+        // match self {
+        //     EditorOrCommand::Builtin(editor) => {
+        //         let mut command = EditorCommand::new(*editor, file_name, line_number);
 
-                command.spawn()
-            }
-            EditorOrCommand::CustomCommand(program, args) => {
-                let mut command = Command::new(program);
+        //         command.spawn()
+        //     }
+        //     EditorOrCommand::Custom(program, args) => {
+        //         let mut command = Command::new(program);
+        //         let args = args.replace("{file_name}", file_name);
+        //         let args = args.replace("{line_number}", &line_number.to_string());
+        //         command.args(args.split_whitespace());
+
+        //         command.spawn()
+        //     }
+        // }
+        let mut command = Command::new(self.program());
+        command.args(self.args(file_name, line_number));
+        command.spawn()
+    }
+
+    fn program(&self) -> &str {
+        match self {
+            EditorCommand::Builtin(editor) => match editor {
+                Editor::Vim => "vim",
+                Editor::Neovim | Editor::Nvim => "nvim",
+                Editor::Nano => "nano",
+                Editor::Code | Editor::Vscode => "code",
+                Editor::CodeInsiders => "code-insiders",
+                Editor::Emacs => "emacs",
+                Editor::Emacsclient => "emacsclient",
+                Editor::Hx => "hx",
+                Editor::Helix => "helix",
+                Editor::Subl | Editor::SublimeText => "subl",
+                Editor::Micro => "micro",
+                Editor::Intellij => "idea",
+                Editor::Goland => "goland",
+                Editor::Pycharm => "pycharm",
+                Editor::Less => "less",
+            },
+            EditorCommand::Custom(program, _) => program,
+        }
+    }
+
+    fn args(&self, file_name: &str, line_number: u64) -> Box<dyn Iterator<Item = String>> {
+        match self {
+            EditorCommand::Builtin(editor) => match editor {
+                Editor::Vim
+                | Editor::Neovim
+                | Editor::Nvim
+                | Editor::Nano
+                | Editor::Micro
+                | Editor::Less => {
+                    Box::new([format!("+{line_number}"), file_name.into()].into_iter())
+                }
+                Editor::Code | Editor::Vscode | Editor::CodeInsiders => {
+                    Box::new(["-g".into(), format!("{file_name}:{line_number}")].into_iter())
+                }
+                Editor::Emacs | Editor::Emacsclient => Box::new(
+                    ["-nw".into(), format!("+{line_number}"), file_name.into()].into_iter(),
+                ),
+                Editor::Hx | Editor::Helix | Editor::Subl | Editor::SublimeText => {
+                    Box::new([format!("{file_name}:{line_number}")].into_iter())
+                }
+                Editor::Intellij | Editor::Goland | Editor::Pycharm => Box::new(
+                    ["--line".into(), format!("{line_number}"), file_name.into()].into_iter(),
+                ),
+            },
+            EditorCommand::Custom(_, args) => {
                 let args = args.replace("{file_name}", file_name);
                 let args = args.replace("{line_number}", &line_number.to_string());
-                command.args(args.split_whitespace());
 
-                command.spawn()
+                let args = args.split_whitespace().map(ToOwned::to_owned).collect_vec();
+                Box::new(args.into_iter())
             }
         }
     }
@@ -116,73 +176,18 @@ pub enum Editor {
     Less,
 }
 
-struct EditorCommand(Command);
+// struct EditorCommand(Command);
 
-impl EditorCommand {
-    fn new(editor: Editor, file_name: &str, line_number: u64) -> Self {
-        let mut command = Command::new(Self::program(editor.clone()));
-        command.args(Self::args(editor, file_name, line_number));
-        Self(command)
-    }
-
-    fn program(editor: Editor) -> String {
-        match editor {
-            Editor::Vim => "vim".into(),
-            Editor::Neovim | Editor::Nvim => "nvim".into(),
-            Editor::Nano => "nano".into(),
-            Editor::Code | Editor::Vscode => "code".into(),
-            Editor::CodeInsiders => "code-insiders".into(),
-            Editor::Emacs => "emacs".into(),
-            Editor::Emacsclient => "emacsclient".into(),
-            Editor::Hx => "hx".into(),
-            Editor::Helix => "helix".into(),
-            Editor::Subl | Editor::SublimeText => "subl".into(),
-            Editor::Micro => "micro".into(),
-            Editor::Intellij => "idea".into(),
-            Editor::Goland => "goland".into(),
-            Editor::Pycharm => "pycharm".into(),
-            Editor::Less => "less".into(),
-        }
-    }
-
-    fn args(editor: Editor, file_name: &str, line_number: u64) -> Box<dyn Iterator<Item = String>> {
-        match editor {
-            Editor::Vim
-            | Editor::Neovim
-            | Editor::Nvim
-            | Editor::Nano
-            | Editor::Micro
-            | Editor::Less => Box::new([format!("+{line_number}"), file_name.into()].into_iter()),
-            Editor::Code | Editor::Vscode | Editor::CodeInsiders => {
-                Box::new(["-g".into(), format!("{file_name}:{line_number}")].into_iter())
-            }
-            Editor::Emacs | Editor::Emacsclient => {
-                Box::new(["-nw".into(), format!("+{line_number}"), file_name.into()].into_iter())
-            }
-            Editor::Hx | Editor::Helix | Editor::Subl | Editor::SublimeText => {
-                Box::new([format!("{file_name}:{line_number}")].into_iter())
-            }
-            Editor::Intellij | Editor::Goland | Editor::Pycharm => {
-                Box::new(["--line".into(), format!("{line_number}"), file_name.into()].into_iter())
-            }
-        }
-    }
-
-    fn spawn(&mut self) -> io::Result<Child> {
-        self.0.spawn()
-    }
-}
-
-impl Display for EditorCommand {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {}",
-            self.0.get_program().to_string_lossy(),
-            self.0.get_args().map(OsStr::to_string_lossy).join(" ")
-        )
-    }
-}
+// impl Display for EditorCommand {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         write!(
+//             f,
+//             "{} {}",
+//             self.0.get_program().to_string_lossy(),
+//             self.0.get_args().map(OsStr::to_string_lossy).join(" ")
+//         )
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

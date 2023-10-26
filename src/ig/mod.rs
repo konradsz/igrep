@@ -5,7 +5,7 @@ mod sink;
 use crate::{
     file_entry::FileEntry,
     ui::{
-        editor::{Editor, EditorOrCommand},
+        editor::{Editor, EditorCommand},
         result_list::ResultList,
     },
 };
@@ -28,11 +28,11 @@ pub struct Ig {
     tx: mpsc::Sender<Event>,
     rx: mpsc::Receiver<Event>,
     state: State,
-    editor: EditorOrCommand,
+    editor: EditorCommand,
 }
 
 impl Ig {
-    pub fn new(editor: EditorOrCommand) -> Self {
+    pub fn new(editor: EditorCommand) -> Self {
         let (tx, rx) = mpsc::channel();
 
         Self {

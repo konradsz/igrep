@@ -1,6 +1,6 @@
 use super::{
     context_viewer::ContextViewer,
-    editor::{Editor, EditorOrCommand},
+    editor::{Editor, EditorCommand},
     input_handler::{InputHandler, InputState},
     keymap_popup::KeymapPopup,
     result_list::ResultList,
@@ -42,11 +42,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(
-        search_config: SearchConfig,
-        editor: EditorOrCommand,
-        theme: Box<dyn Theme>,
-    ) -> Self {
+    pub fn new(search_config: SearchConfig, editor: EditorCommand, theme: Box<dyn Theme>) -> Self {
         let theme = theme;
         Self {
             search_config,

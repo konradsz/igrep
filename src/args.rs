@@ -67,6 +67,7 @@ pub struct EditorOpt {
     #[clap(long, arg_enum)]
     pub editor: Option<Editor>,
 
+    /// Custom command used to open selected match. Must contain {file_name} and {line_number} tokens.
     #[clap(long)]
     pub custom_command: Option<String>,
 }

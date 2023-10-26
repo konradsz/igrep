@@ -4,7 +4,7 @@ mod sink;
 
 use crate::{
     file_entry::FileEntry,
-    ui::{editor::Editor, result_list::ResultList},
+    ui::{editor::EditorCommand, result_list::ResultList},
 };
 pub use search_config::SearchConfig;
 use searcher::Event;
@@ -25,23 +25,23 @@ pub struct Ig {
     tx: mpsc::Sender<Event>,
     rx: mpsc::Receiver<Event>,
     state: State,
-    editor: Editor,
+    editor_command: EditorCommand,
 }
 
 impl Ig {
-    pub fn new(editor: Editor) -> Self {
+    pub fn new(editor_command: EditorCommand) -> Self {
         let (tx, rx) = mpsc::channel();
 
         Self {
             tx,
             rx,
             state: State::Idle,
-            editor,
+            editor_command,
         }
     }
 
     fn try_spawn_editor(&self, file_name: &str, line_number: u64) -> io::Result<ExitStatus> {
-        let mut editor_process = self.editor.spawn(file_name, line_number)?;
+        let mut editor_process = self.editor_command.spawn(file_name, line_number)?;
         editor_process.wait()
     }
 
@@ -53,7 +53,7 @@ impl Ig {
                     Err(_) => {
                         self.state = State::Error(format!(
                             "Failed to open editor '{}'. Is it installed?",
-                            self.editor,
+                            self.editor_command,
                         ))
                     }
                 }

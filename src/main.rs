@@ -2,7 +2,7 @@ use anyhow::Result;
 use args::Args;
 use std::io::Write;
 use ui::{
-    editor::{self},
+    editor::EditorCommand,
     theme::{dark::Dark, light::Light, Theme, ThemeVariant},
     App,
 };
@@ -50,7 +50,7 @@ fn main() -> Result<()> {
     };
     let mut app = App::new(
         search_config,
-        editor::determine(args.editor.custom_command, args.editor.editor)?,
+        EditorCommand::new(args.editor.custom_command, args.editor.editor)?,
         theme,
     );
     app.run()?;

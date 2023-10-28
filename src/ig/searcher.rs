@@ -1,5 +1,4 @@
-use super::{sink::MatchesSink, SearchConfig};
-use crate::file_entry::FileEntry;
+use super::{file_entry::FileEntry, sink::MatchesSink, SearchConfig};
 use grep::{
     matcher::LineTerminator,
     regex::RegexMatcherBuilder,

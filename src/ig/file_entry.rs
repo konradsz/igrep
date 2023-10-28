@@ -1,4 +1,4 @@
-use crate::grep_match::GrepMatch;
+use super::grep_match::GrepMatch;
 
 pub enum EntryType {
     Header(String),

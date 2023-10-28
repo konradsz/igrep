@@ -9,8 +9,6 @@ use ui::{
 
 mod args;
 mod editor;
-mod file_entry;
-mod grep_match;
 pub mod ig;
 pub mod ui;
 

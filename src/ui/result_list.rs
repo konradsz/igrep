@@ -1,5 +1,6 @@
-use crate::file_entry::{EntryType, FileEntry};
 use std::cmp;
+
+use crate::ig::file_entry::{EntryType, FileEntry};
 
 #[derive(Copy, Clone, Default)]
 pub struct ListState(Option<usize>);
@@ -308,8 +309,9 @@ impl ResultList {
 
 #[cfg(test)]
 mod tests {
+    use crate::ig::grep_match::GrepMatch;
+
     use super::*;
-    use crate::grep_match::GrepMatch;
 
     #[test]
     fn test_empty_list() {

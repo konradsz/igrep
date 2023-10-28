@@ -1,8 +1,9 @@
-use crate::grep_match::GrepMatch;
 use grep::{
     matcher::Matcher,
     searcher::{Searcher, Sink, SinkMatch},
 };
+
+use super::grep_match::GrepMatch;
 
 pub(crate) struct MatchesSink<'a, M>
 where

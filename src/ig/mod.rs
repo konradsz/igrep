@@ -1,14 +1,19 @@
+pub mod file_entry;
+pub mod grep_match;
 mod search_config;
 mod searcher;
 mod sink;
 
-use crate::editor::EditorCommand;
-use crate::{file_entry::FileEntry, ui::result_list::ResultList};
-pub use search_config::SearchConfig;
-use searcher::Event;
 use std::io;
 use std::process::ExitStatus;
 use std::sync::mpsc;
+
+use crate::editor::EditorCommand;
+use crate::ui::result_list::ResultList;
+pub use search_config::SearchConfig;
+use searcher::Event;
+
+use self::file_entry::FileEntry;
 
 #[derive(PartialEq, Eq)]
 pub enum State {

@@ -10,8 +10,7 @@ use super::{
 
 use crate::{
     editor::EditorCommand,
-    file_entry::EntryType,
-    ig::{Ig, SearchConfig},
+    ig::{file_entry::EntryType, Ig, SearchConfig},
 };
 use anyhow::Result;
 use crossterm::{

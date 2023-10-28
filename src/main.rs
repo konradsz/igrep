@@ -1,13 +1,14 @@
 use anyhow::Result;
 use args::Args;
+use editor::EditorCommand;
 use std::io::Write;
 use ui::{
-    editor::EditorCommand,
     theme::{dark::Dark, light::Light, Theme, ThemeVariant},
     App,
 };
 
 mod args;
+mod editor;
 mod file_entry;
 mod grep_match;
 pub mod ig;

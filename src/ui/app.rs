@@ -1,6 +1,5 @@
 use super::{
     context_viewer::ContextViewer,
-    editor::EditorCommand,
     input_handler::{InputHandler, InputState},
     keymap_popup::KeymapPopup,
     result_list::ResultList,
@@ -10,6 +9,7 @@ use super::{
 };
 
 use crate::{
+    editor::EditorCommand,
     file_entry::EntryType,
     ig::{Ig, SearchConfig},
 };

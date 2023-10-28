@@ -2,10 +2,8 @@ mod search_config;
 mod searcher;
 mod sink;
 
-use crate::{
-    file_entry::FileEntry,
-    ui::{editor::EditorCommand, result_list::ResultList},
-};
+use crate::editor::EditorCommand;
+use crate::{file_entry::FileEntry, ui::result_list::ResultList};
 pub use search_config::SearchConfig;
 use searcher::Event;
 use std::io;

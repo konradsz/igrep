@@ -1,4 +1,4 @@
-use crate::ui::{editor::Editor, theme::ThemeVariant};
+use crate::{editor::Editor, ui::theme::ThemeVariant};
 use clap::{ArgGroup, CommandFactory, Parser};
 use std::{
     ffi::OsString,

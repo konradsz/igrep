@@ -1,19 +1,20 @@
 use std::cmp;
 
+use ratatui::{
+    backend::CrosstermBackend,
+    layout::Rect,
+    style::Style,
+    text::{Line, Span},
+    widgets::{Block, BorderType, Borders},
+    Frame,
+};
+
 use crate::ig::file_entry::{EntryType, FileEntry};
 
-#[derive(Copy, Clone, Default)]
-pub struct ListState(Option<usize>);
-
-impl ListState {
-    pub fn select(&mut self, index: Option<usize>) {
-        self.0 = index;
-    }
-
-    pub fn selected(&self) -> Option<usize> {
-        self.0
-    }
-}
+use super::{
+    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
+    theme::Theme,
+};
 
 #[derive(Default)]
 pub struct ResultList {
@@ -269,10 +270,6 @@ impl ResultList {
         }
     }
 
-    pub fn get_state(&self) -> ListState {
-        self.state
-    }
-
     pub fn get_current_match_index(&self) -> usize {
         match self.state.selected() {
             Some(selected) => {
@@ -304,6 +301,64 @@ impl ResultList {
 
     pub fn get_filtered_matches_count(&self) -> usize {
         self.filtered_matches_count
+    }
+
+    pub fn draw(
+        &mut self,
+        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+        area: Rect,
+        theme: &dyn Theme,
+    ) {
+        let files_list: Vec<ListItem> = self
+            .iter()
+            .map(|e| match e {
+                EntryType::Header(h) => {
+                    let h = h.trim_start_matches("./");
+                    ListItem::new(Span::styled(h, theme.file_path_color()))
+                }
+                EntryType::Match(n, t, offsets) => {
+                    let line_number = Span::styled(format!(" {n}: "), theme.line_number_color());
+
+                    let mut spans = vec![line_number];
+
+                    let mut current_position = 0;
+                    for offset in offsets {
+                        let before_match =
+                            Span::styled(&t[current_position..offset.0], theme.list_font_color());
+                        let actual_match =
+                            Span::styled(&t[offset.0..offset.1], theme.match_color());
+
+                        // set current position to the end of current match
+                        current_position = offset.1;
+
+                        spans.push(before_match);
+                        spans.push(actual_match);
+                    }
+
+                    // push remaining text of a line
+                    spans.push(Span::styled(
+                        &t[current_position..],
+                        theme.list_font_color(),
+                    ));
+
+                    ListItem::new(Line::from(spans))
+                }
+            })
+            .collect();
+
+        let list_widget = List::new(files_list)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded),
+            )
+            .style(theme.background_color())
+            .highlight_style(Style::default().bg(theme.highlight_color()))
+            .scroll_offset(ScrollOffset::default().top(1).bottom(0));
+
+        let mut state = self.state;
+        frame.render_stateful_widget(list_widget, area, &mut state);
+        self.state = state;
     }
 }
 

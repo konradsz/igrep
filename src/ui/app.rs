@@ -3,14 +3,13 @@ use super::{
     input_handler::{InputHandler, InputState},
     keymap_popup::KeymapPopup,
     result_list::ResultList,
-    scroll_offset_list::{List, ListItem, ListState, ScrollOffset},
     search_popup::SearchPopup,
     theme::Theme,
 };
 
 use crate::{
     editor::EditorCommand,
-    ig::{file_entry::EntryType, Ig, SearchConfig},
+    ig::{Ig, SearchConfig},
 };
 use anyhow::Result;
 use crossterm::{
@@ -23,8 +22,8 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
-    text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Paragraph},
+    text::Span,
+    widgets::Paragraph,
     Frame, Terminal,
 };
 use std::path::PathBuf;
@@ -33,7 +32,6 @@ pub struct App {
     search_config: SearchConfig,
     ig: Ig,
     result_list: ResultList,
-    result_list_state: ListState,
     context_viewer: ContextViewer,
     theme: Box<dyn Theme>,
     search_popup: SearchPopup,
@@ -51,7 +49,6 @@ impl App {
             search_config,
             ig: Ig::new(editor_command),
             result_list: ResultList::default(),
-            result_list_state: ListState::default(),
             context_viewer: ContextViewer::default(),
             theme,
             search_popup: SearchPopup::default(),
@@ -121,7 +118,7 @@ impl App {
         let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
         let (list_area, context_viewer_area) = app.context_viewer.split_view(view_area);
 
-        Self::draw_list(frame, list_area, app);
+        app.result_list.draw(frame, list_area, app.theme.as_ref());
 
         if let Some(cv_area) = context_viewer_area {
             app.context_viewer
@@ -132,63 +129,6 @@ impl App {
 
         app.search_popup.draw(frame, app.theme.as_ref());
         app.keymap_popup.draw(frame, app.theme.as_ref());
-    }
-
-    fn draw_list(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect, app: &mut App) {
-        let files_list: Vec<ListItem> = app
-            .result_list
-            .iter()
-            .map(|e| match e {
-                EntryType::Header(h) => {
-                    let h = h.trim_start_matches("./");
-                    ListItem::new(Span::styled(h, app.theme.file_path_color()))
-                }
-                EntryType::Match(n, t, offsets) => {
-                    let line_number =
-                        Span::styled(format!(" {n}: "), app.theme.line_number_color());
-
-                    let mut spans = vec![line_number];
-
-                    let mut current_position = 0;
-                    for offset in offsets {
-                        let before_match = Span::styled(
-                            &t[current_position..offset.0],
-                            app.theme.list_font_color(),
-                        );
-                        let actual_match =
-                            Span::styled(&t[offset.0..offset.1], app.theme.match_color());
-
-                        // set current position to the end of current match
-                        current_position = offset.1;
-
-                        spans.push(before_match);
-                        spans.push(actual_match);
-                    }
-
-                    // push remaining text of a line
-                    spans.push(Span::styled(
-                        &t[current_position..],
-                        app.theme.list_font_color(),
-                    ));
-
-                    ListItem::new(Line::from(spans))
-                }
-            })
-            .collect();
-
-        let list_widget = List::new(files_list)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_type(BorderType::Rounded),
-            )
-            .style(app.theme.background_color())
-            .highlight_style(Style::default().bg(app.theme.highlight_color()))
-            .scroll_offset(ScrollOffset::default().top(1).bottom(0));
-
-        app.result_list_state
-            .select(app.result_list.get_state().selected());
-        frame.render_stateful_widget(list_widget, area, &mut app.result_list_state);
     }
 
     fn draw_bottom_bar(

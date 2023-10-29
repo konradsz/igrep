@@ -8,7 +8,7 @@ use ratatui::{
 use std::iter::Iterator;
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Copy, Clone)]
 pub struct ListState {
     offset: usize,
     selected: Option<usize>,
@@ -20,6 +20,10 @@ impl ListState {
         if index.is_none() {
             self.offset = 0;
         }
+    }
+
+    pub fn selected(&self) -> Option<usize> {
+        self.selected
     }
 }
 

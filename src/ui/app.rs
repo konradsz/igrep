@@ -1,10 +1,6 @@
 use super::{
-    context_viewer::ContextViewer,
-    input_handler::{InputHandler, InputState},
-    keymap_popup::KeymapPopup,
-    result_list::ResultList,
-    search_popup::SearchPopup,
-    theme::Theme,
+    bottom_bar, context_viewer::ContextViewer, input_handler::InputHandler,
+    keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup, theme::Theme,
 };
 
 use crate::{
@@ -20,10 +16,7 @@ use crossterm::{
 
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::Style,
-    text::Span,
-    widgets::Paragraph,
+    layout::{Constraint, Direction, Layout},
     Frame, Terminal,
 };
 use std::path::PathBuf;
@@ -125,118 +118,17 @@ impl App {
                 .draw(frame, cv_area, &app.result_list, app.theme.as_ref());
         }
 
-        Self::draw_bottom_bar(frame, bottom_bar_area, app, input_handler);
+        bottom_bar::draw(
+            frame,
+            bottom_bar_area,
+            &app.result_list,
+            &app.ig,
+            input_handler,
+            app.theme.as_ref(),
+        );
 
         app.search_popup.draw(frame, app.theme.as_ref());
         app.keymap_popup.draw(frame, app.theme.as_ref());
-    }
-
-    fn draw_bottom_bar(
-        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-        area: Rect,
-        app: &mut App,
-        input_handler: &InputHandler,
-    ) {
-        let current_match_index = app.result_list.get_current_match_index();
-
-        let (app_status_text, app_status_style) = if app.ig.is_searching() {
-            ("SEARCHING", app.theme.searching_state_style())
-        } else if app.ig.last_error().is_some() {
-            ("ERROR", app.theme.error_state_style())
-        } else {
-            ("FINISHED", app.theme.finished_state_style())
-        };
-        let app_status = Span::styled(app_status_text, app_status_style);
-
-        let search_result = Span::raw(if app.ig.is_searching() {
-            "".into()
-        } else if let Some(err) = app.ig.last_error() {
-            format!(" {err}")
-        } else {
-            let total_no_of_matches = app.result_list.get_total_number_of_matches();
-            if total_no_of_matches == 0 {
-                " No matches found.".into()
-            } else {
-                let no_of_files = app.result_list.get_total_number_of_file_entries();
-
-                let matches_str = if total_no_of_matches == 1 {
-                    "match"
-                } else {
-                    "matches"
-                };
-                let files_str = if no_of_files == 1 { "file" } else { "files" };
-
-                let filtered_count = app.result_list.get_filtered_matches_count();
-                let filtered_str = if filtered_count != 0 {
-                    format!(" ({filtered_count} filtered out)")
-                } else {
-                    String::default()
-                };
-
-                format!(" Found {total_no_of_matches} {matches_str} in {no_of_files} {files_str}{filtered_str}.")
-            }
-        });
-
-        let (current_input_content, current_input_color) = match input_handler.get_state() {
-            InputState::Valid => (String::default(), app.theme.bottom_bar_font_color()),
-            InputState::Incomplete(input) => (input.to_owned(), app.theme.bottom_bar_font_color()),
-            InputState::Invalid(input) => (input.to_owned(), app.theme.invalid_input_color()),
-        };
-        let current_input = Span::styled(
-            current_input_content,
-            Style::default()
-                .bg(app.theme.bottom_bar_color())
-                .fg(current_input_color),
-        );
-
-        let current_no_of_matches = app.result_list.get_current_number_of_matches();
-        let selected_info_text = {
-            let width = current_no_of_matches.to_string().len();
-            format!(" | {current_match_index: >width$}/{current_no_of_matches} ")
-        };
-        let selected_info_length = selected_info_text.len();
-        let selected_info = Span::styled(selected_info_text, app.theme.bottom_bar_style());
-
-        let hsplit = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(
-                [
-                    Constraint::Length(12),
-                    Constraint::Min(1),
-                    Constraint::Length(2),
-                    Constraint::Length(selected_info_length as u16),
-                ]
-                .as_ref(),
-            )
-            .split(area);
-
-        frame.render_widget(
-            Paragraph::new(app_status)
-                .style(Style::default().bg(app_status_style.bg.expect("Background not set")))
-                .alignment(Alignment::Center),
-            hsplit[0],
-        );
-
-        frame.render_widget(
-            Paragraph::new(search_result)
-                .style(app.theme.bottom_bar_style())
-                .alignment(Alignment::Left),
-            hsplit[1],
-        );
-
-        frame.render_widget(
-            Paragraph::new(current_input)
-                .style(app.theme.bottom_bar_style())
-                .alignment(Alignment::Right),
-            hsplit[2],
-        );
-
-        frame.render_widget(
-            Paragraph::new(selected_info)
-                .style(app.theme.bottom_bar_style())
-                .alignment(Alignment::Right),
-            hsplit[3],
-        );
     }
 }
 

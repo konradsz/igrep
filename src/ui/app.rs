@@ -24,9 +24,9 @@ use std::path::PathBuf;
 pub struct App {
     search_config: SearchConfig,
     ig: Ig,
+    theme: Box<dyn Theme>,
     result_list: ResultList,
     context_viewer: ContextViewer,
-    theme: Box<dyn Theme>,
     search_popup: SearchPopup,
     keymap_popup: KeymapPopup,
 }
@@ -41,9 +41,9 @@ impl App {
         Self {
             search_config,
             ig: Ig::new(editor_command),
+            theme,
             result_list: ResultList::default(),
             context_viewer: ContextViewer::default(),
-            theme,
             search_popup: SearchPopup::default(),
             keymap_popup: KeymapPopup::default(),
         }

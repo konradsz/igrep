@@ -8,6 +8,7 @@ use std::{
     path::PathBuf,
 };
 
+pub const IGREP_CUSTOM_EDITOR_ENV: &str = "IGREP_CUSTOM_EDITOR";
 pub const IGREP_EDITOR_ENV: &str = "IGREP_EDITOR";
 pub const EDITOR_ENV: &str = "EDITOR";
 pub const RIPGREP_CONFIG_PATH_ENV: &str = "RIPGREP_CONFIG_PATH";
@@ -68,7 +69,7 @@ pub struct EditorOpt {
     pub editor: Option<Editor>,
 
     /// Custom command used to open selected match. Must contain {file_name} and {line_number} tokens.
-    #[clap(long)]
+    #[clap(long, env = IGREP_CUSTOM_EDITOR_ENV)]
     pub custom_command: Option<String>,
 }
 

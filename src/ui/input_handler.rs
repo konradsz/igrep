@@ -1,7 +1,8 @@
-use super::app::Application;
 use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers};
 use std::time::Duration;
+
+use crate::app::Application;
 
 #[derive(Default)]
 pub struct InputHandler {
@@ -241,8 +242,9 @@ impl InputHandler {
 
 #[cfg(test)]
 mod tests {
+    use crate::app::MockApplication;
+
     use super::*;
-    use crate::ui::app::MockApplication;
     use crossterm::event::KeyCode::{Char, Esc};
     use test_case::test_case;
 

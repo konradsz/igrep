@@ -1,11 +1,11 @@
-use super::{
-    bottom_bar, context_viewer::ContextViewer, input_handler::InputHandler,
-    keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup, theme::Theme,
-};
-
 use crate::{
     editor::EditorCommand,
     ig::{Ig, SearchConfig},
+    ui::{
+        bottom_bar, context_viewer::ContextViewer, input_handler::InputHandler,
+        keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup,
+        theme::Theme,
+    },
 };
 use anyhow::Result;
 use crossterm::{

@@ -1,12 +1,11 @@
 use anyhow::Result;
+use app::App;
 use args::Args;
 use editor::EditorCommand;
 use std::io::Write;
-use ui::{
-    theme::{dark::Dark, light::Light, Theme, ThemeVariant},
-    App,
-};
+use ui::theme::{dark::Dark, light::Light, Theme, ThemeVariant};
 
+mod app;
 mod args;
 mod editor;
 pub mod ig;

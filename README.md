@@ -86,6 +86,10 @@ Users can provide their own command used to open selected match using `--custom-
 
 `--custom-command "vim +{line_number} {file_name}"`
 
+The same argument can also be passed via the `$IGREP_CUSTOM_EDITOR` environment variable. Example:
+
+`IGREP_CUSTOM_EDITOR="vim +{line_number} {file_name}"`
+
 ## Installation
 ### Prebuilt binaries
 `igrep` binaries can be downloaded from [GitHub](https://github.com/konradsz/igrep/releases).

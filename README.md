@@ -17,25 +17,26 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
 
 ### Options
 ```
--., --hidden                      Search hidden files and directories. By default, hidden files and
-                                  directories are skipped.
---editor <EDITOR>                 Text editor used to open selected match.
-                                  [possible values: check supported text editors section]
---custom-command <CUSTOM_COMMAND> Custom command used to open selected match.
-                                  Must contain {file_name} and {line_number} tokens (check Custom Command section).
--g, --glob <GLOB>                 Include files and directories for searching that match the given glob.
-                                  Multiple globs may be provided.
--h, --help                        Print help information
--i, --ignore-case                 Searches case insensitively.
--S, --smart-case                  Searches case insensitively if the pattern is all lowercase.
-                                  Search case sensitively otherwise.
--t, --type <TYPE_MATCHING>        Only search files matching TYPE.
-                                  Multiple types may be provided.
--T, --type-not <TYPE_NOT>         Do not search files matching TYPE-NOT.
-                                  Multiple types-not may be provided.
-    --theme <THEME>               UI color theme [default: dark] [possible values: light, dark]
-    --type-list                   Show all supported file types and their corresponding globs.
--V, --version                     Print version information.
+-., --hidden                    Search hidden files and directories. By default, hidden files and
+                                directories are skipped.
+    --editor <EDITOR>           Text editor used to open selected match.
+                                [possible values: check supported text editors section]
+    --custom-command <COMMAND>  Custom command used to open selected match.
+                                Must contain {file_name} and {line_number} tokens (check Custom Command section).
+-g, --glob <GLOB>               Include files and directories for searching that match the given glob.
+                                Multiple globs may be provided.
+-h, --help                      Print help information
+-i, --ignore-case               Searches case insensitively.
+-L, --follow                    Follow symbolic links while traversing directories
+-S, --smart-case                Searches case insensitively if the pattern is all lowercase.
+                                Search case sensitively otherwise.
+-t, --type <TYPE_MATCHING>      Only search files matching TYPE.
+                                Multiple types may be provided.
+-T, --type-not <TYPE_NOT>       Do not search files matching TYPE-NOT.
+                                Multiple types-not may be provided.
+    --theme <THEME>             UI color theme [default: dark] [possible values: light, dark]
+    --type-list                 Show all supported file types and their corresponding globs.
+-V, --version                   Print version information.
 ```
 NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md#configuration-file) if `RIPGREP_CONFIG_PATH` environment variable is set and reads all supported options from it.
 

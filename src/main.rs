@@ -1,15 +1,12 @@
 use anyhow::Result;
-use app::App;
-use args::Args;
-use editor::EditorCommand;
+use igrep::{
+    app::App,
+    args::Args,
+    editor::EditorCommand,
+    ig,
+    ui::theme::{dark::Dark, light::Light, Theme, ThemeVariant},
+};
 use std::io::Write;
-use ui::theme::{dark::Dark, light::Light, Theme, ThemeVariant};
-
-mod app;
-mod args;
-mod editor;
-pub mod ig;
-pub mod ui;
 
 fn main() -> Result<()> {
     let args = Args::parse_cli_and_config_file();

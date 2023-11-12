@@ -43,6 +43,9 @@ pub struct Args {
     /// By default, hidden files and directories are skipped.
     #[clap(short = '.', long = "hidden")]
     pub search_hidden: bool,
+    /// Follow symbolic links while traversing directories.
+    #[clap(short = 'L', long = "follow")]
+    pub follow_links: bool,
     /// Include files and directories for searching that match the given glob.
     /// Multiple globs may be provided.
     #[clap(short, long)]

@@ -14,6 +14,7 @@ pub struct SearchConfig {
     pub overrides: Override,
     pub types: Types,
     pub search_hidden: bool,
+    pub follow_links: bool,
 }
 
 impl SearchConfig {
@@ -30,6 +31,7 @@ impl SearchConfig {
             overrides: Override::empty(),
             types,
             search_hidden: false,
+            follow_links: false,
         })
     }
 
@@ -71,6 +73,11 @@ impl SearchConfig {
 
     pub fn search_hidden(mut self, search_hidden: bool) -> Self {
         self.search_hidden = search_hidden;
+        self
+    }
+
+    pub fn follow_links(mut self, follow_links: bool) -> Self {
+        self.follow_links = follow_links;
         self
     }
 }

@@ -51,13 +51,15 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .case_smart(config.case_smart)
         .build(&config.pattern)
         .expect("Cannot build RegexMatcher");
-    let mut builder = WalkBuilder::new(path);
 
+    let mut builder = WalkBuilder::new(path);
     let walk_parallel = builder
         .overrides(config.overrides.clone())
         .types(config.types.clone())
         .hidden(!config.search_hidden)
+        .follow_links(config.follow_links)
         .build_parallel();
+
     walk_parallel.run(move || {
         let tx = tx.clone();
         let matcher = matcher.clone();

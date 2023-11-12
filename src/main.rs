@@ -39,6 +39,7 @@ fn main() -> Result<()> {
         .case_insensitive(args.ignore_case)
         .case_smart(args.smart_case)
         .search_hidden(args.search_hidden)
+        .follow_links(args.follow_links)
         .globs(args.glob)?
         .file_types(args.type_matching, args.type_not)?;
 

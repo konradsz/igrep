@@ -1,4 +1,7 @@
-use crate::{editor::Editor, ui::theme::ThemeVariant};
+use crate::{
+    editor::Editor,
+    ui::{context_viewer::ContextViewerPosition, theme::ThemeVariant},
+};
 use clap::{ArgGroup, CommandFactory, Parser};
 use std::{
     ffi::OsString,
@@ -17,7 +20,7 @@ pub const VISUAL_ENV: &str = "VISUAL";
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 #[clap(group(
-            ArgGroup::new("excl")
+            ArgGroup::new("pattern_or_type_list")
                 .args(&["pattern", "type-list"])
                 .required(true)
 ))]
@@ -59,6 +62,9 @@ pub struct Args {
     /// Do not search files matching TYPE-NOT. Multiple types-not may be provided.
     #[clap(short = 'T', long)]
     pub type_not: Vec<String>,
+    /// Context viewer position at startup
+    #[clap(long, value_enum, default_value_t = ContextViewerPosition::None)]
+    pub context_viewer: ContextViewerPosition,
 }
 
 #[derive(Parser, Debug)]

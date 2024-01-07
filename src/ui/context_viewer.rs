@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use clap::ValueEnum;
 use itertools::Itertools;
 use ratatui::{
     backend::CrosstermBackend,
@@ -22,7 +23,7 @@ use syntect::{
 
 use super::{result_list::ResultList, theme::Theme};
 
-#[derive(Default, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, ValueEnum)]
 pub enum ContextViewerPosition {
     #[default]
     None,
@@ -40,23 +41,21 @@ pub struct ContextViewer {
     size: u16,
 }
 
-impl Default for ContextViewer {
-    fn default() -> Self {
+impl ContextViewer {
+    const MIN_SIZE: u16 = 20;
+    const MAX_SIZE: u16 = 80;
+    const SIZE_CHANGE_DELTA: u16 = 5;
+
+    pub fn new(position: ContextViewerPosition) -> Self {
         Self {
             highlighted_file_path: Default::default(),
             file_highlighted: Default::default(),
             syntax_set: SyntaxSet::load_defaults_newlines(),
             theme_set: highlighting::ThemeSet::load_defaults(),
-            position: Default::default(),
+            position,
             size: 50,
         }
     }
-}
-
-impl ContextViewer {
-    const MIN_SIZE: u16 = 20;
-    const MAX_SIZE: u16 = 80;
-    const SIZE_CHANGE_DELTA: u16 = 5;
 
     pub fn toggle_vertical(&mut self) {
         match self.position {
@@ -236,10 +235,7 @@ mod tests {
     #[test_case(ContextViewerPosition::Vertical => ContextViewerPosition::None)]
     #[test_case(ContextViewerPosition::Horizontal => ContextViewerPosition::Vertical)]
     fn toggle_vertical(initial_position: ContextViewerPosition) -> ContextViewerPosition {
-        let mut context_viewer = ContextViewer {
-            position: initial_position,
-            ..Default::default()
-        };
+        let mut context_viewer = ContextViewer::new(initial_position);
         context_viewer.toggle_vertical();
         context_viewer.position
     }
@@ -248,17 +244,14 @@ mod tests {
     #[test_case(ContextViewerPosition::Vertical => ContextViewerPosition::Horizontal)]
     #[test_case(ContextViewerPosition::Horizontal => ContextViewerPosition::None)]
     fn toggle_horizontal(initial_position: ContextViewerPosition) -> ContextViewerPosition {
-        let mut context_viewer = ContextViewer {
-            position: initial_position,
-            ..Default::default()
-        };
+        let mut context_viewer = ContextViewer::new(initial_position);
         context_viewer.toggle_horizontal();
         context_viewer.position
     }
 
     #[test]
     fn increase_size() {
-        let mut context_viewer = ContextViewer::default();
+        let mut context_viewer = ContextViewer::new(ContextViewerPosition::None);
         let default_size = context_viewer.size;
         context_viewer.increase_size();
         assert_eq!(
@@ -273,7 +266,7 @@ mod tests {
 
     #[test]
     fn decrease_size() {
-        let mut context_viewer = ContextViewer::default();
+        let mut context_viewer = ContextViewer::new(ContextViewerPosition::None);
         let default_size = context_viewer.size;
         context_viewer.decrease_size();
         assert_eq!(

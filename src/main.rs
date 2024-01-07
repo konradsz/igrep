@@ -4,7 +4,10 @@ use igrep::{
     args::Args,
     editor::EditorCommand,
     ig,
-    ui::theme::{dark::Dark, light::Light, Theme, ThemeVariant},
+    ui::{
+        context_viewer::ContextViewer,
+        theme::{dark::Dark, light::Light, Theme, ThemeVariant},
+    },
 };
 use std::io::Write;
 
@@ -47,6 +50,7 @@ fn main() -> Result<()> {
     let mut app = App::new(
         search_config,
         EditorCommand::new(args.editor.custom_command, args.editor.editor)?,
+        ContextViewer::new(args.context_viewer),
         theme,
     );
     app.run()?;

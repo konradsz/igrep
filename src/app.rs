@@ -35,6 +35,7 @@ impl App {
     pub fn new(
         search_config: SearchConfig,
         editor_command: EditorCommand,
+        context_viewer: ContextViewer,
         theme: Box<dyn Theme>,
     ) -> Self {
         let theme = theme;
@@ -42,8 +43,8 @@ impl App {
             search_config,
             ig: Ig::new(editor_command),
             theme,
+            context_viewer,
             result_list: ResultList::default(),
-            context_viewer: ContextViewer::default(),
             search_popup: SearchPopup::default(),
             keymap_popup: KeymapPopup::default(),
         }

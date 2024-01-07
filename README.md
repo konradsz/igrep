@@ -21,6 +21,8 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
                                 directories are skipped.
     --editor <EDITOR>           Text editor used to open selected match.
                                 [possible values: check supported text editors section]
+    --context-viewer <VIEWER>   Context viewer position at startup [default: none]
+                                [possible values: none, vertical, horizontal]
     --custom-command <COMMAND>  Custom command used to open selected match.
                                 Must contain {file_name} and {line_number} tokens (check Custom Command section).
 -g, --glob <GLOB>               Include files and directories for searching that match the given glob.

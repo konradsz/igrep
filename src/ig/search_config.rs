@@ -15,6 +15,7 @@ pub struct SearchConfig {
     pub types: Types,
     pub search_hidden: bool,
     pub follow_links: bool,
+    pub word_regexp: bool,
 }
 
 impl SearchConfig {
@@ -32,6 +33,7 @@ impl SearchConfig {
             types,
             search_hidden: false,
             follow_links: false,
+            word_regexp: false,
         })
     }
 
@@ -78,6 +80,11 @@ impl SearchConfig {
 
     pub fn follow_links(mut self, follow_links: bool) -> Self {
         self.follow_links = follow_links;
+        self
+    }
+
+    pub fn word_regexp(mut self, word_regexp: bool) -> Self {
+        self.word_regexp = word_regexp;
         self
     }
 }

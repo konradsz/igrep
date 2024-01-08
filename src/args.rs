@@ -49,6 +49,9 @@ pub struct Args {
     /// Follow symbolic links while traversing directories.
     #[clap(short = 'L', long = "follow")]
     pub follow_links: bool,
+    /// Only show matches surrounded by word boundaries.
+    #[clap(short = 'w', long = "word-regexp")]
+    pub word_regexp: bool,
     /// Include files and directories for searching that match the given glob.
     /// Multiple globs may be provided.
     #[clap(short, long)]

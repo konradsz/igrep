@@ -39,6 +39,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
     --theme <THEME>             UI color theme [default: dark] [possible values: light, dark]
     --type-list                 Show all supported file types and their corresponding globs.
 -V, --version                   Print version information.
+-w, --word-regexp               Only show matches surrounded by word boundaries
 ```
 NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md#configuration-file) if `RIPGREP_CONFIG_PATH` environment variable is set and reads all supported options from it.
 

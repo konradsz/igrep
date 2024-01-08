@@ -49,6 +49,7 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .line_terminator(Some(b'\n'))
         .case_insensitive(config.case_insensitive)
         .case_smart(config.case_smart)
+        .word(config.word_regexp)
         .build(&config.pattern)
         .expect("Cannot build RegexMatcher");
 

@@ -40,6 +40,7 @@ fn main() -> Result<()> {
         .case_smart(args.smart_case)
         .search_hidden(args.search_hidden)
         .follow_links(args.follow_links)
+        .word_regexp(args.word_regexp)
         .globs(args.glob)?
         .file_types(args.type_matching, args.type_not)?;
 

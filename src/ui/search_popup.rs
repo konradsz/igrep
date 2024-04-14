@@ -1,5 +1,4 @@
 use ratatui::{
-    backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Text},
     widgets::{Block, Borders, Clear, Paragraph},
@@ -35,7 +34,7 @@ impl SearchPopup {
         self.pattern.pop();
     }
 
-    pub fn draw(&self, frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, theme: &dyn Theme) {
+    pub fn draw(&self, frame: &mut Frame, theme: &dyn Theme) {
         if !self.visible {
             return;
         }

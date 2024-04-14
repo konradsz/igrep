@@ -1,5 +1,4 @@
 use ratatui::{
-    backend::CrosstermBackend,
     layout::{Alignment, Rect},
     text::Text,
     widgets::{Block, Borders, Clear, Padding, Paragraph},
@@ -51,11 +50,7 @@ impl KeymapPopup {
         self.scroll_x = self.scroll_x.saturating_sub(1);
     }
 
-    pub fn draw(
-        &mut self,
-        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-        theme: &dyn Theme,
-    ) {
+    pub fn draw(&mut self, frame: &mut Frame, theme: &dyn Theme) {
         if !self.visible {
             return;
         }

@@ -1,7 +1,6 @@
 use std::cmp;
 
 use ratatui::{
-    backend::CrosstermBackend,
     layout::Rect,
     style::Style,
     text::{Line, Span},
@@ -303,12 +302,7 @@ impl ResultList {
         self.filtered_matches_count
     }
 
-    pub fn draw(
-        &mut self,
-        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-        area: Rect,
-        theme: &dyn Theme,
-    ) {
+    pub fn draw(&mut self, frame: &mut Frame, area: Rect, theme: &dyn Theme) {
         let files_list: Vec<ListItem> = self
             .iter()
             .map(|e| match e {

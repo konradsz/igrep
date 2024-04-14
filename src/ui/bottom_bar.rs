@@ -1,5 +1,4 @@
 use ratatui::{
-    backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::Style,
     text::Span,
@@ -16,7 +15,7 @@ use super::{
 };
 
 pub fn draw(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+    frame: &mut Frame,
     area: Rect,
     result_list: &ResultList,
     ig: &Ig,
@@ -44,12 +43,7 @@ pub fn draw(
     draw_selected_info(frame, hsplit[3], selected_info_text, theme);
 }
 
-fn draw_app_status(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    ig: &Ig,
-    theme: &dyn Theme,
-) {
+fn draw_app_status(frame: &mut Frame, area: Rect, ig: &Ig, theme: &dyn Theme) {
     let (app_status_text, app_status_style) = if ig.is_searching() {
         ("SEARCHING", theme.searching_state_style())
     } else if ig.last_error().is_some() {
@@ -68,7 +62,7 @@ fn draw_app_status(
 }
 
 fn draw_search_result_summary(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+    frame: &mut Frame,
     area: Rect,
     ig: &Ig,
     result_list: &ResultList,
@@ -112,7 +106,7 @@ fn draw_search_result_summary(
 }
 
 fn draw_current_input(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+    frame: &mut Frame,
     area: Rect,
     input_handler: &InputHandler,
     theme: &dyn Theme,
@@ -145,7 +139,7 @@ fn render_selected_info_text(result_list: &ResultList) -> String {
 }
 
 fn draw_selected_info(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
+    frame: &mut Frame,
     area: Rect,
     selected_info_text: String,
     theme: &dyn Theme,

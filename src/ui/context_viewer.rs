@@ -8,7 +8,6 @@ use std::{
 use clap::ValueEnum;
 use itertools::Itertools;
 use ratatui::{
-    backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
@@ -150,13 +149,7 @@ impl ContextViewer {
         }
     }
 
-    pub fn draw(
-        &self,
-        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-        area: Rect,
-        result_list: &ResultList,
-        theme: &dyn Theme,
-    ) {
+    pub fn draw(&self, frame: &mut Frame, area: Rect, result_list: &ResultList, theme: &dyn Theme) {
         let block_widget = Block::default()
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded);

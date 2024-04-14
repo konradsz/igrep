@@ -99,11 +99,7 @@ impl App {
         Ok(())
     }
 
-    fn draw(
-        frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-        app: &mut App,
-        input_handler: &InputHandler,
-    ) {
+    fn draw(frame: &mut Frame, app: &mut App, input_handler: &InputHandler) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())

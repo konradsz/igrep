@@ -7,7 +7,7 @@ use std::{
     io,
     process::{Child, Command},
 };
-use strum_macros::Display;
+use strum::Display;
 
 #[derive(Display, Default, PartialEq, Eq, Copy, Clone, Debug, ArgEnum)]
 #[strum(serialize_all = "lowercase")]

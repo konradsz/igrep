@@ -56,6 +56,7 @@ impl InputHandler {
             KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
+                ..
             } => app.on_exit(),
             KeyEvent {
                 code: KeyCode::Char(character),
@@ -77,6 +78,7 @@ impl InputHandler {
             | KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
+                ..
             }
             | KeyEvent {
                 code: KeyCode::F(5),
@@ -88,6 +90,7 @@ impl InputHandler {
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: modifier,
+                ..
             } => {
                 if modifier == KeyModifiers::SHIFT {
                     app.on_char_inserted(c.to_ascii_uppercase());

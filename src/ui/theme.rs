@@ -3,7 +3,7 @@ pub mod light;
 
 use clap::ArgEnum;
 use ratatui::style::{Color, Modifier, Style};
-use strum_macros::Display;
+use strum::Display;
 
 #[derive(Display, Copy, Clone, Debug, ArgEnum)]
 #[strum(serialize_all = "lowercase")]

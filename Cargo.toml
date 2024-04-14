@@ -16,22 +16,23 @@ name = "ig"
 path = "src/main.rs"
 
 [dependencies]
-grep = "0.2.8"
-ignore = "0.4.18"
+grep = "0.3.1"
+ignore = "0.4.22"
 clap = { version = "3.1.6", features = ["derive", "env"] }
-crossterm = "0.23.0"
-ratatui = { version = "0.21.0", default-features = false, features = ['crossterm'] }
-unicode-width = "0.1"
-itertools = "0.10.0"
-anyhow = "1.0.38"
-strum = { version = "0.24", features = ["derive"] }
-strum_macros = "0.24.0"
+crossterm = "0.27.0"
+ratatui = { version = "0.26.1", default-features = false, features = [
+  'crossterm',
+] }
+unicode-width = "0.1.11"
+itertools = "0.12.1"
+anyhow = "1.0.82"
+strum = { version = "0.26.2", features = ["derive"] }
 syntect = "5.0.0"
 
 [dev-dependencies]
 lazy_static = "1.4.0"
-test-case = "2.0.0"
-mockall = "0.11.0"
+test-case = "3.3.1"
+mockall = "0.12.1"
 
 [build-dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.82"

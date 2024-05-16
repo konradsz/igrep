@@ -2,7 +2,7 @@ use crate::{
     editor::Editor,
     ui::{context_viewer::ContextViewerPosition, theme::ThemeVariant},
 };
-use clap::{ArgGroup, CommandFactory, Parser};
+use clap::{CommandFactory, Parser};
 use std::{
     ffi::OsString,
     fs::File,
@@ -19,13 +19,9 @@ pub const VISUAL_ENV: &str = "VISUAL";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
-#[clap(group(
-            ArgGroup::new("pattern_or_type_list")
-                .args(&["pattern", "type-list"])
-                .required(true)
-))]
 pub struct Args {
     /// Regular expression used for searching.
+    #[arg(group = "pattern_or_type", required = true)]
     pub pattern: Option<String>,
     /// Files or directories to search. Directories are searched recursively.
     /// If not specified, searching starts from current directory.
@@ -33,7 +29,7 @@ pub struct Args {
     #[clap(flatten)]
     pub editor: EditorOpt,
     /// UI color theme.
-    #[clap(long, arg_enum, default_value_t = ThemeVariant::Dark)]
+    #[clap(long, default_value_t = ThemeVariant::Dark)]
     pub theme: ThemeVariant,
     /// Searches case insensitively.
     #[clap(short = 'i', long)]
@@ -57,6 +53,7 @@ pub struct Args {
     #[clap(short, long)]
     pub glob: Vec<String>,
     /// Show all supported file types and their corresponding globs.
+    #[arg(group = "pattern_or_type", required = true)]
     #[clap(long)]
     pub type_list: bool,
     /// Only search files matching TYPE. Multiple types may be provided.
@@ -71,16 +68,14 @@ pub struct Args {
 }
 
 #[derive(Parser, Debug)]
-#[clap(group(
-            ArgGroup::new("editor_command")
-                .args(&["editor", "custom-command"])
-))]
 pub struct EditorOpt {
     /// Text editor used to open selected match.
-    #[clap(long, arg_enum)]
+    #[arg(group = "editor_command")]
+    #[clap(long)]
     pub editor: Option<Editor>,
 
     /// Custom command used to open selected match. Must contain {file_name} and {line_number} tokens.
+    #[arg(group = "editor_command")]
     #[clap(long, env = IGREP_CUSTOM_EDITOR_ENV)]
     pub custom_command: Option<String>,
 }
@@ -122,14 +117,14 @@ impl Args {
 
     fn pair_ignored(
         to_ignore: Vec<String>,
-        supported_arguments: &[(Option<String>, Option<String>, bool)],
+        supported_arguments: &[(Option<String>, Option<String>)],
     ) -> Vec<String> {
         to_ignore
             .iter()
             .filter(|i| {
                 supported_arguments
                     .iter()
-                    .any(|arg| (arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i)) && !arg.2)
+                    .any(|arg| (arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i)))
             })
             .flat_map(|i| {
                 match supported_arguments
@@ -145,23 +140,19 @@ impl Args {
             .collect()
     }
 
-    fn collect_supported_arguments() -> Vec<(Option<String>, Option<String>, bool)> {
+    fn collect_supported_arguments() -> Vec<(Option<String>, Option<String>)> {
         Args::command()
             .get_arguments()
             .filter_map(|arg| match (arg.get_long(), arg.get_short()) {
                 (None, None) => None,
-                (l, s) => Some((
-                    l.map(|l| l.to_string()),
-                    s.map(|s| s.to_string()),
-                    arg.is_multiple_occurrences_set(),
-                )),
+                (l, s) => Some((l.map(|l| l.to_string()), s.map(|s| s.to_string()))),
             })
             .collect::<Vec<_>>()
     }
 
     fn parse_from_reader<R: io::Read>(
         reader: R,
-        supported: Vec<(Option<String>, Option<String>, bool)>,
+        supported: Vec<(Option<String>, Option<String>)>,
         to_ignore: Vec<String>,
     ) -> Vec<OsString> {
         let reader = BufReader::new(reader);
@@ -220,8 +211,8 @@ mod tests {
     #[test]
     fn ripgrep_example_config() {
         let supported_args = vec![
-            (Some("glob".to_owned()), Some("g".to_owned()), true),
-            (Some("smart-case".to_owned()), None, false),
+            (Some("glob".to_owned()), Some("g".to_owned())),
+            (Some("smart-case".to_owned()), None),
         ];
         let input = "\
             # Don't let ripgrep vomit really long lines to my terminal, and show a preview.
@@ -255,7 +246,7 @@ mod tests {
 
     #[test]
     fn trim_whitespaces() {
-        let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()), false)];
+        let supported_args = vec![(Some("sup".to_owned()), Some("s".to_owned()))];
 
         let input = "\
     # comment
@@ -277,8 +268,8 @@ mod tests {
     #[test]
     fn skip_line_after_ignored_option() {
         let supported_args = vec![
-            (Some("aaa".to_owned()), Some("a".to_owned()), false),
-            (Some("bbb".to_owned()), Some("b".to_owned()), false),
+            (Some("aaa".to_owned()), Some("a".to_owned())),
+            (Some("bbb".to_owned()), Some("b".to_owned())),
         ];
 
         let input = "\
@@ -313,8 +304,8 @@ mod tests {
     #[test]
     fn do_not_skip_line_after_ignored_option_if_value_inline() {
         let supported_args = vec![
-            (Some("aaa".to_owned()), Some("a".to_owned()), false),
-            (Some("bbb".to_owned()), Some("b".to_owned()), false),
+            (Some("aaa".to_owned()), Some("a".to_owned())),
+            (Some("bbb".to_owned()), Some("b".to_owned())),
         ];
 
         let input = "\
@@ -347,8 +338,8 @@ mod tests {
     #[test]
     fn do_not_skip_line_after_ignored_flag() {
         let supported_args = vec![
-            (Some("aaa".to_owned()), Some("a".to_owned()), false),
-            (Some("bbb".to_owned()), Some("b".to_owned()), false),
+            (Some("aaa".to_owned()), Some("a".to_owned())),
+            (Some("bbb".to_owned()), Some("b".to_owned())),
         ];
 
         let input = "\
@@ -388,11 +379,11 @@ mod tests {
                 "e".to_owned(),
             ],
             &vec![
-                (Some("aaa".to_owned()), Some("a".to_owned()), false),
-                (Some("bbb".to_owned()), Some("b".to_owned()), false),
-                (Some("ccc".to_owned()), Some("c".to_owned()), false),
-                (Some("ddd".to_owned()), None, false),
-                (None, Some("e".to_owned()), false),
+                (Some("aaa".to_owned()), Some("a".to_owned())),
+                (Some("bbb".to_owned()), Some("b".to_owned())),
+                (Some("ccc".to_owned()), Some("c".to_owned())),
+                (Some("ddd".to_owned()), None),
+                (None, Some("e".to_owned())),
             ],
         );
 
@@ -405,23 +396,6 @@ mod tests {
             "ddd".to_owned(),
             "e".to_owned(),
         ]);
-
-        assert_eq!(extended, expected);
-    }
-
-    #[test]
-    fn do_not_ignore_multi_value_options() {
-        let to_ignore = Args::pair_ignored(
-            vec!["aaa".to_owned(), "b".to_owned(), "c".to_owned()],
-            &[
-                (Some("aaa".to_owned()), Some("a".to_owned()), true),
-                (Some("bbb".to_owned()), Some("b".to_owned()), false),
-                (Some("ccc".to_owned()), Some("c".to_owned()), true),
-            ],
-        );
-
-        let extended: HashSet<String> = HashSet::from_iter(to_ignore);
-        let expected: HashSet<String> = HashSet::from(["bbb".to_owned(), "b".to_owned()]);
 
         assert_eq!(extended, expected);
     }

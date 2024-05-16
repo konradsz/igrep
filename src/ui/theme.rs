@@ -1,11 +1,11 @@
 pub mod dark;
 pub mod light;
 
-use clap::ArgEnum;
+use clap::ValueEnum;
 use ratatui::style::{Color, Modifier, Style};
 use strum::Display;
 
-#[derive(Display, Copy, Clone, Debug, ArgEnum)]
+#[derive(Display, Copy, Clone, Debug, ValueEnum)]
 #[strum(serialize_all = "lowercase")]
 pub enum ThemeVariant {
     Light,

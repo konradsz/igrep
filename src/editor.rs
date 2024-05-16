@@ -1,6 +1,6 @@
 use crate::args::{EDITOR_ENV, IGREP_EDITOR_ENV, VISUAL_ENV};
 use anyhow::{anyhow, Result};
-use clap::ArgEnum;
+use clap::ValueEnum;
 use itertools::Itertools;
 use std::{
     fmt::{self, Debug, Display, Formatter},
@@ -9,7 +9,7 @@ use std::{
 };
 use strum::Display;
 
-#[derive(Display, Default, PartialEq, Eq, Copy, Clone, Debug, ArgEnum)]
+#[derive(Display, Default, PartialEq, Eq, Copy, Clone, Debug, ValueEnum)]
 #[strum(serialize_all = "lowercase")]
 pub enum Editor {
     #[default]

@@ -18,16 +18,16 @@ path = "src/main.rs"
 [dependencies]
 grep = "0.3.1"
 ignore = "0.4.22"
-clap = { version = "3.1.6", features = ["derive", "env"] }
+clap = { version = "4.5.4", features = ["derive", "env"] }
 crossterm = "0.27.0"
-ratatui = { version = "0.26.1", default-features = false, features = [
+ratatui = { version = "0.26.2", default-features = false, features = [
   'crossterm',
 ] }
-unicode-width = "0.1.11"
-itertools = "0.12.1"
-anyhow = "1.0.82"
+unicode-width = "0.1.12"
+itertools = "0.13.0"
+anyhow = "1.0.83"
 strum = { version = "0.26.2", features = ["derive"] }
-syntect = "5.0.0"
+syntect = "5.2.0"
 
 [dev-dependencies]
 lazy_static = "1.4.0"
@@ -35,4 +35,4 @@ test-case = "3.3.1"
 mockall = "0.12.1"
 
 [build-dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0.83"

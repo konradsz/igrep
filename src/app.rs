@@ -82,7 +82,7 @@ impl App {
 
                 if let Some((file_name, _)) = self.result_list.get_selected_entry() {
                     self.context_viewer
-                        .update_if_needed(&PathBuf::from(file_name), self.theme.as_ref());
+                        .update_if_needed(PathBuf::from(file_name), self.theme.as_ref());
                 }
             }
 

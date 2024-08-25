@@ -4,7 +4,6 @@ use clap::ValueEnum;
 use itertools::Itertools;
 use std::{
     fmt::{self, Debug, Display, Formatter},
-    io,
     process::{Child, Command},
 };
 use strum::Display;
@@ -87,10 +86,11 @@ impl EditorCommand {
         ))
     }
 
-    pub fn spawn(&self, file_name: &str, line_number: u64) -> io::Result<Child> {
-        let mut command = Command::new(self.program());
+    pub fn spawn(&self, file_name: &str, line_number: u64) -> Result<Child> {
+        let path = which::which(self.program())?;
+        let mut command = Command::new(path);
         command.args(self.args(file_name, line_number));
-        command.spawn()
+        command.spawn().map_err(anyhow::Error::from)
     }
 
     fn program(&self) -> &str {

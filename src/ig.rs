@@ -4,7 +4,6 @@ mod search_config;
 mod searcher;
 mod sink;
 
-use std::io;
 use std::process::ExitStatus;
 use std::sync::mpsc;
 
@@ -43,9 +42,9 @@ impl Ig {
         }
     }
 
-    fn try_spawn_editor(&self, file_name: &str, line_number: u64) -> io::Result<ExitStatus> {
+    fn try_spawn_editor(&self, file_name: &str, line_number: u64) -> anyhow::Result<ExitStatus> {
         let mut editor_process = self.editor_command.spawn(file_name, line_number)?;
-        editor_process.wait()
+        editor_process.wait().map_err(anyhow::Error::from)
     }
 
     pub fn open_file_if_requested(&mut self, selected_entry: Option<(String, u64)>) {

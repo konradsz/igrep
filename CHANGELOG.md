@@ -1,3 +1,16 @@
+## v1.3.0 (2024-09-08)
+***
+- locate editor executable using `which` crate
+- add `-w`/`--word-regexp` arg
+- add option to open Context Viewer at startup
+- add follow symlinks option
+- ability to specify custom command
+- read custom editor from environment
+- add `less` as an editor option
+- add a keybindings popup
+- add keybindings for changing context viewer size
+- fix flushing infinitely when opening nvim with no results found
+
 ## v1.2.0 (2023-08-08)
 ***
 - support multiple search paths

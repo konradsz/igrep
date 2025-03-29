@@ -1,5 +1,5 @@
 use anyhow::Result;
-use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use std::time::Duration;
 
 use crate::app::Application;
@@ -38,12 +38,19 @@ impl InputHandler {
         if poll(poll_timeout)? {
             let read_event = read()?;
             if let Event::Key(key_event) = read_event {
-                match self.input_mode {
-                    InputMode::Normal => self.handle_key_in_normal_mode(key_event, app),
-                    InputMode::TextInsertion => {
-                        self.handle_key_in_text_insertion_mode(key_event, app)
+                // The following line needs to be amended if and when enabling the
+                // `KeyboardEnhancementFlags::REPORT_EVENT_TYPES` flag on unix.
+                let event_kind_enabled = cfg!(target_family = "windows");
+                let process_event = !event_kind_enabled || key_event.kind != KeyEventKind::Release;
+
+                if process_event {
+                    match self.input_mode {
+                        InputMode::Normal => self.handle_key_in_normal_mode(key_event, app),
+                        InputMode::TextInsertion => {
+                            self.handle_key_in_text_insertion_mode(key_event, app)
+                        }
+                        InputMode::Keymap => self.handle_key_in_keymap_mode(key_event, app),
                     }
-                    InputMode::Keymap => self.handle_key_in_keymap_mode(key_event, app),
                 }
             }
         }

@@ -118,7 +118,7 @@ impl<'a> List<'a> {
     }
 }
 
-impl<'a> StatefulWidget for List<'a> {
+impl StatefulWidget for List<'_> {
     type State = ListState;
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
@@ -236,7 +236,7 @@ impl<'a> StatefulWidget for List<'a> {
     }
 }
 
-impl<'a> Widget for List<'a> {
+impl Widget for List<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let mut state = ListState::default();
         StatefulWidget::render(self, area, buf, &mut state);

@@ -25,7 +25,7 @@ where
     }
 }
 
-impl<'a, M> Sink for MatchesSink<'a, M>
+impl<M> Sink for MatchesSink<'_, M>
 where
     M: Matcher,
 {

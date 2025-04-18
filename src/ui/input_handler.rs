@@ -110,6 +110,18 @@ impl InputHandler {
                 ..
             } => app.on_char_removed(),
             KeyEvent {
+                code: KeyCode::Delete,
+                ..
+            } => app.on_char_deleted(),
+            KeyEvent {
+                code: KeyCode::Left,
+                ..
+            } => app.on_char_left(),
+            KeyEvent {
+                code: KeyCode::Right,
+                ..
+            } => app.on_char_right(),
+            KeyEvent {
                 code: KeyCode::Enter,
                 ..
             } => {
@@ -202,6 +214,10 @@ impl InputHandler {
             "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
             "?" => {
                 consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_toggle_keymap())
+            }
+            "/" => {
+                self.input_mode = InputMode::TextInsertion;
+                consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_toggle_popup())
             }
             "g" => self.input_state = InputState::Incomplete("g…".into()),
             "d" => self.input_state = InputState::Incomplete("d…".into()),
@@ -385,11 +401,12 @@ mod tests {
         handle_key(KeyCode::Enter, &mut app_mock);
     }
 
-    #[test]
-    fn search() {
+    #[test_case(KeyCode::F(5))]
+    #[test_case(KeyCode::Char('/'))]
+    fn search(key_code: KeyCode) {
         let mut app_mock = MockApplication::default();
         app_mock.expect_on_toggle_popup().once().return_const(());
-        handle_key(KeyCode::F(5), &mut app_mock);
+        handle_key(key_code, &mut app_mock);
     }
 
     #[test_case(KeyCode::F(1))]

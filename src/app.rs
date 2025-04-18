@@ -211,6 +211,18 @@ impl Application for App {
         self.search_popup.remove_char();
     }
 
+    fn on_char_deleted(&mut self) {
+        self.search_popup.delete_char();
+    }
+
+    fn on_char_left(&mut self) {
+        self.search_popup.left();
+    }
+
+    fn on_char_right(&mut self) {
+        self.search_popup.right();
+    }
+
     fn on_toggle_keymap(&mut self) {
         self.keymap_popup.toggle();
     }
@@ -253,6 +265,9 @@ pub trait Application {
     fn on_toggle_popup(&mut self);
     fn on_char_inserted(&mut self, c: char);
     fn on_char_removed(&mut self);
+    fn on_char_deleted(&mut self);
+    fn on_char_left(&mut self);
+    fn on_char_right(&mut self);
     fn on_toggle_keymap(&mut self);
     fn on_keymap_up(&mut self);
     fn on_keymap_down(&mut self);

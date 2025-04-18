@@ -54,43 +54,85 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .expect("Cannot build RegexMatcher");
 
     let mut builder = WalkBuilder::new(path);
-    let walk_parallel = builder
+    let walker = builder
         .overrides(config.overrides.clone())
         .types(config.types.clone())
         .hidden(!config.search_hidden)
-        .follow_links(config.follow_links)
-        .build_parallel();
+        .follow_links(config.follow_links);
 
-    walk_parallel.run(move || {
-        let tx = tx.clone();
-        let matcher = matcher.clone();
-        let mut grep_searcher = grep_searcher.clone();
+    let sorted = true;
+    if !sorted
+    {
+        let walk_parallel = walker
+            .build_parallel();
 
-        Box::new(move |result| {
-            let dir_entry = match result {
-                Ok(entry) => {
-                    if !entry.file_type().is_some_and(|ft| ft.is_file()) {
-                        return ignore::WalkState::Continue;
+        walk_parallel.run(move || {
+            let tx = tx.clone();
+            let matcher = matcher.clone();
+            let mut grep_searcher = grep_searcher.clone();
+
+            Box::new(move |result| {
+                let dir_entry = match result {
+                    Ok(entry) => {
+                        if !entry.file_type().is_some_and(|ft| ft.is_file()) {
+                            return ignore::WalkState::Continue;
+                        }
+                        entry
                     }
-                    entry
+                    Err(_) => return ignore::WalkState::Continue,
+                };
+                let mut matches_in_entry = Vec::new();
+                let sr = MatchesSink::new(&matcher, &mut matches_in_entry);
+                grep_searcher
+                    .search_path(&matcher, dir_entry.path(), sr)
+                    .ok();
+
+                if !matches_in_entry.is_empty() {
+                    tx.send(Event::NewEntry(FileEntry::new(
+                        dir_entry.path().to_string_lossy().into_owned(),
+                        matches_in_entry,
+                    )))
+                    .ok();
                 }
-                Err(_) => return ignore::WalkState::Continue,
-            };
-            let mut matches_in_entry = Vec::new();
-            let sr = MatchesSink::new(&matcher, &mut matches_in_entry);
-            grep_searcher
-                .search_path(&matcher, dir_entry.path(), sr)
-                .ok();
 
-            if !matches_in_entry.is_empty() {
-                tx.send(Event::NewEntry(FileEntry::new(
-                    dir_entry.path().to_string_lossy().into_owned(),
-                    matches_in_entry,
-                )))
-                .ok();
-            }
+                ignore::WalkState::Continue
+            })
+        });
+    }
+    else
+    {
+        let walk_sorted = walker
+            .sort_by_file_name(|a,b| a.cmp(b));
 
-            ignore::WalkState::Continue
-        })
-    });
+        for result in walk_sorted.build(){
+            let tx = tx.clone();
+            let matcher = matcher.clone();
+            let mut grep_searcher = grep_searcher.clone();
+
+                let dir_entry = match result {
+                    Ok(entry) => {
+                        if !entry.file_type().is_some_and(|ft| ft.is_file()) {
+                            continue;
+                        }
+                        entry
+                    }
+                    Err(_) => continue,
+                };
+                let mut matches_in_entry = Vec::new();
+                let sr = MatchesSink::new(&matcher, &mut matches_in_entry);
+                grep_searcher
+                    .search_path(&matcher, dir_entry.path(), sr)
+                    .ok();
+
+                if !matches_in_entry.is_empty() {
+                    tx.send(Event::NewEntry(FileEntry::new(
+                        dir_entry.path().to_string_lossy().into_owned(),
+                        matches_in_entry,
+                    )))
+                    .ok();
+                }
+
+                continue
+        }
+    }
 }

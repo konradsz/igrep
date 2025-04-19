@@ -66,7 +66,6 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
     // if no sort is specified the faster parallel search is used
     if config.sort_by.is_none() && config.sort_by_reversed.is_none()
     {
-        println!("parallel");
         let walk_parallel = walker
             .build_parallel();
 
@@ -110,7 +109,6 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
 
         if config.sort_by == Some("path".to_string()) || config.sort_by_reversed == Some("path".to_string())
         {
-            println!("by name");
             walk_sorted = walk_sorted
                 .sort_by_file_name(move |a,b| { if !reversed {a.cmp(b)} else {b.cmp(a)}} );
         }

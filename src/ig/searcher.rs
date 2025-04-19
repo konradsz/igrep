@@ -116,50 +116,69 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         }
         else if config.sort_by == Some("modified".to_string()) || config.sort_by_reversed == Some("modified".to_string())
         {
-            fn compare_modified (a: &Path, b: &Path) -> Ordering {
+            let compare_modified  = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
                 let mb = b.metadata().expect("cannot get metadata from file");
 
                 let ta = ma.modified().expect("cannot get time of file");
                 let tb = mb.modified().expect("cannot get time of file");
 
-                ta.cmp(&tb)
-            }
+                if !reversed
+                {
+                    ta.cmp(&tb)
+                } else {
+                    tb.cmp(&ta)
+                }
+            };
+
             walk_sorted = walk_sorted
                 .sort_by_file_path(move |a,b| { compare_modified(a,b) } );
+            
         }
         else if config.sort_by == Some("created".to_string()) || config.sort_by_reversed == Some("created".to_string())
         {
-            fn compare_created (a: &Path, b: &Path) -> Ordering {
+            let compare_created = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
                 let mb = b.metadata().expect("cannot get metadata from file");
 
                 let ta = ma.created().expect("cannot get time of file");
                 let tb = mb.created().expect("cannot get time of file");
 
-                ta.cmp(&tb)
-            }
+                if !reversed
+                {
+                    ta.cmp(&tb)
+                } else {
+                    tb.cmp(&ta)
+                }
+            };
+
             walk_sorted = walk_sorted
                 .sort_by_file_path(move |a,b| { compare_created(a,b) } );
         }
         else if config.sort_by == Some("accessed".to_string()) || config.sort_by_reversed == Some("accessed".to_string())
         {
-            fn compare_accessed (a: &Path, b: &Path) -> Ordering {
+            let compare_accessed = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
                 let mb = b.metadata().expect("cannot get metadata from file");
 
                 let ta = ma.accessed().expect("cannot get time of file");
                 let tb = mb.accessed().expect("cannot get time of file");
 
-                ta.cmp(&tb)
-            }
+                if !reversed
+                {
+                    ta.cmp(&tb)
+                } else {
+                    tb.cmp(&ta)
+                }
+            };
+
             walk_sorted = walk_sorted
                 .sort_by_file_path(move |a,b| { compare_accessed(a,b) } );
         }
         else
         {
             // unknown order specified
-            println!("unknown sort order specified");
+            panic!("unknown sort order specified");
         }
 
         for result in walk_sorted.build(){

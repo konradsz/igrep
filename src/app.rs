@@ -182,6 +182,58 @@ impl Application for App {
         self.context_viewer.decrease_size();
     }
 
+    fn on_toggle_sort_name(&mut self) {
+        if self.search_config.sort_by.is_some()
+        {
+            self.search_config.sort_by_reversed = Some("path".to_string());
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some("path".to_string());
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
+    fn on_toggle_sort_mtime(&mut self) {
+        if self.search_config.sort_by.is_some()
+        {
+            self.search_config.sort_by_reversed = Some("modified".to_string());
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some("modified".to_string());
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
+    fn on_toggle_sort_ctime(&mut self) {
+        if self.search_config.sort_by.is_some()
+        {
+            self.search_config.sort_by_reversed = Some("created".to_string());
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some("created".to_string());
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
+    fn on_toggle_sort_atime(&mut self) {
+        if self.search_config.sort_by.is_some()
+        {
+            self.search_config.sort_by_reversed = Some("accessed".to_string());
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some("accessed".to_string());
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
     fn on_open_file(&mut self) {
         self.ig.open_file();
     }
@@ -259,6 +311,10 @@ pub trait Application {
     fn on_toggle_context_viewer_horizontal(&mut self);
     fn on_increase_context_viewer_size(&mut self);
     fn on_decrease_context_viewer_size(&mut self);
+    fn on_toggle_sort_name(&mut self);
+    fn on_toggle_sort_mtime(&mut self);
+    fn on_toggle_sort_ctime(&mut self);
+    fn on_toggle_sort_atime(&mut self);
     fn on_open_file(&mut self);
     fn on_search(&mut self);
     fn on_exit(&mut self);

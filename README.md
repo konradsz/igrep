@@ -70,6 +70,10 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `+`                      | Increase context viewer size           |
 | `-`                      | Decrease context viewer size           |
 | `F5`, `/`                | Open search pattern popup              |
+| `n`                      | Sort search results by name            |
+| `m`                      | Sort search results by mtime           |
+| `c`                      | Sort search results by ctime           |
+| `a`                      | Sort search results by atime           |
 <!-- keybindings end -->
 
 ## Supported text editors

@@ -87,7 +87,6 @@ impl SearchConfig {
         Ok(self)
     }
 
-
     pub fn search_hidden(mut self, search_hidden: bool) -> Self {
         self.search_hidden = search_hidden;
         self

@@ -480,7 +480,7 @@ mod tests {
 
     #[test_case(&[Char('q')]; "q")]
     #[test_case(&[Esc]; "empty input state")]
-    #[test_case(&[Char('a'), Char('b'), Esc]; "invalid input state")]
+    #[test_case(&[Char('b'), Char('e'), Esc]; "invalid input state")]
     #[test_case(&[Char('d'), Esc, Esc]; "clear incomplete state first")]
     fn exit(key_codes: &[KeyCode]) {
         let mut app_mock = MockApplication::default();

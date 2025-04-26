@@ -183,8 +183,7 @@ impl Application for App {
     }
 
     fn on_toggle_sort_name(&mut self) {
-        if self.search_config.sort_by.is_some()
-        {
+        if self.search_config.sort_by.is_some() {
             self.search_config.sort_by_reversed = Some("path".to_string());
             self.search_config.sort_by = None;
         } else {
@@ -196,8 +195,7 @@ impl Application for App {
     }
 
     fn on_toggle_sort_mtime(&mut self) {
-        if self.search_config.sort_by.is_some()
-        {
+        if self.search_config.sort_by.is_some() {
             self.search_config.sort_by_reversed = Some("modified".to_string());
             self.search_config.sort_by = None;
         } else {
@@ -209,8 +207,7 @@ impl Application for App {
     }
 
     fn on_toggle_sort_ctime(&mut self) {
-        if self.search_config.sort_by.is_some()
-        {
+        if self.search_config.sort_by.is_some() {
             self.search_config.sort_by_reversed = Some("created".to_string());
             self.search_config.sort_by = None;
         } else {
@@ -222,8 +219,7 @@ impl Application for App {
     }
 
     fn on_toggle_sort_atime(&mut self) {
-        if self.search_config.sort_by.is_some()
-        {
+        if self.search_config.sort_by.is_some() {
             self.search_config.sort_by_reversed = Some("accessed".to_string());
             self.search_config.sort_by = None;
         } else {

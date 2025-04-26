@@ -3,11 +3,11 @@ use grep::{
     matcher::LineTerminator,
     regex::RegexMatcherBuilder,
     searcher::{BinaryDetection, SearcherBuilder},
-//    flags::lowargs::{SortMode,},
+    //    flags::lowargs::{SortMode,},
 };
 use ignore::WalkBuilder;
+use std::cmp::Ordering;
 use std::{path::Path, sync::mpsc};
-use std::{cmp::Ordering};
 
 pub enum Event {
     NewEntry(FileEntry),
@@ -62,12 +62,9 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .hidden(!config.search_hidden)
         .follow_links(config.follow_links);
 
-
     // if no sort is specified the faster parallel search is used
-    if config.sort_by.is_none() && config.sort_by_reversed.is_none()
-    {
-        let walk_parallel = walker
-            .build_parallel();
+    if config.sort_by.is_none() && config.sort_by_reversed.is_none() {
+        let walk_parallel = walker.build_parallel();
 
         walk_parallel.run(move || {
             let tx = tx.clone();
@@ -101,39 +98,43 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
                 ignore::WalkState::Continue
             })
         });
-    }
-    else
-    {
+    } else {
         let mut walk_sorted = walker;
         let reversed = config.sort_by_reversed.is_some();
 
-        if config.sort_by == Some("path".to_string()) || config.sort_by_reversed == Some("path".to_string())
+        if config.sort_by == Some("path".to_string())
+            || config.sort_by_reversed == Some("path".to_string())
         {
-            walk_sorted = walk_sorted
-                .sort_by_file_name(move |a,b| { if !reversed {a.cmp(b)} else {b.cmp(a)}} );
-        }
-        else if config.sort_by == Some("modified".to_string()) || config.sort_by_reversed == Some("modified".to_string())
+            walk_sorted =
+                walk_sorted.sort_by_file_name(
+                    move |a, b| {
+                        if !reversed {
+                            a.cmp(b)
+                        } else {
+                            b.cmp(a)
+                        }
+                    },
+                );
+        } else if config.sort_by == Some("modified".to_string())
+            || config.sort_by_reversed == Some("modified".to_string())
         {
-            let compare_modified  = move |a: &Path, b: &Path| -> Ordering {
+            let compare_modified = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
                 let mb = b.metadata().expect("cannot get metadata from file");
 
                 let ta = ma.modified().expect("cannot get time of file");
                 let tb = mb.modified().expect("cannot get time of file");
 
-                if !reversed
-                {
+                if !reversed {
                     ta.cmp(&tb)
                 } else {
                     tb.cmp(&ta)
                 }
             };
 
-            walk_sorted = walk_sorted
-                .sort_by_file_path(move |a,b| { compare_modified(a,b) } );
-            
-        }
-        else if config.sort_by == Some("created".to_string()) || config.sort_by_reversed == Some("created".to_string())
+            walk_sorted = walk_sorted.sort_by_file_path(compare_modified);
+        } else if config.sort_by == Some("created".to_string())
+            || config.sort_by_reversed == Some("created".to_string())
         {
             let compare_created = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
@@ -142,18 +143,16 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
                 let ta = ma.created().expect("cannot get time of file");
                 let tb = mb.created().expect("cannot get time of file");
 
-                if !reversed
-                {
+                if !reversed {
                     ta.cmp(&tb)
                 } else {
                     tb.cmp(&ta)
                 }
             };
 
-            walk_sorted = walk_sorted
-                .sort_by_file_path(move |a,b| { compare_created(a,b) } );
-        }
-        else if config.sort_by == Some("accessed".to_string()) || config.sort_by_reversed == Some("accessed".to_string())
+            walk_sorted = walk_sorted.sort_by_file_path(compare_created);
+        } else if config.sort_by == Some("accessed".to_string())
+            || config.sort_by_reversed == Some("accessed".to_string())
         {
             let compare_accessed = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
@@ -162,52 +161,48 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
                 let ta = ma.accessed().expect("cannot get time of file");
                 let tb = mb.accessed().expect("cannot get time of file");
 
-                if !reversed
-                {
+                if !reversed {
                     ta.cmp(&tb)
                 } else {
                     tb.cmp(&ta)
                 }
             };
 
-            walk_sorted = walk_sorted
-                .sort_by_file_path(move |a,b| { compare_accessed(a,b) } );
-        }
-        else
-        {
+            walk_sorted = walk_sorted.sort_by_file_path(compare_accessed);
+        } else {
             // unknown order specified
             panic!("unknown sort order specified");
         }
 
-        for result in walk_sorted.build(){
+        for result in walk_sorted.build() {
             let tx = tx.clone();
             let matcher = matcher.clone();
             let mut grep_searcher = grep_searcher.clone();
 
-                let dir_entry = match result {
-                    Ok(entry) => {
-                        if !entry.file_type().is_some_and(|ft| ft.is_file()) {
-                            continue;
-                        }
-                        entry
+            let dir_entry = match result {
+                Ok(entry) => {
+                    if !entry.file_type().is_some_and(|ft| ft.is_file()) {
+                        continue;
                     }
-                    Err(_) => continue,
-                };
-                let mut matches_in_entry = Vec::new();
-                let sr = MatchesSink::new(&matcher, &mut matches_in_entry);
-                grep_searcher
-                    .search_path(&matcher, dir_entry.path(), sr)
-                    .ok();
-
-                if !matches_in_entry.is_empty() {
-                    tx.send(Event::NewEntry(FileEntry::new(
-                        dir_entry.path().to_string_lossy().into_owned(),
-                        matches_in_entry,
-                    )))
-                    .ok();
+                    entry
                 }
+                Err(_) => continue,
+            };
+            let mut matches_in_entry = Vec::new();
+            let sr = MatchesSink::new(&matcher, &mut matches_in_entry);
+            grep_searcher
+                .search_path(&matcher, dir_entry.path(), sr)
+                .ok();
 
-                continue
+            if !matches_in_entry.is_empty() {
+                tx.send(Event::NewEntry(FileEntry::new(
+                    dir_entry.path().to_string_lossy().into_owned(),
+                    matches_in_entry,
+                )))
+                .ok();
+            }
+
+            continue;
         }
     }
 }

@@ -16,6 +16,8 @@ pub struct SearchConfig {
     pub search_hidden: bool,
     pub follow_links: bool,
     pub word_regexp: bool,
+    pub sort_by: Option<String>,
+    pub sort_by_reversed: Option<String>,
 }
 
 impl SearchConfig {
@@ -34,6 +36,8 @@ impl SearchConfig {
             search_hidden: false,
             follow_links: false,
             word_regexp: false,
+            sort_by: None,
+            sort_by_reversed: None,
         })
     }
 
@@ -70,6 +74,16 @@ impl SearchConfig {
             builder.negate(&file_type);
         }
         self.types = builder.build()?;
+        Ok(self)
+    }
+
+    pub fn sort_by(
+        mut self,
+        sort_by: Option<String>,
+        sort_by_reversed: Option<String>,
+    ) -> Result<Self> {
+        self.sort_by = sort_by;
+        self.sort_by_reversed = sort_by_reversed;
         Ok(self)
     }
 

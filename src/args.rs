@@ -65,6 +65,12 @@ pub struct Args {
     /// Context viewer position at startup
     #[clap(long, value_enum, default_value_t = ContextViewerPosition::None)]
     pub context_viewer: ContextViewerPosition,
+    /// Sort results by [path, modified, accessed, created], see ripgrep for details
+    #[clap(long = "sort")]
+    pub sort_by: Option<String>,
+    /// Sort results reverse by [path, modified, accessed, created], see ripgrep for details
+    #[clap(long = "sortr")]
+    pub sort_by_reverse: Option<String>,
 }
 
 #[derive(Parser, Debug)]

@@ -19,13 +19,13 @@ impl FileEntry {
                         pos += 1;
                         if c != '\t' {
                             text.push(c);
-                            continue;
-                        }
-                        text.push_str("  ");
-                        for p in &mut ofs {
-                            if p.0 >= pos {
-                                p.0 += 1;
-                                p.1 += 1;
+                        } else {
+                            text.push_str("  ");
+                            for p in &mut ofs {
+                                if p.0 >= pos {
+                                    p.0 += 1;
+                                    p.1 += 1;
+                                }
                             }
                         }
                     }

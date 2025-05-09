@@ -11,7 +11,7 @@ use super::theme::Theme;
 pub struct SearchPopup {
     visible: bool,
     pattern: String,
-    position: usize,
+    cursor_position: usize,
 }
 
 impl SearchPopup {
@@ -21,7 +21,7 @@ impl SearchPopup {
 
     pub fn set_pattern(&mut self, pattern: String) {
         self.pattern = pattern;
-        self.position = self.pattern.len();
+        self.cursor_position = self.pattern.len();
     }
 
     pub fn get_pattern(&self) -> String {
@@ -29,32 +29,32 @@ impl SearchPopup {
     }
 
     pub fn insert_char(&mut self, c: char) {
-        self.pattern.insert(self.position, c);
-        self.right();
+        self.pattern.insert(self.cursor_position, c);
+        self.move_cursor_right();
     }
 
     pub fn remove_char(&mut self) {
-        self.left();
+        self.move_cursor_left();
         if !self.pattern.is_empty() {
-            self.pattern.remove(self.position);
+            self.pattern.remove(self.cursor_position);
         }
     }
 
     pub fn delete_char(&mut self) {
-        if self.position < self.pattern.len() {
-            self.pattern.remove(self.position);
+        if self.cursor_position < self.pattern.len() {
+            self.pattern.remove(self.cursor_position);
         }
     }
 
-    pub fn left(&mut self) {
-        if self.position > 0 {
-            self.position -= 1;
+    pub fn move_cursor_left(&mut self) {
+        if self.cursor_position > 0 {
+            self.cursor_position -= 1;
         }
     }
 
-    pub fn right(&mut self) {
-        if self.position < self.pattern.len() {
-            self.position += 1;
+    pub fn move_cursor_right(&mut self) {
+        if self.cursor_position < self.pattern.len() {
+            self.cursor_position += 1;
         }
     }
 
@@ -92,7 +92,7 @@ impl SearchPopup {
         frame.render_widget(pattern_text, text_area);
         frame.set_cursor(
             std::cmp::min(
-                text_area.x + self.position as u16,
+                text_area.x + self.cursor_position as u16,
                 text_area.x + text_area.width - 4,
             ),
             text_area.y,

@@ -216,11 +216,11 @@ impl Application for App {
     }
 
     fn on_char_left(&mut self) {
-        self.search_popup.left();
+        self.search_popup.move_cursor_left();
     }
 
     fn on_char_right(&mut self) {
-        self.search_popup.right();
+        self.search_popup.move_cursor_right();
     }
 
     fn on_toggle_keymap(&mut self) {

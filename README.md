@@ -69,7 +69,7 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `s`                      | Toggle horizontal context viewer       |
 | `+`                      | Increase context viewer size           |
 | `-`                      | Decrease context viewer size           |
-| `F5`                     | Open search pattern popup              |
+| `F5`, `/`                | Open search pattern popup              |
 <!-- keybindings end -->
 
 ## Supported text editors

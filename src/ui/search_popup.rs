@@ -1,5 +1,6 @@
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::Stylize,
     text::{Line, Text},
     widgets::{Block, Borders, Clear, Paragraph},
     Frame,
@@ -66,7 +67,8 @@ impl SearchPopup {
         let block = Block::default()
             .borders(Borders::ALL)
             .border_style(theme.search_popup_border())
-            .title("Regex Pattern")
+            .bold()
+            .title(" Regex Pattern ")
             .title_alignment(Alignment::Center);
         let popup_area = Self::get_popup_area(frame.size(), 50);
         frame.render_widget(Clear, popup_area);

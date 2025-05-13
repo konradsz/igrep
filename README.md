@@ -73,9 +73,9 @@ NOTE: `ig` respects `ripgrep`'s [configuration file](https://github.com/BurntSus
 | `-`                      | Decrease context viewer size           |
 | `F5`, `/`                | Open search pattern popup              |
 | `n`                      | Sort search results by name            |
-| `m`                      | Sort search results by mtime           |
-| `c`                      | Sort search results by ctime           |
-| `a`                      | Sort search results by atime           |
+| `m`                      | Sort search results by time modified   |
+| `c`                      | Sort search results by time created    |
+| `a`                      | Sort search results by time accessed   |
 <!-- keybindings end -->
 
 ## Supported text editors

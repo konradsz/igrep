@@ -1,6 +1,6 @@
 use crate::{
     editor::EditorCommand,
-    ig::{Ig, SearchConfig},
+    ig::{Ig, SearchConfig, SortKey},
     ui::{
         bottom_bar, context_viewer::ContextViewer, input_handler::InputHandler,
         keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup,
@@ -184,10 +184,10 @@ impl Application for App {
 
     fn on_toggle_sort_name(&mut self) {
         if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some("path".to_string());
+            self.search_config.sort_by_reversed = Some(SortKey::Path);
             self.search_config.sort_by = None;
         } else {
-            self.search_config.sort_by = Some("path".to_string());
+            self.search_config.sort_by = Some(SortKey::Path);
             self.search_config.sort_by_reversed = None;
         }
         self.ig
@@ -196,10 +196,10 @@ impl Application for App {
 
     fn on_toggle_sort_mtime(&mut self) {
         if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some("modified".to_string());
+            self.search_config.sort_by_reversed = Some(SortKey::Modified);
             self.search_config.sort_by = None;
         } else {
-            self.search_config.sort_by = Some("modified".to_string());
+            self.search_config.sort_by = Some(SortKey::Modified);
             self.search_config.sort_by_reversed = None;
         }
         self.ig
@@ -208,10 +208,10 @@ impl Application for App {
 
     fn on_toggle_sort_ctime(&mut self) {
         if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some("created".to_string());
+            self.search_config.sort_by_reversed = Some(SortKey::Created);
             self.search_config.sort_by = None;
         } else {
-            self.search_config.sort_by = Some("created".to_string());
+            self.search_config.sort_by = Some(SortKey::Created);
             self.search_config.sort_by_reversed = None;
         }
         self.ig
@@ -220,10 +220,10 @@ impl Application for App {
 
     fn on_toggle_sort_atime(&mut self) {
         if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some("accessed".to_string());
+            self.search_config.sort_by_reversed = Some(SortKey::Accessed);
             self.search_config.sort_by = None;
         } else {
-            self.search_config.sort_by = Some("accessed".to_string());
+            self.search_config.sort_by = Some(SortKey::Accessed);
             self.search_config.sort_by_reversed = None;
         }
         self.ig

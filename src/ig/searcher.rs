@@ -1,9 +1,9 @@
 use super::{file_entry::FileEntry, sink::MatchesSink, SearchConfig};
+use crate::ig::SortKey;
 use grep::{
     matcher::LineTerminator,
     regex::RegexMatcherBuilder,
     searcher::{BinaryDetection, SearcherBuilder},
-    //    flags::lowargs::{SortMode,},
 };
 use ignore::WalkBuilder;
 use std::cmp::Ordering;
@@ -14,6 +14,7 @@ pub enum Event {
     SearchingFinished,
     Error,
 }
+
 
 pub fn search(config: SearchConfig, tx: mpsc::Sender<Event>) {
     std::thread::spawn(move || {
@@ -102,8 +103,8 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         let mut walk_sorted = walker;
         let reversed = config.sort_by_reversed.is_some();
 
-        if config.sort_by == Some("path".to_string())
-            || config.sort_by_reversed == Some("path".to_string())
+        if config.sort_by == Some(SortKey::Path)
+            || config.sort_by_reversed == Some(SortKey::Path)
         {
             walk_sorted =
                 walk_sorted.sort_by_file_name(
@@ -115,8 +116,8 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
                         }
                     },
                 );
-        } else if config.sort_by == Some("modified".to_string())
-            || config.sort_by_reversed == Some("modified".to_string())
+        } else if config.sort_by == Some(SortKey::Modified)
+            || config.sort_by_reversed == Some(SortKey::Modified)
         {
             let compare_modified = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
@@ -133,8 +134,8 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
             };
 
             walk_sorted = walk_sorted.sort_by_file_path(compare_modified);
-        } else if config.sort_by == Some("created".to_string())
-            || config.sort_by_reversed == Some("created".to_string())
+        } else if config.sort_by == Some(SortKey::Created)
+            || config.sort_by_reversed == Some(SortKey::Created)
         {
             let compare_created = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");
@@ -151,8 +152,8 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
             };
 
             walk_sorted = walk_sorted.sort_by_file_path(compare_created);
-        } else if config.sort_by == Some("accessed".to_string())
-            || config.sort_by_reversed == Some("accessed".to_string())
+        } else if config.sort_by == Some(SortKey::Accessed)
+            || config.sort_by_reversed == Some(SortKey::Accessed)
         {
             let compare_accessed = move |a: &Path, b: &Path| -> Ordering {
                 let ma = a.metadata().expect("cannot get metadata from file");

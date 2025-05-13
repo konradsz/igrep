@@ -236,7 +236,7 @@ impl InputHandler {
                 self.input_mode = InputMode::TextInsertion;
                 consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_toggle_popup())
             }
-            // buffer for multikey inuts
+            // buffer for multikey inputs
             "g" => self.input_state = InputState::Incomplete("g…".into()),
             "d" => self.input_state = InputState::Incomplete("d…".into()),
             buf => {

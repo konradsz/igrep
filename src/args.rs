@@ -1,6 +1,7 @@
 use crate::{
     editor::Editor,
     ui::{context_viewer::ContextViewerPosition, theme::ThemeVariant},
+    ig::search_config::SortKey,
 };
 use clap::{CommandFactory, Parser};
 use std::{
@@ -65,12 +66,12 @@ pub struct Args {
     /// Context viewer position at startup
     #[clap(long, value_enum, default_value_t = ContextViewerPosition::None)]
     pub context_viewer: ContextViewerPosition,
-    /// Sort results by [path, modified, accessed, created], see ripgrep for details
+    /// Sort results, see ripgrep for details
     #[clap(long = "sort")]
-    pub sort_by: Option<String>,
-    /// Sort results reverse by [path, modified, accessed, created], see ripgrep for details
+    pub sort_by: Option<SortKey>,
+    /// Sort results reverse, see ripgrep for details
     #[clap(long = "sortr")]
-    pub sort_by_reverse: Option<String>,
+    pub sort_by_reverse: Option<SortKey>,
 }
 
 #[derive(Parser, Debug)]

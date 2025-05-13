@@ -4,6 +4,16 @@ use ignore::{
     types::{Types, TypesBuilder},
 };
 use std::path::PathBuf;
+use clap::ValueEnum;
+use strum::Display;
+
+#[derive(Clone, ValueEnum, Display, Debug, PartialEq)]
+pub enum SortKey {
+    Path,
+    Modified,
+    Created,
+    Accessed,
+}
 
 #[derive(Clone)]
 pub struct SearchConfig {
@@ -16,8 +26,8 @@ pub struct SearchConfig {
     pub search_hidden: bool,
     pub follow_links: bool,
     pub word_regexp: bool,
-    pub sort_by: Option<String>,
-    pub sort_by_reversed: Option<String>,
+    pub sort_by: Option<SortKey>,
+    pub sort_by_reversed: Option<SortKey>,
 }
 
 impl SearchConfig {
@@ -79,8 +89,8 @@ impl SearchConfig {
 
     pub fn sort_by(
         mut self,
-        sort_by: Option<String>,
-        sort_by_reversed: Option<String>,
+        sort_by: Option<SortKey>,
+        sort_by_reversed: Option<SortKey>,
     ) -> Result<Self> {
         self.sort_by = sort_by;
         self.sort_by_reversed = sort_by_reversed;

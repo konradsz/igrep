@@ -1,10 +1,10 @@
 use anyhow::Result;
+use clap::ValueEnum;
 use ignore::{
     overrides::{Override, OverrideBuilder},
     types::{Types, TypesBuilder},
 };
 use std::path::PathBuf;
-use clap::ValueEnum;
 use strum::Display;
 
 #[derive(Clone, ValueEnum, Display, Debug, PartialEq)]

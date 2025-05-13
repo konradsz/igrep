@@ -15,7 +15,6 @@ pub enum Event {
     Error,
 }
 
-
 pub fn search(config: SearchConfig, tx: mpsc::Sender<Event>) {
     std::thread::spawn(move || {
         let path_searchers = config
@@ -102,77 +101,80 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
     } else {
         let mut walk_sorted = walker;
         let reversed = config.sort_by_reversed.is_some();
-
-        if config.sort_by == Some(SortKey::Path)
-            || config.sort_by_reversed == Some(SortKey::Path)
-        {
-            walk_sorted =
-                walk_sorted.sort_by_file_name(
-                    move |a, b| {
-                        if !reversed {
-                            a.cmp(b)
-                        } else {
-                            b.cmp(a)
-                        }
-                    },
-                );
-        } else if config.sort_by == Some(SortKey::Modified)
-            || config.sort_by_reversed == Some(SortKey::Modified)
-        {
-            let compare_modified = move |a: &Path, b: &Path| -> Ordering {
-                let ma = a.metadata().expect("cannot get metadata from file");
-                let mb = b.metadata().expect("cannot get metadata from file");
-
-                let ta = ma.modified().expect("cannot get time of file");
-                let tb = mb.modified().expect("cannot get time of file");
-
-                if !reversed {
-                    ta.cmp(&tb)
-                } else {
-                    tb.cmp(&ta)
-                }
-            };
-
-            walk_sorted = walk_sorted.sort_by_file_path(compare_modified);
-        } else if config.sort_by == Some(SortKey::Created)
-            || config.sort_by_reversed == Some(SortKey::Created)
-        {
-            let compare_created = move |a: &Path, b: &Path| -> Ordering {
-                let ma = a.metadata().expect("cannot get metadata from file");
-                let mb = b.metadata().expect("cannot get metadata from file");
-
-                let ta = ma.created().expect("cannot get time of file");
-                let tb = mb.created().expect("cannot get time of file");
-
-                if !reversed {
-                    ta.cmp(&tb)
-                } else {
-                    tb.cmp(&ta)
-                }
-            };
-
-            walk_sorted = walk_sorted.sort_by_file_path(compare_created);
-        } else if config.sort_by == Some(SortKey::Accessed)
-            || config.sort_by_reversed == Some(SortKey::Accessed)
-        {
-            let compare_accessed = move |a: &Path, b: &Path| -> Ordering {
-                let ma = a.metadata().expect("cannot get metadata from file");
-                let mb = b.metadata().expect("cannot get metadata from file");
-
-                let ta = ma.accessed().expect("cannot get time of file");
-                let tb = mb.accessed().expect("cannot get time of file");
-
-                if !reversed {
-                    ta.cmp(&tb)
-                } else {
-                    tb.cmp(&ta)
-                }
-            };
-
-            walk_sorted = walk_sorted.sort_by_file_path(compare_accessed);
+        let local_sort_key = if config.sort_by.is_some() {
+            config.sort_by
         } else {
-            // unknown order specified
-            panic!("unknown sort order specified");
+            config.sort_by_reversed
+        };
+
+        match local_sort_key {
+            Some(SortKey::Path) => {
+                walk_sorted =
+                    walk_sorted.sort_by_file_name(
+                        move |a, b| {
+                            if !reversed {
+                                a.cmp(b)
+                            } else {
+                                b.cmp(a)
+                            }
+                        },
+                    );
+            }
+            Some(SortKey::Modified) => {
+                let compare_modified = move |a: &Path, b: &Path| -> Ordering {
+                    let ma = a.metadata().expect("cannot get metadata from file");
+                    let mb = b.metadata().expect("cannot get metadata from file");
+
+                    let ta = ma.modified().expect("cannot get time of file");
+                    let tb = mb.modified().expect("cannot get time of file");
+
+                    if !reversed {
+                        ta.cmp(&tb)
+                    } else {
+                        tb.cmp(&ta)
+                    }
+                };
+
+                walk_sorted = walk_sorted.sort_by_file_path(compare_modified);
+            }
+            Some(SortKey::Created) => {
+                let compare_created = move |a: &Path, b: &Path| -> Ordering {
+                    let ma = a.metadata().expect("cannot get metadata from file");
+                    let mb = b.metadata().expect("cannot get metadata from file");
+
+                    let ta = ma.created().expect("cannot get time of file");
+                    let tb = mb.created().expect("cannot get time of file");
+
+                    if !reversed {
+                        ta.cmp(&tb)
+                    } else {
+                        tb.cmp(&ta)
+                    }
+                };
+
+                walk_sorted = walk_sorted.sort_by_file_path(compare_created);
+            }
+            Some(SortKey::Accessed) => {
+                let compare_accessed = move |a: &Path, b: &Path| -> Ordering {
+                    let ma = a.metadata().expect("cannot get metadata from file");
+                    let mb = b.metadata().expect("cannot get metadata from file");
+
+                    let ta = ma.accessed().expect("cannot get time of file");
+                    let tb = mb.accessed().expect("cannot get time of file");
+
+                    if !reversed {
+                        ta.cmp(&tb)
+                    } else {
+                        tb.cmp(&ta)
+                    }
+                };
+
+                walk_sorted = walk_sorted.sort_by_file_path(compare_accessed);
+            }
+            _ => {
+                // unknown order specified
+                panic!("unknown sort order specified");
+            }
         }
 
         for result in walk_sorted.build() {

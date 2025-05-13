@@ -1,7 +1,7 @@
 use crate::{
     editor::Editor,
-    ui::{context_viewer::ContextViewerPosition, theme::ThemeVariant},
     ig::search_config::SortKey,
+    ui::{context_viewer::ContextViewerPosition, theme::ThemeVariant},
 };
 use clap::{CommandFactory, Parser};
 use std::{

@@ -57,7 +57,7 @@ pub trait Theme {
     fn searching_state_style(&self) -> Style {
         Style::default()
             .add_modifier(Modifier::BOLD)
-            .bg(Color::LightRed)
+            .bg(Color::Rgb(255, 165, 0))
             .fg(Color::Black)
     }
 

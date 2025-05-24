@@ -42,7 +42,8 @@ fn main() -> Result<()> {
         .follow_links(args.follow_links)
         .word_regexp(args.word_regexp)
         .globs(args.glob)?
-        .file_types(args.type_matching, args.type_not)?;
+        .file_types(args.type_matching, args.type_not)?
+        .sort_by(args.sort_by, args.sort_by_reverse)?;
 
     let theme: Box<dyn Theme> = match args.theme {
         ThemeVariant::Light => Box::new(Light),

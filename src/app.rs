@@ -1,6 +1,6 @@
 use crate::{
     editor::EditorCommand,
-    ig::{Ig, SearchConfig},
+    ig::{Ig, SearchConfig, SortKey},
     ui::{
         bottom_bar, context_viewer::ContextViewer, input_handler::InputHandler,
         keymap_popup::KeymapPopup, result_list::ResultList, search_popup::SearchPopup,
@@ -182,6 +182,54 @@ impl Application for App {
         self.context_viewer.decrease_size();
     }
 
+    fn on_toggle_sort_name(&mut self) {
+        if self.search_config.sort_by.is_some() {
+            self.search_config.sort_by_reversed = Some(SortKey::Path);
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some(SortKey::Path);
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
+    fn on_toggle_sort_mtime(&mut self) {
+        if self.search_config.sort_by.is_some() {
+            self.search_config.sort_by_reversed = Some(SortKey::Modified);
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some(SortKey::Modified);
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
+    fn on_toggle_sort_ctime(&mut self) {
+        if self.search_config.sort_by.is_some() {
+            self.search_config.sort_by_reversed = Some(SortKey::Created);
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some(SortKey::Created);
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
+    fn on_toggle_sort_atime(&mut self) {
+        if self.search_config.sort_by.is_some() {
+            self.search_config.sort_by_reversed = Some(SortKey::Accessed);
+            self.search_config.sort_by = None;
+        } else {
+            self.search_config.sort_by = Some(SortKey::Accessed);
+            self.search_config.sort_by_reversed = None;
+        }
+        self.ig
+            .search(self.search_config.clone(), &mut self.result_list);
+    }
+
     fn on_open_file(&mut self) {
         self.ig.open_file();
     }
@@ -259,6 +307,10 @@ pub trait Application {
     fn on_toggle_context_viewer_horizontal(&mut self);
     fn on_increase_context_viewer_size(&mut self);
     fn on_decrease_context_viewer_size(&mut self);
+    fn on_toggle_sort_name(&mut self);
+    fn on_toggle_sort_mtime(&mut self);
+    fn on_toggle_sort_ctime(&mut self);
+    fn on_toggle_sort_atime(&mut self);
     fn on_open_file(&mut self);
     fn on_search(&mut self);
     fn on_exit(&mut self);

@@ -1,9 +1,19 @@
 use anyhow::Result;
+use clap::ValueEnum;
 use ignore::{
     overrides::{Override, OverrideBuilder},
     types::{Types, TypesBuilder},
 };
 use std::path::PathBuf;
+use strum::Display;
+
+#[derive(Clone, ValueEnum, Display, Debug, PartialEq)]
+pub enum SortKey {
+    Path,
+    Modified,
+    Created,
+    Accessed,
+}
 
 #[derive(Clone)]
 pub struct SearchConfig {
@@ -16,6 +26,8 @@ pub struct SearchConfig {
     pub search_hidden: bool,
     pub follow_links: bool,
     pub word_regexp: bool,
+    pub sort_by: Option<SortKey>,
+    pub sort_by_reversed: Option<SortKey>,
 }
 
 impl SearchConfig {
@@ -34,6 +46,8 @@ impl SearchConfig {
             search_hidden: false,
             follow_links: false,
             word_regexp: false,
+            sort_by: None,
+            sort_by_reversed: None,
         })
     }
 
@@ -70,6 +84,16 @@ impl SearchConfig {
             builder.negate(&file_type);
         }
         self.types = builder.build()?;
+        Ok(self)
+    }
+
+    pub fn sort_by(
+        mut self,
+        sort_by: Option<SortKey>,
+        sort_by_reversed: Option<SortKey>,
+    ) -> Result<Self> {
+        self.sort_by = sort_by;
+        self.sort_by_reversed = sort_by_reversed;
         Ok(self)
     }
 

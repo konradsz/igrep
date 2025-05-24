@@ -1,6 +1,6 @@
 pub mod file_entry;
 pub mod grep_match;
-mod search_config;
+pub mod search_config;
 mod searcher;
 mod sink;
 
@@ -10,6 +10,7 @@ use std::sync::mpsc;
 use crate::editor::EditorCommand;
 use crate::ui::result_list::ResultList;
 pub use search_config::SearchConfig;
+pub use search_config::SortKey;
 use searcher::Event;
 
 use self::file_entry::FileEntry;

@@ -183,6 +183,7 @@ impl InputHandler {
         };
 
         match self.input_buffer.as_str() {
+            // navigation
             "j" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_next_match()),
             "k" => {
                 consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_previous_match())
@@ -193,12 +194,14 @@ impl InputHandler {
             }
             "gg" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_top()),
             "G" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_bottom()),
+            // deletion
             "dd" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                 app.on_remove_current_entry()
             }),
             "dw" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                 app.on_remove_current_file()
             }),
+            // viewer
             "v" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                 app.on_toggle_context_viewer_vertical()
             }),
@@ -211,6 +214,20 @@ impl InputHandler {
             "-" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
                 app.on_decrease_context_viewer_size()
             }),
+            // sort
+            "n" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                app.on_toggle_sort_name()
+            }),
+            "m" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                app.on_toggle_sort_mtime()
+            }),
+            "a" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                app.on_toggle_sort_atime()
+            }),
+            "c" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                app.on_toggle_sort_ctime()
+            }),
+            // misc
             "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
             "?" => {
                 consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_toggle_keymap())
@@ -219,6 +236,7 @@ impl InputHandler {
                 self.input_mode = InputMode::TextInsertion;
                 consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_toggle_popup())
             }
+            // buffer for multikey inputs
             "g" => self.input_state = InputState::Incomplete("g…".into()),
             "d" => self.input_state = InputState::Incomplete("d…".into()),
             buf => {
@@ -462,7 +480,7 @@ mod tests {
 
     #[test_case(&[Char('q')]; "q")]
     #[test_case(&[Esc]; "empty input state")]
-    #[test_case(&[Char('a'), Char('b'), Esc]; "invalid input state")]
+    #[test_case(&[Char('b'), Char('e'), Esc]; "invalid input state")]
     #[test_case(&[Char('d'), Esc, Esc]; "clear incomplete state first")]
     fn exit(key_codes: &[KeyCode]) {
         let mut app_mock = MockApplication::default();

@@ -13,7 +13,6 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -183,48 +182,40 @@ impl Application for App {
     }
 
     fn on_toggle_sort_name(&mut self) {
-        if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some(SortKey::Path);
-            self.search_config.sort_by = None;
-        } else {
-            self.search_config.sort_by = Some(SortKey::Path);
-            self.search_config.sort_by_reversed = None;
+        match self.search_config.sort_by {
+            Some(SortKey::Path) => self.search_config.sort_by = Some(SortKey::PathReversed),
+            Some(_) => self.search_config.sort_by = Some(SortKey::Path),
+            None => self.search_config.sort_by = Some(SortKey::Path),
         }
         self.ig
             .search(self.search_config.clone(), &mut self.result_list);
     }
 
     fn on_toggle_sort_mtime(&mut self) {
-        if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some(SortKey::Modified);
-            self.search_config.sort_by = None;
-        } else {
-            self.search_config.sort_by = Some(SortKey::Modified);
-            self.search_config.sort_by_reversed = None;
+        match self.search_config.sort_by {
+            Some(SortKey::Modified) => self.search_config.sort_by = Some(SortKey::ModifiedReversed),
+            Some(_) => self.search_config.sort_by = Some(SortKey::Modified),
+            None => self.search_config.sort_by = Some(SortKey::Modified),
         }
         self.ig
             .search(self.search_config.clone(), &mut self.result_list);
     }
 
     fn on_toggle_sort_ctime(&mut self) {
-        if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some(SortKey::Created);
-            self.search_config.sort_by = None;
-        } else {
-            self.search_config.sort_by = Some(SortKey::Created);
-            self.search_config.sort_by_reversed = None;
+        match self.search_config.sort_by {
+            Some(SortKey::Created) => self.search_config.sort_by = Some(SortKey::CreatedReversed),
+            Some(_) => self.search_config.sort_by = Some(SortKey::Created),
+            None => self.search_config.sort_by = Some(SortKey::Created),
         }
         self.ig
             .search(self.search_config.clone(), &mut self.result_list);
     }
 
     fn on_toggle_sort_atime(&mut self) {
-        if self.search_config.sort_by.is_some() {
-            self.search_config.sort_by_reversed = Some(SortKey::Accessed);
-            self.search_config.sort_by = None;
-        } else {
-            self.search_config.sort_by = Some(SortKey::Accessed);
-            self.search_config.sort_by_reversed = None;
+        match self.search_config.sort_by {
+            Some(SortKey::Modified) => self.search_config.sort_by = Some(SortKey::ModifiedReversed),
+            Some(_) => self.search_config.sort_by = Some(SortKey::Modified),
+            None => self.search_config.sort_by = Some(SortKey::Modified),
         }
         self.ig
             .search(self.search_config.clone(), &mut self.result_list);

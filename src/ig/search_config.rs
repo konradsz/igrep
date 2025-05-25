@@ -1,18 +1,22 @@
 use anyhow::Result;
-use clap::ValueEnum;
 use ignore::{
     overrides::{Override, OverrideBuilder},
     types::{Types, TypesBuilder},
 };
 use std::path::PathBuf;
-use strum::Display;
 
-#[derive(Clone, ValueEnum, Display, Debug, PartialEq)]
+use crate::args::SortKeyArg;
+
+#[derive(Clone, Copy)]
 pub enum SortKey {
     Path,
+    PathReversed,
     Modified,
+    ModifiedReversed,
     Created,
+    CreatedReversed,
     Accessed,
+    AccessedReversed,
 }
 
 #[derive(Clone)]
@@ -27,7 +31,6 @@ pub struct SearchConfig {
     pub follow_links: bool,
     pub word_regexp: bool,
     pub sort_by: Option<SortKey>,
-    pub sort_by_reversed: Option<SortKey>,
 }
 
 impl SearchConfig {
@@ -47,7 +50,6 @@ impl SearchConfig {
             follow_links: false,
             word_regexp: false,
             sort_by: None,
-            sort_by_reversed: None,
         })
     }
 
@@ -89,11 +91,25 @@ impl SearchConfig {
 
     pub fn sort_by(
         mut self,
-        sort_by: Option<SortKey>,
-        sort_by_reversed: Option<SortKey>,
+        sort_by: Option<SortKeyArg>,
+        sort_by_reversed: Option<SortKeyArg>,
     ) -> Result<Self> {
-        self.sort_by = sort_by;
-        self.sort_by_reversed = sort_by_reversed;
+        if let Some(arg) = sort_by {
+            match arg {
+                SortKeyArg::Path => self.sort_by = Some(SortKey::Path),
+                SortKeyArg::Modified => self.sort_by = Some(SortKey::Modified),
+                SortKeyArg::Created => self.sort_by = Some(SortKey::Created),
+                SortKeyArg::Accessed => self.sort_by = Some(SortKey::Accessed),
+            }
+        };
+        if let Some(arg) = sort_by_reversed {
+            match arg {
+                SortKeyArg::Path => self.sort_by = Some(SortKey::PathReversed),
+                SortKeyArg::Modified => self.sort_by = Some(SortKey::ModifiedReversed),
+                SortKeyArg::Created => self.sort_by = Some(SortKey::CreatedReversed),
+                SortKeyArg::Accessed => self.sort_by = Some(SortKey::AccessedReversed),
+            }
+        };
         Ok(self)
     }
 

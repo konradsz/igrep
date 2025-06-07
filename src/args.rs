@@ -1,9 +1,8 @@
 use crate::{
     editor::Editor,
-    ig::search_config::SortKey,
     ui::{context_viewer::ContextViewerPosition, theme::ThemeVariant},
 };
-use clap::{CommandFactory, Parser};
+use clap::{CommandFactory, Parser, ValueEnum};
 use std::{
     ffi::OsString,
     fs::File,
@@ -11,6 +10,7 @@ use std::{
     iter::once,
     path::PathBuf,
 };
+use strum::Display;
 
 pub const IGREP_CUSTOM_EDITOR_ENV: &str = "IGREP_CUSTOM_EDITOR";
 pub const IGREP_EDITOR_ENV: &str = "IGREP_EDITOR";
@@ -68,10 +68,10 @@ pub struct Args {
     pub context_viewer: ContextViewerPosition,
     /// Sort results, see ripgrep for details
     #[clap(long = "sort")]
-    pub sort_by: Option<SortKey>,
+    pub sort_by: Option<SortKeyArg>,
     /// Sort results reverse, see ripgrep for details
     #[clap(long = "sortr")]
-    pub sort_by_reverse: Option<SortKey>,
+    pub sort_by_reverse: Option<SortKeyArg>,
 }
 
 #[derive(Parser, Debug)]
@@ -85,6 +85,14 @@ pub struct EditorOpt {
     #[arg(group = "editor_command")]
     #[clap(long, env = IGREP_CUSTOM_EDITOR_ENV)]
     pub custom_command: Option<String>,
+}
+
+#[derive(Clone, ValueEnum, Display, Debug, PartialEq)]
+pub enum SortKeyArg {
+    Path,
+    Modified,
+    Created,
+    Accessed,
 }
 
 impl Args {

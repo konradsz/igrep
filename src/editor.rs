@@ -47,12 +47,12 @@ impl EditorCommand {
             )?;
 
             if args.matches("{file_name}").count() != 1 {
-                return Err(anyhow!("Expected one occurence of '{{file_name}}'.")
+                return Err(anyhow!("Expected one occurrence of '{{file_name}}'.")
                     .context(format!("Incorrect editor command: '{custom_command}'")));
             }
 
             if args.matches("{line_number}").count() != 1 {
-                return Err(anyhow!("Expected one occurence of '{{line_number}}'.")
+                return Err(anyhow!("Expected one occurrence of '{{line_number}}'.")
                     .context(format!("Incorrect editor command: '{custom_command}'")));
             }
 

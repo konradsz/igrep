@@ -31,6 +31,7 @@ pub struct SearchConfig {
     pub follow_links: bool,
     pub word_regexp: bool,
     pub sort_by: Option<SortKey>,
+    pub fixed_strings: bool,
 }
 
 impl SearchConfig {
@@ -49,6 +50,7 @@ impl SearchConfig {
             search_hidden: false,
             follow_links: false,
             word_regexp: false,
+            fixed_strings: false,
             sort_by: None,
         })
     }
@@ -125,6 +127,11 @@ impl SearchConfig {
 
     pub fn word_regexp(mut self, word_regexp: bool) -> Self {
         self.word_regexp = word_regexp;
+        self
+    }
+
+    pub fn fixed_strings(mut self, fixed_strings: bool) -> Self {
+        self.fixed_strings = fixed_strings;
         self
     }
 }

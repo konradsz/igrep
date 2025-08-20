@@ -49,6 +49,9 @@ pub struct Args {
     /// Only show matches surrounded by word boundaries.
     #[clap(short = 'w', long = "word-regexp")]
     pub word_regexp: bool,
+    /// Exact matches with no regex. Useful when search for a string full of delimiters.
+    #[clap(short = 'F', long = "fixed-strings")]
+    pub fixed_strings: bool,
     /// Include files and directories for searching that match the given glob.
     /// Multiple globs may be provided.
     #[clap(short, long)]

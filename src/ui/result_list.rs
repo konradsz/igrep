@@ -36,7 +36,7 @@ impl ResultList {
         }
     }
 
-    pub fn iter(&self) -> std::slice::Iter<EntryType> {
+    pub fn iter(&self) -> std::slice::Iter<'_, EntryType> {
         self.entries.iter()
     }
 

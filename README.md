@@ -40,6 +40,7 @@ Runs [grep](https://crates.io/crates/grep) ([ripgrep's](https://github.com/Burnt
     --type-list                 Show all supported file types and their corresponding globs.
 -V, --version                   Print version information.
 -w, --word-regexp               Only show matches surrounded by word boundaries
+-F, --fixed-strings             Exact matches with no regex. Useful when searching for a string full of delimiters.
     --sort <SORT_BY>            Sort results by [path, modified, accessed, created], see ripgrep for details
     --sortr <SORT_BY_REVERSE>   Sort results reverse by [path, modified, accessed, created], see ripgrep for details
 ```

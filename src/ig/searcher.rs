@@ -52,6 +52,7 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .case_insensitive(config.case_insensitive)
         .case_smart(config.case_smart)
         .word(config.word_regexp)
+        .fixed_strings(config.fixed_strings)
         .build(&config.pattern)
         .expect("Cannot build RegexMatcher");
 

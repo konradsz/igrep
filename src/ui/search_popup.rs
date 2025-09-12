@@ -1,12 +1,11 @@
+use super::theme::Theme;
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Position, Rect},
     style::Stylize,
     text::{Line, Text},
     widgets::{Block, Borders, Clear, Paragraph},
     Frame,
 };
-
-use super::theme::Theme;
 
 #[derive(Default)]
 pub struct SearchPopup {
@@ -70,7 +69,7 @@ impl SearchPopup {
             .bold()
             .title(" Regex Pattern ")
             .title_alignment(Alignment::Center);
-        let popup_area = Self::get_popup_area(frame.size(), 50);
+        let popup_area = Self::get_popup_area(frame.area(), 50);
         frame.render_widget(Clear, popup_area);
 
         frame.render_widget(block, popup_area);
@@ -92,13 +91,13 @@ impl SearchPopup {
         let text = Text::from(Line::from(pattern.as_str()));
         let pattern_text = Paragraph::new(text);
         frame.render_widget(pattern_text, text_area);
-        frame.set_cursor(
+        frame.set_cursor_position(Position::new(
             std::cmp::min(
                 text_area.x + self.cursor_position as u16,
                 text_area.x + text_area.width - 4,
             ),
             text_area.y,
-        );
+        ));
     }
 
     fn get_popup_area(frame_size: Rect, width_percent: u16) -> Rect {

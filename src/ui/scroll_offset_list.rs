@@ -1,9 +1,9 @@
 use ratatui::{
     buffer::Buffer,
-    layout::{Corner, Rect},
+    layout::Rect,
     style::Style,
     text::Text,
-    widgets::{Block, StatefulWidget, Widget},
+    widgets::{Block, ListDirection, StatefulWidget, Widget},
 };
 use std::iter::Iterator;
 use unicode_width::UnicodeWidthStr;
@@ -73,7 +73,7 @@ pub struct List<'a> {
     items: Vec<ListItem<'a>>,
     /// Style used as a base style for the widget
     style: Style,
-    start_corner: Corner,
+    start_corner: ListDirection,
     /// Style used to render selected item
     highlight_style: Style,
     /// Symbol in front of the selected item (Shift all items to the right)
@@ -90,7 +90,7 @@ impl<'a> List<'a> {
             block: None,
             style: Style::default(),
             items: items.into(),
-            start_corner: Corner::TopLeft,
+            start_corner: ListDirection::TopToBottom,
             highlight_style: Style::default(),
             highlight_symbol: None,
             scroll_offset: ScrollOffset::default(),
@@ -194,7 +194,7 @@ impl StatefulWidget for List<'_> {
             .take(end - start)
         {
             let (x, y) = match self.start_corner {
-                Corner::BottomLeft => {
+                ListDirection::BottomToTop => {
                     current_height += item.height() as u16;
                     (list_area.left(), list_area.bottom() - current_height)
                 }

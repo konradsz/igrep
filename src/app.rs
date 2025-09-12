@@ -102,7 +102,7 @@ impl App {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
-            .split(frame.size());
+            .split(frame.area());
 
         let (view_area, bottom_bar_area) = (chunks[0], chunks[1]);
         let (list_area, context_viewer_area) = app.context_viewer.split_view(view_area);

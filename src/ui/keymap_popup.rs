@@ -55,7 +55,7 @@ impl KeymapPopup {
             return;
         }
 
-        let popup_area = Self::get_popup_area(frame.size());
+        let popup_area = Self::get_popup_area(frame.area());
 
         let max_y = KEYBINDINGS_LEN.saturating_sub(popup_area.height - 4);
         self.scroll_y = self.scroll_y.min(max_y);

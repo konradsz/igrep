@@ -55,7 +55,8 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .fixed_strings(config.fixed_strings)
         .multi_line(config.multi_line);
 
-    // HACK: without this we will occur the NotAllowed("\n").
+    // INFO: enable this for non-multiline pattern.
+    // HACK: without disabling this we will occur the NotAllowed("\n").
     if !config.multi_line {
         regex_matcher_builder.line_terminator(Some(b'\n'));
     }

@@ -44,15 +44,23 @@ fn run(path: &Path, config: SearchConfig, tx: mpsc::Sender<Event>) {
         .binary_detection(BinaryDetection::quit(b'\x00'))
         .line_terminator(LineTerminator::byte(b'\n'))
         .line_number(true)
-        .multi_line(false)
+        .multi_line(config.multi_line)
         .build();
 
-    let matcher = RegexMatcherBuilder::new()
-        .line_terminator(Some(b'\n'))
+    let mut regex_matcher_builder = RegexMatcherBuilder::new();
+    regex_matcher_builder
         .case_insensitive(config.case_insensitive)
         .case_smart(config.case_smart)
         .word(config.word_regexp)
         .fixed_strings(config.fixed_strings)
+        .multi_line(config.multi_line);
+
+    // INFO: enable this for non-multiline pattern.
+    // HACK: without disabling this we will occur the NotAllowed("\n").
+    if !config.multi_line {
+        regex_matcher_builder.line_terminator(Some(b'\n'));
+    }
+    let matcher = regex_matcher_builder
         .build(&config.pattern)
         .expect("Cannot build RegexMatcher");
 

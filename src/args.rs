@@ -52,6 +52,9 @@ pub struct Args {
     /// Exact matches with no regex. Useful when searching for a string full of delimiters.
     #[clap(short = 'F', long = "fixed-strings")]
     pub fixed_strings: bool,
+    /// Search with pattern contains newline character ('\n').
+    #[clap(short = 'U', long = "multiline")]
+    pub multi_line: bool,
     /// Include files and directories for searching that match the given glob.
     /// Multiple globs may be provided.
     #[clap(short, long)]

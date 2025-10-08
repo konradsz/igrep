@@ -42,6 +42,7 @@ fn main() -> Result<()> {
         .follow_links(args.follow_links)
         .word_regexp(args.word_regexp)
         .fixed_strings(args.fixed_strings)
+        .multi_line(args.multi_line)
         .globs(args.glob)?
         .file_types(args.type_matching, args.type_not)?
         .sort_by(args.sort_by, args.sort_by_reverse)?;

@@ -145,7 +145,7 @@ impl Args {
             .filter(|i| {
                 supported_arguments
                     .iter()
-                    .any(|arg| (arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i)))
+                    .any(|arg| arg.0.as_ref() == Some(i) || arg.1.as_ref() == Some(i))
             })
             .flat_map(|i| {
                 match supported_arguments

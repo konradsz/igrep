@@ -399,7 +399,7 @@ mod tests {
                 "ddd".to_owned(),
                 "e".to_owned(),
             ],
-            &vec![
+            &[
                 (Some("aaa".to_owned()), Some("a".to_owned())),
                 (Some("bbb".to_owned()), Some("b".to_owned())),
                 (Some("ccc".to_owned()), Some("c".to_owned())),

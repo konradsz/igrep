@@ -229,9 +229,10 @@ impl InputHandler {
             }),
             // misc
             "q" => consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_exit()),
-            "?" => {
-                consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_toggle_keymap())
-            }
+            "?" => consume_buffer_and_execute(&mut self.input_buffer, &mut || {
+                self.input_mode = InputMode::Keymap;
+                app.on_toggle_keymap();
+            }),
             "/" => {
                 self.input_mode = InputMode::TextInsertion;
                 consume_buffer_and_execute(&mut self.input_buffer, &mut || app.on_toggle_popup())

@@ -9,7 +9,7 @@ use std::{
 use strum::Display;
 
 #[derive(Display, Default, PartialEq, Eq, Copy, Clone, Debug, ValueEnum)]
-#[strum(serialize_all = "lowercase")]
+#[strum(serialize_all = "kebab-case")]
 pub enum Editor {
     #[default]
     Vim,

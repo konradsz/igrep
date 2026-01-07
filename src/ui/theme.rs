@@ -6,7 +6,7 @@ use ratatui::style::{Color, Modifier, Style};
 use strum::Display;
 
 #[derive(Display, Copy, Clone, Debug, ValueEnum)]
-#[strum(serialize_all = "lowercase")]
+#[strum(serialize_all = "kebab-case")]
 pub enum ThemeVariant {
     Light,
     Dark,

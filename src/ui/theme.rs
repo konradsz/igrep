@@ -1,15 +1,26 @@
 pub mod dark;
 pub mod light;
 
+use std::fmt::Display;
+
 use clap::ValueEnum;
 use ratatui::style::{Color, Modifier, Style};
-use strum::Display;
 
-#[derive(Display, Copy, Clone, Debug, ValueEnum)]
-#[strum(serialize_all = "kebab-case")]
+#[derive(Copy, Clone, Debug, ValueEnum, Default)]
 pub enum ThemeVariant {
     Light,
+    #[default]
     Dark,
+}
+
+impl Display for ThemeVariant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let pv = self
+            .to_possible_value()
+            .expect("unexpected display of skipped variant");
+        let name = pv.get_name().to_owned();
+        write!(f, "{name}")
+    }
 }
 
 pub trait Theme {

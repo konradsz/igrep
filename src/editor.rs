@@ -6,10 +6,8 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     process::{Child, Command},
 };
-use strum::Display;
 
-#[derive(Display, Default, PartialEq, Eq, Copy, Clone, Debug, ValueEnum)]
-#[strum(serialize_all = "kebab-case")]
+#[derive(Default, PartialEq, Eq, Copy, Clone, Debug, ValueEnum)]
 pub enum Editor {
     #[default]
     Vim,
@@ -62,7 +60,8 @@ impl EditorCommand {
         let add_error_context = |e: String, env_value: String, env_name: &str| {
             let possible_variants = Editor::value_variants()
                 .iter()
-                .map(Editor::to_string)
+                .filter_map(ValueEnum::to_possible_value)
+                .map(|v| v.get_name().to_owned())
                 .join(", ");
             anyhow!(e).context(format!(
                 "\"{env_value}\" read from ${env_name}, possible variants: [{possible_variants}]",

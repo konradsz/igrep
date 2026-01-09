@@ -36,6 +36,7 @@ impl App {
         editor_command: EditorCommand,
         context_viewer: ContextViewer,
         theme: Box<dyn Theme>,
+        preserve_ansi: bool,
     ) -> Self {
         let theme = theme;
         Self {
@@ -43,7 +44,7 @@ impl App {
             ig: Ig::new(editor_command),
             theme,
             context_viewer,
-            result_list: ResultList::default(),
+            result_list: ResultList::new(preserve_ansi),
             search_popup: SearchPopup::default(),
             keymap_popup: KeymapPopup::default(),
         }

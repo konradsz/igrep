@@ -56,6 +56,7 @@ fn main() -> Result<()> {
         EditorCommand::new(args.editor.custom_command, args.editor.editor)?,
         ContextViewer::new(args.context_viewer),
         theme,
+        args.preserve_ansi,
     );
     app.run()?;
 

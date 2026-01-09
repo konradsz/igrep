@@ -29,6 +29,7 @@ anyhow = "1.0.83"
 strum = { version = "0.26.2", features = ["derive"] }
 syntect = "5.2.0"
 which = "6.0.3"
+ansi-to-tui = "4"
 
 [dev-dependencies]
 lazy_static = "1.4.0"

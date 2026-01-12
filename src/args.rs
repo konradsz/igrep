@@ -10,7 +10,6 @@ use std::{
     iter::once,
     path::PathBuf,
 };
-use strum::Display;
 
 pub const IGREP_CUSTOM_EDITOR_ENV: &str = "IGREP_CUSTOM_EDITOR";
 pub const IGREP_EDITOR_ENV: &str = "IGREP_EDITOR";
@@ -30,7 +29,7 @@ pub struct Args {
     #[clap(flatten)]
     pub editor: EditorOpt,
     /// UI color theme.
-    #[clap(long, default_value_t = ThemeVariant::Dark)]
+    #[clap(long, default_value_t)]
     pub theme: ThemeVariant,
     /// Searches case insensitively.
     #[clap(short = 'i', long)]
@@ -93,7 +92,7 @@ pub struct EditorOpt {
     pub custom_command: Option<String>,
 }
 
-#[derive(Clone, ValueEnum, Display, Debug, PartialEq)]
+#[derive(Clone, ValueEnum, Debug, PartialEq)]
 pub enum SortKeyArg {
     Path,
     Modified,

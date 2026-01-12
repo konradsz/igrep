@@ -41,6 +41,12 @@ jobs:
         with:
           command: test
 
+      - name: Run program to print help
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: -- --help
+
   lints:
     name: Lints
     runs-on: ubuntu-latest

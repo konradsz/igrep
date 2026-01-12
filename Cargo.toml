@@ -26,7 +26,6 @@ ratatui = { version = "0.26.2", default-features = false, features = [
 unicode-width = "0.1.12"
 itertools = "0.13.0"
 anyhow = "1.0.83"
-strum = { version = "0.26.2", features = ["derive"] }
 syntect = "5.2.0"
 which = "6.0.3"
 

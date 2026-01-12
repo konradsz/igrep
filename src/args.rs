@@ -78,6 +78,9 @@ pub struct Args {
     /// Sort results reverse, see ripgrep for details
     #[clap(long = "sortr")]
     pub sort_by_reverse: Option<SortKeyArg>,
+    /// Preserve ANSI escape codes.
+    #[clap(long)]
+    pub preserve_ansi: bool,
 }
 
 #[derive(Parser, Debug)]

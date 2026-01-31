@@ -72,7 +72,8 @@ where
             })
             .ok();
 
-        *self.matches_in_entry = split_by_lines(line_number, text, offsets);
+        // append matches instead of overwriting so all matches in a file are kept
+        self.matches_in_entry.extend(split_by_lines(line_number, text, offsets));
 
         Ok(true)
     }

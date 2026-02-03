@@ -1,5 +1,6 @@
 use std::cmp;
 
+use ansi_to_tui::IntoText;
 use ratatui::{
     layout::Rect,
     style::Style,
@@ -22,9 +23,24 @@ pub struct ResultList {
     file_entries_count: usize,
     matches_count: usize,
     filtered_matches_count: usize,
+    preserve_ansi: bool,
 }
 
 impl ResultList {
+    pub fn new(preserve_ansi: bool) -> Self {
+        Self {
+            preserve_ansi,
+            ..Default::default()
+        }
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self {
+            preserve_ansi: self.preserve_ansi,
+            ..Default::default()
+        };
+    }
+
     pub fn add_entry(&mut self, entry: FileEntry) {
         self.file_entries_count += 1;
         self.matches_count += entry.get_matches_count();
@@ -313,29 +329,40 @@ impl ResultList {
                 EntryType::Match(n, t, offsets) => {
                     let line_number = Span::styled(format!(" {n}: "), theme.line_number_color());
 
-                    let mut spans = vec![line_number];
+                    if !self.preserve_ansi {
+                        let mut spans = vec![line_number];
 
-                    let mut current_position = 0;
-                    for offset in offsets {
-                        let before_match =
-                            Span::styled(&t[current_position..offset.0], theme.list_font_color());
-                        let actual_match =
-                            Span::styled(&t[offset.0..offset.1], theme.match_color());
+                        let mut current_position = 0;
+                        for offset in offsets {
+                            let before_match = Span::styled(
+                                &t[current_position..offset.0],
+                                theme.list_font_color(),
+                            );
+                            let actual_match =
+                                Span::styled(&t[offset.0..offset.1], theme.match_color());
 
-                        // set current position to the end of current match
-                        current_position = offset.1;
+                            // set current position to the end of current match
+                            current_position = offset.1;
 
-                        spans.push(before_match);
-                        spans.push(actual_match);
+                            spans.push(before_match);
+                            spans.push(actual_match);
+                        }
+
+                        // push remaining text of a line
+                        spans.push(Span::styled(
+                            &t[current_position..],
+                            theme.list_font_color(),
+                        ));
+
+                        ListItem::new(Line::from(spans))
+                    } else {
+                        let mut text = t.into_text().unwrap();
+                        assert_eq!(text.lines.len(), 1);
+                        let mut line = text.lines.remove(0);
+                        assert_ne!(line.spans.len(), 0);
+                        line.spans.insert(0, line_number);
+                        ListItem::new(line)
                     }
-
-                    // push remaining text of a line
-                    spans.push(Span::styled(
-                        &t[current_position..],
-                        theme.list_font_color(),
-                    ));
-
-                    ListItem::new(Line::from(spans))
                 }
             })
             .collect();

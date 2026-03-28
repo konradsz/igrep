@@ -28,6 +28,7 @@ itertools = "0.13.0"
 anyhow = "1.0.83"
 syntect = "5.2.0"
 which = "6.0.3"
+ansi-to-tui = "4"
 
 [dev-dependencies]
 lazy_static = "1.4.0"

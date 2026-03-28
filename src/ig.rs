@@ -1,3 +1,4 @@
+pub mod ansi_utils;
 pub mod file_entry;
 pub mod grep_match;
 pub mod search_config;
@@ -80,7 +81,7 @@ impl Ig {
 
     pub fn search(&mut self, search_config: SearchConfig, result_list: &mut ResultList) {
         if self.state == State::Idle {
-            *result_list = ResultList::default();
+            result_list.reset();
             self.state = State::Searching;
             searcher::search(search_config, self.tx.clone());
         }

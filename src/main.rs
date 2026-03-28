@@ -54,8 +54,9 @@ fn main() -> Result<()> {
     let mut app = App::new(
         search_config,
         EditorCommand::new(args.editor.custom_command, args.editor.editor)?,
-        ContextViewer::new(args.context_viewer),
+        ContextViewer::new(args.context_viewer, args.preserve_ansi),
         theme,
+        args.preserve_ansi,
     );
     app.run()?;
 

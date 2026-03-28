@@ -1,5 +1,6 @@
 use std::cmp;
 
+use ansi_to_tui::IntoText;
 use ratatui::{
     layout::Rect,
     style::Style,
@@ -22,9 +23,27 @@ pub struct ResultList {
     file_entries_count: usize,
     matches_count: usize,
     filtered_matches_count: usize,
+    preserve_ansi: bool,
 }
 
 impl ResultList {
+    const MATCH_BG_ANSI_START: &str = "\x1b[48;5;52m";
+    const MATCH_BG_ANSI_END: &str = "\x1b[49m";
+
+    pub fn new(preserve_ansi: bool) -> Self {
+        Self {
+            preserve_ansi,
+            ..Default::default()
+        }
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self {
+            preserve_ansi: self.preserve_ansi,
+            ..Default::default()
+        };
+    }
+
     pub fn add_entry(&mut self, entry: FileEntry) {
         self.file_entries_count += 1;
         self.matches_count += entry.get_matches_count();
@@ -269,6 +288,14 @@ impl ResultList {
         }
     }
 
+    pub fn get_selected_match_offsets(&self) -> Option<(u64, Vec<(usize, usize)>)> {
+        let selected = self.state.selected()?;
+        match &self.entries[selected] {
+            EntryType::Match(number, _, offsets) => Some((*number, offsets.clone())),
+            EntryType::Header(_) => None,
+        }
+    }
+
     pub fn get_current_match_index(&self) -> usize {
         match self.state.selected() {
             Some(selected) => {
@@ -312,30 +339,42 @@ impl ResultList {
                 }
                 EntryType::Match(n, t, offsets) => {
                     let line_number = Span::styled(format!(" {n}: "), theme.line_number_color());
+                    if !self.preserve_ansi {
+                        let mut spans = vec![line_number];
 
-                    let mut spans = vec![line_number];
+                        let mut current_position = 0;
+                        for offset in offsets {
+                            let before_match = Span::styled(
+                                &t[current_position..offset.0],
+                                theme.list_font_color(),
+                            );
+                            let actual_match =
+                                Span::styled(&t[offset.0..offset.1], theme.match_color());
 
-                    let mut current_position = 0;
-                    for offset in offsets {
-                        let before_match =
-                            Span::styled(&t[current_position..offset.0], theme.list_font_color());
-                        let actual_match =
-                            Span::styled(&t[offset.0..offset.1], theme.match_color());
+                            // set current position to the end of current match
+                            current_position = offset.1;
 
-                        // set current position to the end of current match
-                        current_position = offset.1;
+                            spans.push(before_match);
+                            spans.push(actual_match);
+                        }
 
-                        spans.push(before_match);
-                        spans.push(actual_match);
+                        // push remaining text of a line
+                        spans.push(Span::styled(
+                            &t[current_position..],
+                            theme.list_font_color(),
+                        ));
+
+                        ListItem::new(Line::from(spans))
+                    } else {
+                        let rendered = Self::inject_match_background_ansi(t, offsets);
+                        let stripped = crate::ig::ansi_utils::strip_osc8_keep_text(&rendered);
+                        let mut text = stripped.as_str().into_text().unwrap();
+                        assert_eq!(text.lines.len(), 1);
+                        let mut line = text.lines.remove(0);
+                        assert_ne!(line.spans.len(), 0);
+                        line.spans.insert(0, line_number);
+                        ListItem::new(line)
                     }
-
-                    // push remaining text of a line
-                    spans.push(Span::styled(
-                        &t[current_position..],
-                        theme.list_font_color(),
-                    ));
-
-                    ListItem::new(Line::from(spans))
                 }
             })
             .collect();
@@ -353,6 +392,30 @@ impl ResultList {
         let mut state = self.state;
         frame.render_stateful_widget(list_widget, area, &mut state);
         self.state = state;
+    }
+
+    fn inject_match_background_ansi(line: &str, offsets: &[(usize, usize)]) -> String {
+        if offsets.is_empty() {
+            return line.to_owned();
+        }
+
+        let mut rendered = String::with_capacity(line.len() + offsets.len() * 10);
+        let mut cursor = 0;
+
+        for &(start, end) in offsets {
+            if start > line.len() || end > line.len() || start >= end || start < cursor {
+                continue;
+            }
+
+            rendered.push_str(&line[cursor..start]);
+            rendered.push_str(Self::MATCH_BG_ANSI_START);
+            rendered.push_str(&line[start..end]);
+            rendered.push_str(Self::MATCH_BG_ANSI_END);
+            cursor = end;
+        }
+
+        rendered.push_str(&line[cursor..]);
+        rendered
     }
 }
 
@@ -391,5 +454,19 @@ mod tests {
         ));
         assert_eq!(list.entries.len(), 5);
         assert_eq!(list.state.selected(), Some(1));
+    }
+
+    #[test]
+    fn injects_background_ansi_around_matches() {
+        let rendered = ResultList::inject_match_background_ansi("abc123xyz", &[(3, 6)]);
+
+        assert_eq!(
+            rendered,
+            format!(
+                "abc{}123{}xyz",
+                ResultList::MATCH_BG_ANSI_START,
+                ResultList::MATCH_BG_ANSI_END
+            )
+        );
     }
 }

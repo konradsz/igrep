@@ -29,6 +29,7 @@ pub enum Editor {
     Pycharm,
     Less,
     Fresh,
+    Zed
 }
 
 #[derive(Debug)]

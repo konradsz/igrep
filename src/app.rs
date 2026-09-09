@@ -85,6 +85,15 @@ impl App {
                 }
             }
 
+            // NOTE: Disable raw mode before spawning an editor. An editor may restore terminal
+            // state across suspend/resume; nvim, for example, can leave the tty canonical
+            // after SIGTSTP + fg if inherited in raw mode.
+            //
+            // Crossterm's raw mode handling is based on cached global state and does not account
+            // for terminal state changes made by spawned processes. As a result, a subsequent
+            // enable_raw_mode() may incorrectly assume the tty is still raw and skip restoring it
+            disable_raw_mode()?;
+
             self.ig
                 .open_file_if_requested(self.result_list.get_selected_entry());
 
